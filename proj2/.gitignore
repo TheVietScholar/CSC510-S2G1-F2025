@@ -1,0 +1,49 @@
+# --- Maven / Build Output ---
+target/
+**/target/
+
+# --- IDE / Editor ---
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+.vscode/
+
+# --- OS / Misc ---
+.DS_Store
+Thumbs.db
+
+# --- Logs & Temp ---
+logs/
+*.log
+*.tmp
+*.swp
+*.swo
+
+# --- Environment / Secrets ---
+.env
+.env.*
+secrets/
+*.keystore
+*.jks
+
+# --- Coverage / Reports ---
+coverage/
+surefire-reports/
+failsafe-reports/
+
+# --- Local data / caches ---
+.cache/
+.eslintcache
+
+# --- Tooling ---
+node_modules/
+
+# --- Dist / Packaging ---
+*.tar
+*.zip
+
+# --- Exclusions (intentionally tracked scripts) ---
+!mvnw
+!mvnw.cmd
