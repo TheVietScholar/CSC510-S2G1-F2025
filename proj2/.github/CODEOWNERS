@@ -1,0 +1,10 @@
+# Team A (Orders, Products, Merchants)
+src/main/java/com/boozebuddies/order/**   @matthew @rj
+src/main/java/com/boozebuddies/product/** @matthew @rj
+src/main/java/com/boozebuddies/merchant/** @matthew @rj
+
+# Team B (Users, Drivers, Deliveries)
+src/main/java/com/boozebuddies/user/**     @tzhang33 @robert
+src/main/java/com/boozebuddies/driver/**   @tzhang33 @robert
+src/main/java/com/boozebuddies/delivery/** @tzhang33 @robert
+

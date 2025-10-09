@@ -1,0 +1,27 @@
+name: CI (Maven)
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Temurin JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Verify formatting (Spotless), style (Checkstyle), and tests
+        run: |
+          ./mvnw -B -ntp spotless:check
+          ./mvnw -B -ntp checkstyle:check
+          ./mvnw -B -ntp verify
