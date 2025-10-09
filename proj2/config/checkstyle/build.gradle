@@ -1,0 +1,37 @@
+plugins {
+  id 'java'
+  id 'com.diffplug.spotless' version '6.25.0'
+  id 'checkstyle'
+}
+
+repositories { mavenCentral() }
+
+dependencies {
+  testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+}
+
+java {
+  toolchain { languageVersion = JavaLanguageVersion.of(21) }
+}
+
+checkstyle {
+  toolVersion = '10.17.0'
+  configFile = file('config/checkstyle/checkstyle.xml')
+  maxWarnings = 0
+}
+
+spotless {
+  java {
+    googleJavaFormat('1.22.0') // matches latest Google Java Format
+    // Remove unused imports & apply license header if needed
+    removeUnusedImports()
+    // Optional: licenseHeaderFile('config/headers/license.java')
+    target 'src/**/*.java'
+  }
+}
+
+tasks.withType(Test).configureEach {
+  useJUnitPlatform()
+}
+
+tasks.check.dependsOn 'spotlessCheck', 'checkstyleMain', 'checkstyleTest'
