@@ -53,11 +53,11 @@
 
     <module name="JavadocType"/>
     <module name="JavadocMethod">
-      <!-- <property name="scope" value="public"/> -->
+      <property name="accessModifiers" value="public"/>
       <property name="allowMissingParamTags" value="true"/>
-      <property name="allowMissingThrowsTags" value="true"/>
+      <!-- <property name="allowMissingThrowsTags" value="true"/> -->
       <property name="allowMissingReturnTag" value="true"/>
-      <property name="minLineCount" value="2"/>
+      <!-- <property name="minLineCount" value="2"/> -->
     </module>
 
     <module name="FinalClass"/>
