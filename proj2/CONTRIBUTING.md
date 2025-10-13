@@ -5,25 +5,27 @@ Thanks for helping build **BoozeBuddies**! This guide explains how to propose ch
 ---
 
 ## Table of Contents
-- [Code of Conduct](#code-of-conduct)
-- [Acceptance of Contributions](#acceptance-of-contributions)
-- [Project Roles](#project-roles)
-- [Branching & Workflow](#branching--workflow)
-- [Issues & Proposals](#issues--proposals)
-- [Commit Messages](#commit-messages)
-- [Pull Requests](#pull-requests)
-- [AI-Assisted Contributions](#ai-assisted-contributions)
-- [Testing & Coverage](#testing--coverage)
-- [Style & Linting](#style--linting)
-- [Security & Secrets](#security--secrets)
-- [Intellectual Property & License](#intellectual-property--license)
-- [Public Availability](#public-availability)
-- [Contact Information](#contact-information)
+- [Contributing to BoozeBuddies](#contributing-to-boozebuddies)
+  - [Table of Contents](#table-of-contents)
+  - [Code of Conduct](#code-of-conduct)
+  - [Acceptance of Contributions](#acceptance-of-contributions)
+  - [Project Roles](#project-roles)
+  - [Branching \& Workflow](#branching--workflow)
+  - [Issues \& Proposals](#issues--proposals)
+  - [Commit Messages](#commit-messages)
+  - [Pull Requests](#pull-requests)
+  - [AI-Assisted Contributions](#ai-assisted-contributions)
+  - [Testing \& Coverage](#testing--coverage)
+  - [Style \& Linting](#style--linting)
+  - [Security \& Secrets](#security--secrets)
+  - [Intellectual Property \& License](#intellectual-property--license)
+  - [Public Availability](#public-availability)
+  - [Contact Information](#contact-information)
 
 ---
 
 ## Code of Conduct
-All contributors must follow our **CODE_OF_CONDUCT.md**.
+All contributors must follow our [Code of Conduct](**CODE_OF_CONDUCT.md**).
 - Be respectful and inclusive.
 - Collaborate in good faith.
 - No discrimination, harassment, or disrespectful behavior.
