@@ -64,6 +64,7 @@
 
     <module name="AnnotationLocation"/>
     <module name="MissingOverride"/>
+  </module>
 
   </module>
   
