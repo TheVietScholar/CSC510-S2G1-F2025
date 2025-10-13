@@ -43,6 +43,15 @@ App starts on <http://localhost:8080>
 
 - Health endpoint: `GET /api/health` → `{ "status": "ok" }`
 
+### Run against Docker DB
+
+If using Docker to provide MySQL, wait for the DB to be reachable and use the `docker` Spring profile:
+
+```sh
+./scripts/wait-for-mysql.sh 127.0.0.1 33060 60
+./mvnw spring-boot:run -Dspring-boot.run.profiles=docker
+```
+
 ## Using your local MySQL (no Docker)
 
 If you use a system-installed MySQL, JDBC expects the classic protocol port (3306 by default). Port 33060 is the X Protocol and won't work with JDBC unless you've explicitly mapped it to classic.
