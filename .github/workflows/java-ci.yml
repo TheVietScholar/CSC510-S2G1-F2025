@@ -1,0 +1,29 @@
+name: CI (proj2 Spring Boot)
+
+on:
+  push:
+    branches: [ main, tiehang ]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: proj2
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Temurin JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Build & Test
+        run: |
+          ./mvnw -B -ntp spotless:check
+          ./mvnw -B -ntp checkstyle:check
+          ./mvnw -B -ntp -DskipITs=false verify

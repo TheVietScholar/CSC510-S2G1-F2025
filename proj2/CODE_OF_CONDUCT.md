@@ -1,31 +1,3 @@
-Code of Conduct
-Software Engineering Project – Booze Buddies
-1. Purpose
-The purpose of this Code of Conduct is to ensure a welcoming, inclusive, and respectful environment for everyone participating in the Booze Buddies project.
-2. Expected Behavior
-All participants are expected to:
-Be respectful and considerate of different perspectives
-
-
-Use welcoming and inclusive language
-
-
-Provide constructive feedback during discussions and reviews
-
-
-Collaborate openly and act with integrity
-
-
-Respect others’ privacy and personal boundaries
-
-
-3. Unacceptable Behavior
-The following behaviors are considered unacceptable:
-Harassment, bullying, or discrimination of any kind
-
-
-Use of sexualized or offensive language or imagery
-
 # Code of Conduct
 
 Software Engineering Project – Booze Buddies
