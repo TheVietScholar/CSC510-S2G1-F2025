@@ -44,6 +44,9 @@ node_modules/
 *.tar
 *.zip
 
+# --- developer documents ---
+design.md
+
 # --- Exclusions (intentionally tracked scripts) ---
 !mvnw
 !mvnw.cmd
