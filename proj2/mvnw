@@ -1,0 +1,78 @@
+#!/bin/sh
+# ----------------------------------------------------------------------------
+# Maven Start Up Batch script for UN*X
+# ----------------------------------------------------------------------------
+
+# Optional: honor JAVA_HOME
+if [ -n "$JAVA_HOME" ] ; then
+  MAVEN_JAVA="$JAVA_HOME/bin/java"
+else
+  MAVEN_JAVA="java"
+fi
+
+WRAPPER_JAR=".mvn/wrapper/maven-wrapper.jar"
+WRAPPER_PROPS=".mvn/wrapper/maven-wrapper.properties"
+MAVEN_WRAPPER_DL_URL=$(grep -E "^wrapperUrl=" "$WRAPPER_PROPS" | cut -d'=' -f2-)
+
+# Download wrapper jar if needed
+if [ ! -f "$WRAPPER_JAR" ]; then
+  mkdir -p .mvn/wrapper
+  if command -v curl >/dev/null 2>&1; then
+    curl -fsSL "$MAVEN_WRAPPER_DL_URL" -o "$WRAPPER_JAR"
+  elif command -v wget >/dev/null 2>&1; then
+    wget -q "$MAVEN_WRAPPER_DL_URL" -O "$WRAPPER_JAR"
+  else
+    echo "Error: curl or wget is required to download Maven Wrapper." >&2
+    exit 1
+  fi
+fi
+
+# Ensure Java 17+
+# Capture full output for robust parsing across vendors
+JAVA_VERSION_OUT=$($MAVEN_JAVA -version 2>&1)
+
+# Try to extract major version from patterns like: 'openjdk version "21.0.8" ...' or 'java version "1.8.0_292"'
+JAVA_MAJOR=$(echo "$JAVA_VERSION_OUT" | sed -nE 's/.*version "([0-9]+).*/\1/p' | head -n 1)
+
+# Handle legacy 1.x notation (e.g., 1.8 -> 8)
+if [ "$JAVA_MAJOR" = "1" ]; then
+  JAVA_MINOR=$(echo "$JAVA_VERSION_OUT" | sed -nE 's/.*version "1\.([0-9]+).*/\1/p' | head -n 1)
+  if [ -n "$JAVA_MINOR" ]; then
+    JAVA_MAJOR="$JAVA_MINOR"
+  fi
+fi
+
+# Fallback: if still empty, grab the first X.Y token and cut X
+if [ -z "$JAVA_MAJOR" ]; then
+  JAVA_MAJOR=$(echo "$JAVA_VERSION_OUT" | head -n 1 | grep -oE '\\b[0-9]+(\\.[0-9]+)?\\b' | head -n 1 | cut -d. -f1)
+fi
+
+# Validate numeric before comparing to avoid 'Illegal number'
+if ! echo "$JAVA_MAJOR" | grep -Eq '^[0-9]+$'; then
+  echo "Unable to detect Java major version from: $(echo "$JAVA_VERSION_OUT" | head -n 1)" >&2
+else
+  if [ "$JAVA_MAJOR" -lt 17 ]; then
+    echo "Detected Java $JAVA_MAJOR; this project requires Java 17+. Please install JDK 17 and set JAVA_HOME, or switch your system Java." >&2
+    exit 1
+  fi
+fi
+
+# Determine project base dir (where .mvn dir lives)
+if [ -z "$MAVEN_PROJECTBASEDIR" ]; then
+  basedir=$(dirname "$0")
+  wdir=$(cd "$basedir"; pwd)
+  while [ "$wdir" != "/" ]; do
+    if [ -d "$wdir/.mvn" ]; then
+      MAVEN_PROJECTBASEDIR="$wdir"
+      break
+    fi
+    wdir=$(dirname "$wdir")
+  done
+  # fallback to current
+  if [ -z "$MAVEN_PROJECTBASEDIR" ]; then
+    MAVEN_PROJECTBASEDIR=$(pwd)
+  fi
+fi
+
+# Execute Wrapper main
+exec "$MAVEN_JAVA" -Dmaven.multiModuleProjectDirectory="$MAVEN_PROJECTBASEDIR" -cp "$WRAPPER_JAR" org.apache.maven.wrapper.MavenWrapperMain "$@"
