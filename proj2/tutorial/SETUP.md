@@ -102,3 +102,22 @@ Edit `src/main/resources/application.properties` to adjust DB settings. Defaults
 - Ensure the container is healthy and ports are free.
 - Check credentials match properties.
 - On first run, schema is created automatically by Flyway (`db/migration` scripts).
+
+## Windows setup notes (PowerShell)
+
+PowerShell parses arguments differently than bash. Use the following patterns:
+
+- Start Docker dependencies:
+	- `docker compose up -d`
+
+- Wait for MySQL (PowerShell):
+	- `./scripts/wait-for-mysql.ps1 -Host 127.0.0.1 -Port 3307 -TimeoutSeconds 60`
+
+- Run Spring Boot with the docker profile:
+	- PowerShell: `./mvnw "-Dspring-boot.run.profiles=docker" spring-boot:run`
+	- CMD.exe: `mvnw -Dspring-boot.run.profiles=docker spring-boot:run`
+
+- Using environment overrides in PowerShell:
+	- `$env:DB_HOST = "127.0.0.1"; $env:DB_PORT = "3306"; $env:DB_NAME = "boozebuddies"; $env:DB_USER = "app"; $env:DB_PASS = "app"; ./mvnw spring-boot:run`
+
+Tip: If you see `unknown life cycle .run.profiles=docker`, quote the property as shown above so PowerShell doesn’t split the `-D` argument.
