@@ -65,10 +65,11 @@
     <module name="AnnotationLocation"/>
     <module name="MissingOverride"/>
 
-    <!-- Line length: Google default is 100; we use 110 to reduce churn -->
-    <module name="LineLength">
-      <property name="max" value="110"/>
-      <property name="ignorePattern" value="^package|^import|http(s)?://"/>
-    </module>
+  </module>
+  
+  <!-- Line length: Google default is 100; we use 110 to reduce churn -->
+  <module name="LineLength">
+    <property name="max" value="110"/>
+    <property name="ignorePattern" value="^package|^import|http(s)?://"/>
   </module>
 </module>
