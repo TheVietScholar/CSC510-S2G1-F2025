@@ -4,14 +4,14 @@ param(
   [int]$TimeoutSeconds = 60
 )
 
-Write-Output "Waiting for MySQL at $Host:$Port (timeout: $TimeoutSeconds s)..."
+Write-Output "Waiting for MySQL at $Host:${Port} (timeout: ${TimeoutSeconds} s)..."
 $sw = [System.Diagnostics.Stopwatch]::StartNew()
 
 function Test-TcpPortReachable {
   param([string]$Host, [int]$Port)
   try {
     if (Get-Command Test-NetConnection -ErrorAction SilentlyContinue) {
-      return (Test-NetConnection -ComputerName $Host -Port $Port -WarningAction SilentlyContinue).TcpTestSucceeded
+      return (Test-NetConnection -ComputerName $Host -Port ${Port} -WarningAction SilentlyContinue).TcpTestSucceeded
     } else {
       $client = New-Object System.Net.Sockets.TcpClient
       $iar = $client.BeginConnect($Host, $Port, $null, $null)
@@ -24,7 +24,7 @@ function Test-TcpPortReachable {
 }
 
 while ($sw.Elapsed.TotalSeconds -lt $TimeoutSeconds) {
-  if (Test-TcpPortReachable -Host $Host -Port $Port) {
+  if (Test-TcpPortReachable -Host ${Host} -Port ${Port}) {
     Write-Output "MySQL is reachable at $Host:$Port."
     exit 0
   }
