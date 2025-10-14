@@ -19,10 +19,10 @@
     <java.version>17</java.version>
     <maven.compiler.release>17</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <checkstyle.config.location>config/checkstyle/checkstyle.xml</checkstyle.config.location>
-    <spotless.plugin.version>2.43.0</spotless.plugin.version>
+    <checkstyle.config.location>google_checks.xml</checkstyle.config.location>
+    <spotless.plugin.version>3.0.0</spotless.plugin.version>
     <google.java.format.version>1.22.0</google.java.format.version>
-    <checkstyle.plugin.version>3.3.1</checkstyle.plugin.version>
+    <checkstyle.plugin.version>3.6.0</checkstyle.plugin.version>
     <checkstyle.version>10.17.0</checkstyle.version>
   </properties>
 

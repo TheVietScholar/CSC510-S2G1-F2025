@@ -1,9 +1,8 @@
-<?xml version="1.0"?>
-<!DOCTYPE suppressions PUBLIC
-  "-//Checkstyle//DTD Suppressions 1.2//EN"
-  "https://checkstyle.org/dtds/suppressions_1_2.dtd">
-<suppressions>
-  <!-- Example:
-  <suppress files=".*Generated.*" checks="JavadocMethod"/>
-  -->
-</suppressions>
+# Suppressions configuration in YAML format
+# Example:
+# - files: ".*Generated.*"
+#   checks: "JavadocMethod"
+suppressions:
+  - files: ".*Generated.*"
+    checks: "JavadocMethod"
+# Add more suppressions below as needed
