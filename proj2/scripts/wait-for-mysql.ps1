@@ -24,7 +24,7 @@ function Test-TcpPortReachable {
 }
 
 while ($sw.Elapsed.TotalSeconds -lt $TimeoutSeconds) {
-  if (Test-TcpPortReachable -Host ${Host} -Port ${Port}) {
+  if (Test-TcpPortReachable -Host ${Hostname} -Port ${Port}) {
     Write-Output "MySQL is reachable at $Host:$Port."
     exit 0
   }
