@@ -53,6 +53,10 @@
 
     <module name="JavadocType"/>
     <module name="JavadocMethod">
+<<<<<<< HEAD
+=======
+      <property name="accessModifiers" value="public"/>
+>>>>>>> 7efd511fb1f64802052a9d508e8da27094fa071e
       <property name="allowMissingParamTags" value="true"/>
       <!-- <property name="allowMissingThrowsTags" value="true"/> -->
       <property name="allowMissingReturnTag" value="true"/>
@@ -64,9 +68,18 @@
 
     <module name="AnnotationLocation"/>
     <module name="MissingOverride"/>
+<<<<<<< HEAD
 
   </module>
   
+  <!-- Line length: Google default is 100; we use 110 to reduce churn -->
+  <module name="LineLength">
+    <property name="max" value="110"/>
+    <property name="ignorePattern" value="^package|^import|http(s)?://"/>
+=======
+>>>>>>> 7efd511fb1f64802052a9d508e8da27094fa071e
+  </module>
+
   <!-- Line length: Google default is 100; we use 110 to reduce churn -->
   <module name="LineLength">
     <property name="max" value="110"/>
