@@ -1,5 +1,5 @@
 //Needs to be changed to actual package
-package com.example.beerdelivery.model;
+package com.boozebuddies.user;
 
 import java.time.LocalDate;
 import java.time.Period;
@@ -68,8 +68,9 @@ public class User {
 	}
 
 	public boolean verifyAge() {
-		if (dateOfBirth == null)
+		if (dateOfBirth == null) {
 			return false;
+		}
 		return Period.between(dateOfBirth, LocalDate.now()).getYears() >= 21;
 	}
 

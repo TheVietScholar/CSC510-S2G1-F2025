@@ -1,3 +1,5 @@
+package com.boozebuddies.order;
+
 import java.math.BigDecimal;
 import java.util.List;
 

@@ -1,6 +1,9 @@
 //Need to figoure out imports and packages
 package com.boozebuddies.delivery;
 
+import com.boozebuddies.driver.Driver;
+import com.boozebuddies.order.Order;
+
 public class Delivery {
 
 	private Long deliveryId;
@@ -70,7 +73,7 @@ public class Delivery {
 	// === Core Functions ===
 	public void assignDriver(Driver driver) {
 		if (this.status != DeliveryStatus.PENDING) {
-			throw new IllegalStateException("Driver can only be assigned when delivery is pending.");
+			throw new IllegalStateException("Driver can only be" + " assigned when delivery is pending.");
 		}
 		setDriver(driver);
 		setStatus(DeliveryStatus.ASSIGNED);
@@ -80,7 +83,7 @@ public class Delivery {
 		if (status == DeliveryStatus.ASSIGNED) {
 			status = DeliveryStatus.IN_TRANSIT;
 		} else {
-			throw new IllegalStateException("Delivery must be assigned before starting.");
+			throw new IllegalStateException("Delivery must be " + "assigned before starting.");
 		}
 	}
 
@@ -92,13 +95,13 @@ public class Delivery {
 		if (status == DeliveryStatus.IN_TRANSIT) {
 			setStatus(DeliveryStatus.DELIVERED);
 		} else {
-			throw new IllegalStateException("Cannot mark delivery as delivered unless it's in transit.");
+			throw new IllegalStateException("Cannot mark delivery as " + "delivered unless it's in transit.");
 		}
 	}
 
 	public void cancelDelivery(String reason) {
 		if (status == DeliveryStatus.DELIVERED) {
-			throw new IllegalStateException("Cannot cancel a completed delivery.");
+			throw new IllegalStateException("Cannot cancel " + "a completed delivery.");
 		}
 		setStatus(DeliveryStatus.CANCELLED);
 		// this.cancellationReason = reason;

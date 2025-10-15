@@ -2,7 +2,8 @@
 // Need to figure out driver repository and tracking services classes
 package com.boozebuddies.delivery;
 
-import com.boozebuddies.model.*;
+import com.boozebuddies.driver.Driver;
+import com.boozebuddies.order.Order;
 import com.boozebuddies.repository.DriverRepository;
 
 public class DeliveryService {

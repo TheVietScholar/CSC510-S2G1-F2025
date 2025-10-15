@@ -1,3 +1,5 @@
+package com.boozebuddies.driver;
+
 public class Driver {
 
 	private Long driverId;

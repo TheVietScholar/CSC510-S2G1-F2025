@@ -1,3 +1,5 @@
+package com.boozebuddies.merchant;
+
 public class Merchant {
 	private Long merchantId;
 	private String name;

@@ -1,3 +1,5 @@
+package com.boozebuddies.product;
+
 import java.math.BigDecimal;
 
 public class Product {
