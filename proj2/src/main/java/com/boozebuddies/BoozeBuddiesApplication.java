@@ -5,7 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
 public class BoozeBuddiesApplication {
-	public BoozeBuddiesApplication() {
+	protected BoozeBuddiesApplication() {
 		// Prevent instantiation
 	}
 
