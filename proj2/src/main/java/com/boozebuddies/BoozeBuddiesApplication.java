@@ -4,8 +4,8 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public final class BoozeBuddiesApplication {
-	private BoozeBuddiesApplication() {
+public class BoozeBuddiesApplication {
+	public BoozeBuddiesApplication() {
 		// Prevent instantiation
 	}
 
