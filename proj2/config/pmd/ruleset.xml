@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ruleset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          name="BoozeBuddies PMD Rules"
-         xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
-         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.net/ruleset_2_0_0.xsd">
+         xmlns="https://pmd.github.io/ruleset/2.0.0"
+         xsi:schemaLocation="https://pmd.github.io/ruleset/2.0.0 https://pmd.github.io/ruleset_2_0_0.xsd">
 
   <description>Minimal PMD rule set for CSC510-S2G1-F2025 project.</description>
 

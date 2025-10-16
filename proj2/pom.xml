@@ -152,7 +152,6 @@
         </executions>
         <configuration>
           <configLocation>${checkstyle.config.location}</configLocation>
-          <encoding>${project.build.sourceEncoding}</encoding>
           <consoleOutput>true</consoleOutput>
           <failsOnError>true</failsOnError>
           <violationSeverity>warning</violationSeverity>
