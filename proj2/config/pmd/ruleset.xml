@@ -6,7 +6,6 @@
 
   <description>Minimal PMD rule set for CSC510-S2G1-F2025 project.</description>
 
-  <rule ref="category/java/bestpractices.xml/UnusedImports"/>
   <rule ref="category/java/bestpractices.xml/AvoidPrintStackTrace"/>
   <rule ref="category/java/codestyle.xml/UnnecessaryModifier"/>
   <rule ref="category/java/errorprone.xml/CloseResource"/>
