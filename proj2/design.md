@@ -24,55 +24,77 @@ Layers (inside each bounded context):
 
 ```text
 src/main/java/com/boozebuddies/
+  controller/
+    UserController.java
+    OrderController.java
+    ProductController.java
+    DeliveryController.java
+    DriverController.java
+    MerchantController.java
+    PaymentController.java
+    RatingController.java
+
+  service/
+    UserService.java
+    OrderService.java
+    ProductService.java
+    DeliveryService.java
+    DriverService.java
+    MerchantService.java
+    PaymentService.java
+    RatingService.java
+    ValidationService.java
+    NotificationService.java
+
+  repository/
+    UserRepository.java
+    OrderRepository.java
+    ProductRepository.java
+    DeliveryRepository.java
+    DriverRepository.java
+    MerchantRepository.java
+    PaymentRepository.java
+    RatingRepository.java
+
+  model/
+    User.java
+    Order.java
+    OrderItem.java
+    Product.java
+    Category.java
+    Delivery.java
+    Driver.java
+    Merchant.java
+    Payment.java
+    Rating.java
+    Review.java
+    Enums/
+      OrderStatus.java
+      PaymentStatus.java
+      Role.java
+      DeliveryStatus.java
+
+  dto/
+    UserDTO.java
+    RegisterUserRequest.java
+    OrderDTO.java
+    ProductDTO.java
+
+  config/
+    SecurityConfig.java
+    WebConfig.java
+    AppConfig.java
+
   common/
-    config/ (global spring or manual DI config later)
-    error/ (ProblemDetails, exceptions)
-    event/ (DomainEvent interface, dispatcher abstraction)
+    exception/
+      GlobalExceptionHandler.java
+      CustomExceptions.java
     util/
-  user/
-    api/  (UserController, DTOs)
-    application/ (RegisterUserUseCase, VerifyAgeUseCase)
-    domain/ (User, UserId, Role, AgeVerificationStatus, repository interfaces)
-    infrastructure/ (JpaUserRepository, AgeVerificationGateway)
-  merchant/
-    api/
-    application/
-    domain/ (Merchant, ProductCatalog aggregate root?)
-    infrastructure/
-  product/
-    api/
-    application/
-    domain/ (Product, SKU, Category, InventoryItem)
-    infrastructure/
-  order/
-    api/
-    application/ (PlaceOrder, CancelOrder, UpdateOrderStatus)
-    domain/ (Order, OrderId, OrderItem, OrderStatus enum, PaymentState)
-    infrastructure/ (repository impls)
-  delivery/
-    api/
-    application/ (AssignDriver, UpdateDeliveryStatus)
-    domain/ (Delivery, DeliveryStatus, TrackingEvent)
-    infrastructure/
-  driver/
-    api/
-    application/
-    domain/ (Driver, DriverAvailability, VehicleInfo)
-    infrastructure/
-  payment/
-    api/
-    application/ (Authorize, Capture, Refund)
-    domain/ (Payment, PaymentId, PaymentStatus, Money VO)
-    infrastructure/ (PaymentGatewayAdapter)
-  notification/
-    application/ (SendOrderStatusNotification)
-    infrastructure/ (EmailSender, SmsSender, PushAdapter)
-  rating/
-    api/
-    domain/ (Rating, Review, Score)
-  security/
-    auth/ (JWT utilities, filters)
-    acl/ (authorization rules)
+      DateUtils.java
+      ValidationUtils.java
+    event/
+      DomainEvent.java
+      EventPublisher.java
 ```text
 
 Tests mirror structure under `src/test/java/...` with `*Test` and integration tests possibly under `src/test/java/.../it/` or using Failsafe with `src/it/java` later.
