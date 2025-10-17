@@ -1,0 +1,183 @@
+package com.boozebuddies.service;
+
+import com.boozebuddies.model.Order;
+import com.boozebuddies.model.OrderStatus;
+import com.boozebuddies.model.User;
+import com.boozebuddies.model.Merchant;
+import com.boozebuddies.model.Delivery;
+import com.boozebuddies.repository.OrderRepository;
+import com.boozebuddies.repository.UserRepository;
+import com.boozebuddies.repository.MerchantRepository;
+import com.boozebuddies.repository.DeliveryRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
+@Service
+public class OrderService {
+
+    @Autowired
+    private OrderRepository orderRepository;
+    
+    @Autowired
+    private UserRepository userRepository;
+    
+    @Autowired
+    private MerchantRepository merchantRepository;
+    
+    @Autowired
+    private DeliveryRepository deliveryRepository;
+    
+    @Autowired
+    private PaymentService paymentService;
+    
+    @Autowired
+    private NotificationService notificationService;
+
+    @Transactional
+    public Order createOrder(Order order) {
+        // Validate business rules
+        validateOrderCreation(order);
+        
+        // Set initial status and timestamps
+        order.setStatus(OrderStatus.PENDING);
+        order.setCreatedAt(LocalDateTime.now());
+        order.setUpdatedAt(LocalDateTime.now());
+        
+        // Calculate total if not set
+        if (order.getTotalAmount() == null) {
+            order.calculateTotal();
+        }
+        
+        // Save order
+        Order savedOrder = orderRepository.save(order);
+        
+        // Process payment
+        paymentService.processPayment(savedOrder);
+        
+        // Create delivery record
+        createDeliveryRecord(savedOrder);
+        
+        // Notify merchant and user
+        notificationService.sendOrderConfirmation(savedOrder);
+        
+        return savedOrder;
+    }
+
+    public Optional<Order> getOrderById(Long id) {
+        return orderRepository.findById(id);
+    }
+
+    public List<Order> getOrdersByUser(Long userId) {
+        return orderRepository.findByUserId(userId);
+    }
+
+    public List<Order> getAllOrders() {
+        return orderRepository.findAll();
+    }
+
+    @Transactional
+    public Order cancelOrder(Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+        
+        // Check if order can be cancelled
+        if (!order.canBeCancelled()) {
+            throw new RuntimeException("Order cannot be cancelled in current status: " + order.getStatus());
+        }
+        
+        // Update status
+        order.setStatus(OrderStatus.CANCELLED);
+        order.setUpdatedAt(LocalDateTime.now());
+        
+        Order cancelledOrder = orderRepository.save(order);
+        
+        // Process refund if payment was made
+        paymentService.processRefund(cancelledOrder);
+        
+        // Notify user and merchant
+        notificationService.sendOrderCancellation(cancelledOrder);
+        
+        return cancelledOrder;
+    }
+
+    @Transactional
+    public Order updateOrderStatus(Long orderId, String status) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+        
+        OrderStatus newStatus = OrderStatus.valueOf(status.toUpperCase());
+        
+        // Validate status transition
+        if (!order.isValidStatusTransition(newStatus)) {
+            throw new RuntimeException("Invalid status transition from " + 
+                    order.getStatus() + " to " + newStatus);
+        }
+        
+        order.setStatus(newStatus);
+        order.setUpdatedAt(LocalDateTime.now());
+        
+        Order updatedOrder = orderRepository.save(order);
+        
+        // Handle status-specific logic
+        handleStatusChange(updatedOrder, newStatus);
+        
+        return updatedOrder;
+    }
+
+    private void validateOrderCreation(Order order) {
+        if (order.getUser() == null) {
+            throw new RuntimeException("User is required");
+        }
+        
+        if (order.getMerchant() == null) {
+            throw new RuntimeException("Merchant is required");
+        }
+        
+        if (order.getItems() == null || order.getItems().isEmpty()) {
+            throw new RuntimeException("Order must contain at least one item");
+        }
+        
+        // Check if user is age verified for alcohol products
+        boolean hasAlcohol = order.getItems().stream()
+                .anyMatch(item -> item.getProduct() != null && item.getProduct().isAlcohol());
+        
+        if (hasAlcohol && !order.getUser().isAgeVerified()) {
+            throw new RuntimeException("User must be age verified for alcohol orders");
+        }
+    }
+
+    private void createDeliveryRecord(Order order) {
+        Delivery delivery = new Delivery();
+        delivery.setOrder(order);
+        delivery.setStatus(com.boozebuddies.model.DeliveryStatus.PENDING);
+        delivery.setDeliveryAddress(order.getDeliveryAddress());
+        delivery.setCreatedAt(LocalDateTime.now());
+        deliveryRepository.save(delivery);
+    }
+
+    private void handleStatusChange(Order order, OrderStatus newStatus) {
+        switch (newStatus) {
+            case CONFIRMED:
+                notificationService.sendOrderConfirmed(order);
+                break;
+            case PREPARING:
+                notificationService.sendOrderPreparing(order);
+                break;
+            case READY_FOR_PICKUP:
+                notificationService.sendOrderReady(order);
+                break;
+            case COMPLETED:
+                paymentService.capturePayment(order);
+                notificationService.sendOrderCompleted(order);
+                break;
+            case CANCELLED:
+                notificationService.sendOrderCancellation(order);
+                break;
+        }
+    }
+}
