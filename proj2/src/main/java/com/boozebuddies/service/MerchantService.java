@@ -1,7 +1,7 @@
 package com.boozebuddies.service;
 
-import com.boozebuddies.model.Merchant;
-import com.boozebuddies.model.Order;
+import com.boozebuddies.entity.Merchant;
+import com.boozebuddies.entity.Order;
 import java.util.List;
 
 public interface MerchantService {

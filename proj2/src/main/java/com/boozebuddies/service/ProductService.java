@@ -1,6 +1,6 @@
 package com.boozebuddies.service;
 
-import com.boozebuddies.model.Product;
+import com.boozebuddies.entity.Product;
 import java.util.List;
 
 public interface ProductService {

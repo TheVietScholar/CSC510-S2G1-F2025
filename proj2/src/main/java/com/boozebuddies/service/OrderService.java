@@ -1,6 +1,6 @@
 package com.boozebuddies.service;
 
-import com.boozebuddies.model.Order;
+import com.boozebuddies.entity.Order;
 
 import java.util.List;
 import java.util.Optional;

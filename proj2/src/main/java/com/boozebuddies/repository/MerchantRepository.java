@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import com.boozebuddies.Entity.Merchant;
+import com.boozebuddies.entity.Merchant;
 
 @Repository
 public interface MerchantRepository extends JpaRepository<Merchant, Long> {

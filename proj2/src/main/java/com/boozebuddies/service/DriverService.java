@@ -1,6 +1,6 @@
 package com.boozebuddies.service;
 
-import com.boozebuddies.model.Driver;
+import com.boozebuddies.entity.Driver;
 import com.boozebuddies.model.CertificationStatus;
 import java.util.List;
 

@@ -1,6 +1,6 @@
 package com.boozebuddies.service.implementation;
 
-import com.boozebuddies.model.Product;
+import com.boozebuddies.entity.Product;
 import com.boozebuddies.service.ProductService;
 import org.springframework.stereotype.Service;
 

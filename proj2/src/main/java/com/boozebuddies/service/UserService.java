@@ -1,6 +1,6 @@
 package com.boozebuddies.service;
 
-import com.boozebuddies.model.User;
+import com.boozebuddies.entity.User;
 import java.util.Optional;
 
 public interface UserService {

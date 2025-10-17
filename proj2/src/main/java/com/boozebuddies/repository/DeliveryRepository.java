@@ -5,8 +5,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import com.boozebuddies.Entity.Delivery;
-import com.boozebuddies.Entity.DeliveryStatus;
+import com.boozebuddies.entity.Delivery;
+import com.boozebuddies.model.DeliveryStatus;
 
 import java.time.LocalDateTime;
 import java.util.List;

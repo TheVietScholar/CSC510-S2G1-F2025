@@ -1,11 +1,11 @@
 package com.boozebuddies.service.implementation;
 
-import com.boozebuddies.model.Order;
+import com.boozebuddies.entity.Order;
 import com.boozebuddies.model.OrderStatus;
 import com.boozebuddies.service.OrderService;
-import com.boozebuddies.model.User;
-import com.boozebuddies.model.Merchant;
-import com.boozebuddies.model.Delivery;
+import com.boozebuddies.entity.User;
+import com.boozebuddies.entity.Merchant;
+import com.boozebuddies.entity.Delivery;
 import com.boozebuddies.repository.OrderRepository;
 import com.boozebuddies.repository.UserRepository;
 import com.boozebuddies.repository.MerchantRepository;

@@ -1,6 +1,6 @@
 package com.boozebuddies.service.implementation;
 
-import com.boozebuddies.model.User;
+import com.boozebuddies.entity.User;
 import com.boozebuddies.service.UserService;
 import org.springframework.stereotype.Service;
 
