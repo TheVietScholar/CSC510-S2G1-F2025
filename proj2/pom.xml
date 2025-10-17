@@ -120,6 +120,8 @@
             <eclipse>
               <!-- Use Eclipse JDT formatter to avoid JDK-internal API breakages in google-java-format on JDK 23+ -->
               <version>4.33</version>
+              <!-- Align with Checkstyle's LineLength max=110 and wrapping behavior -->
+              <file>${project.basedir}/config/spotless/eclipse-formatter.prefs</file>
             </eclipse>
             <removeUnusedImports/>
             <includes>
