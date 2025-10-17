@@ -1,6 +1,6 @@
 package com.boozebuddies.service.implementation;
 
-import com.boozebuddies.model.Driver;
+import com.boozebuddies.entity.Driver;
 import com.boozebuddies.model.CertificationStatus;
 import com.boozebuddies.service.DriverService;
 import org.springframework.stereotype.Service;
