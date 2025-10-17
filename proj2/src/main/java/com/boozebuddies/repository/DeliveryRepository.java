@@ -1,11 +1,12 @@
 package com.boozebuddies.repository;
 
-import com.boozebuddies.model.Delivery;
-import com.boozebuddies.model.DeliveryStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
+import com.boozebuddies.Entity.Delivery;
+import com.boozebuddies.Entity.DeliveryStatus;
 
 import java.time.LocalDateTime;
 import java.util.List;

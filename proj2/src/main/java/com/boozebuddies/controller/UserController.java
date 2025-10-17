@@ -1,7 +1,7 @@
 package com.boozebuddies.controller;
 
-import com.boozebuddies.model.User;
 import com.boozebuddies.dto.UserDTO;
+import com.boozebuddies.Entity.User;
 import com.boozebuddies.dto.RegisterUserRequest;
 import com.boozebuddies.service.UserService;
 import com.boozebuddies.service.ValidationService;
