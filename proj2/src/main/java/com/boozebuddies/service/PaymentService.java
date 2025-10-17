@@ -1,8 +1,8 @@
 package com.boozebuddies.service;
 
-import com.boozebuddies.model.Order;
-import com.boozebuddies.model.Payment;
-import com.boozebuddies.model.User;
+import com.boozebuddies.entity.Order;
+import com.boozebuddies.entity.Payment;
+import com.boozebuddies.entity.User;
 
 import java.math.BigDecimal;
 import java.util.List;

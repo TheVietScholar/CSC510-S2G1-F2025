@@ -1,8 +1,10 @@
-package com.boozebuddies.Entity;
+package com.boozebuddies.entity;
 
 import lombok.*;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+
+import com.boozebuddies.model.DeliveryStatus;
 
 @Entity
 @Table(name = "deliveries")

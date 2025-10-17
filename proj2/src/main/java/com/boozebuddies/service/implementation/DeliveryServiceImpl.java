@@ -1,8 +1,8 @@
 package com.boozebuddies.service.implementation;
 
-import com.boozebuddies.model.Delivery;
-import com.boozebuddies.model.Driver;
-import com.boozebuddies.model.Order;
+import com.boozebuddies.entity.Delivery;
+import com.boozebuddies.entity.Driver;
+import com.boozebuddies.entity.Order;
 import com.boozebuddies.model.DeliveryStatus;
 import com.boozebuddies.service.DeliveryService;
 

@@ -1,8 +1,11 @@
-package com.boozebuddies.Entity;
+package com.boozebuddies.entity;
 
 import lombok.*;
 import jakarta.persistence.*;
+
 import java.time.LocalDateTime;
+
+import com.boozebuddies.model.RatingTargetType;
 
 @Entity
 @Table(name = "ratings")

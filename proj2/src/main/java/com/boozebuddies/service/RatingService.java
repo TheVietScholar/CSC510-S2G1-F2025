@@ -1,9 +1,9 @@
 package com.boozebuddies.service;
 
-import com.boozebuddies.model.User;
-import com.boozebuddies.model.Driver;
-import com.boozebuddies.model.Merchant;
-import com.boozebuddies.model.Product;
+import com.boozebuddies.entity.User;
+import com.boozebuddies.entity.Driver;
+import com.boozebuddies.entity.Merchant;
+import com.boozebuddies.entity.Product;
 
 public interface RatingService {
 

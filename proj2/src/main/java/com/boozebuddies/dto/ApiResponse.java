@@ -1,16 +1,18 @@
 package com.boozebuddies.dto;
 
+import lombok.*;
 import java.util.List;
 
+@Data
+@NoArgsConstructor
+@Builder
 public class ApiResponse<T> {
     private boolean success;
     private String message;
     private T data;
     private List<String> errors;
-
-    // Constructors
-    public ApiResponse() {}
     
+    // Manual constructor for the static factory methods
     public ApiResponse(boolean success, String message, T data) {
         this.success = success;
         this.message = message;
@@ -21,7 +23,14 @@ public class ApiResponse<T> {
         this.success = success;
         this.message = message;
     }
-
+    
+    public ApiResponse(boolean success, String message, T data, List<String> errors) {
+        this.success = success;
+        this.message = message;
+        this.data = data;
+        this.errors = errors;
+    }
+    
     // Static factory methods
     public static <T> ApiResponse<T> success(T data, String message) {
         return new ApiResponse<>(true, message, data);
@@ -36,21 +45,6 @@ public class ApiResponse<T> {
     }
     
     public static <T> ApiResponse<T> error(String message, List<String> errors) {
-        ApiResponse<T> response = new ApiResponse<>(false, message);
-        response.setErrors(errors);
-        return response;
+        return new ApiResponse<>(false, message, null, errors);
     }
-
-    // Getters and Setters
-    public boolean isSuccess() { return success; }
-    public void setSuccess(boolean success) { this.success = success; }
-
-    public String getMessage() { return message; }
-    public void setMessage(String message) { this.message = message; }
-
-    public T getData() { return data; }
-    public void setData(T data) { this.data = data; }
-
-    public List<String> getErrors() { return errors; }
-    public void setErrors(List<String> errors) { this.errors = errors; }
 }

@@ -1,11 +1,14 @@
-package com.boozebuddies.Entity;
+package com.boozebuddies.entity;
 
 import lombok.*;
 import jakarta.persistence.*;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.boozebuddies.model.OrderStatus;
 
 @Entity
 @Table(name = "orders")

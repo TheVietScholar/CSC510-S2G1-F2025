@@ -1,4 +1,4 @@
-package com.boozebuddies.Entity;
+package com.boozebuddies.entity;
 
 import lombok.*;
 import jakarta.persistence.*;

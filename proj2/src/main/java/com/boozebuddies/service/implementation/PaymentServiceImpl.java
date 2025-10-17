@@ -1,8 +1,8 @@
 package com.boozebuddies.service.implementation;
 
-import com.boozebuddies.model.Order;
-import com.boozebuddies.model.Payment;
-import com.boozebuddies.model.User;
+import com.boozebuddies.entity.Order;
+import com.boozebuddies.entity.Payment;
+import com.boozebuddies.entity.User;
 import com.boozebuddies.service.PaymentService;
 import org.springframework.stereotype.Service;
 

@@ -1,8 +1,11 @@
-package com.boozebuddies.Entity;
+package com.boozebuddies.entity;
 
 import lombok.*;
 import jakarta.persistence.Embeddable;
+
 import java.time.LocalDate;
+
+import jakarta.persistence.Column;
 
 @Embeddable
 @NoArgsConstructor

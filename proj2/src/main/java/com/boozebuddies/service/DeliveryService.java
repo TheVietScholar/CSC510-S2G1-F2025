@@ -1,9 +1,12 @@
 package com.boozebuddies.service;
 
-import com.boozebuddies.model.Delivery;
-import com.boozebuddies.model.Driver;
-import com.boozebuddies.model.Order;
+import com.boozebuddies.entity.Delivery;
+import com.boozebuddies.entity.Driver;
+import com.boozebuddies.entity.Order;
+
 import java.util.List;
+
+import com.boozebuddies.model.DeliveryStatus;
 
 public interface DeliveryService {
 
