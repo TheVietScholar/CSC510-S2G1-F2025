@@ -1,5 +1,49 @@
 package com.boozebuddies.service;
 
-public class ValidationService {
+import com.boozebuddies.model.User;
+import com.boozebuddies.model.Product;
 
+public interface ValidationService {
+
+    /**
+     * Validates a user's email format.
+     *
+     * @param email The email to validate.
+     * @return True if the email format is valid, false otherwise.
+     */
+    boolean validateEmail(String email);
+
+    /**
+     * Validates a user's password strength.
+     * E.g., minimum length, contains numbers and letters, etc.
+     *
+     * @param password The password to validate.
+     * @return True if the password meets the strength requirements, false otherwise.
+     */
+    boolean validatePassword(String password);
+
+    /**
+     * Validates that a user is of legal drinking age.
+     *
+     * @param user The user to check.
+     * @return True if the user is of legal age, false otherwise.
+     */
+    boolean validateAge(User user);
+
+    /**
+     * Validates that a product has valid data (name, type, price, stock).
+     *
+     * @param product The product to validate.
+     * @return True if the product data is valid, false otherwise.
+     */
+    boolean validateProduct(Product product);
+
+    /**
+     * Validates that a given quantity is positive and available in stock.
+     *
+     * @param product The product to check.
+     * @param quantity The quantity to validate.
+     * @return True if the quantity is valid and available, false otherwise.
+     */
+    boolean validateProductQuantity(Product product, int quantity);
 }
