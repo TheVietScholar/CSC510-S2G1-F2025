@@ -1,5 +1,3 @@
 package com.boozebuddies.service.implementation;
 
-public class ValidationServiceImplTest {
-    
-}
+public class ValidationServiceImplTest {}

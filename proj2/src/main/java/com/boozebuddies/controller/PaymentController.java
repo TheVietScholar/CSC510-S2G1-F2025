@@ -1,93 +1,107 @@
 package com.boozebuddies.controller;
 
+import com.boozebuddies.dto.PaymentDTO;
+import com.boozebuddies.entity.Order;
 import com.boozebuddies.entity.Payment;
 import com.boozebuddies.entity.User;
-import com.boozebuddies.entity.Order;
+import com.boozebuddies.mapper.PaymentMapper;
 import com.boozebuddies.service.PaymentService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.web.bind.annotation.*;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/payments")
+@RequiredArgsConstructor
 public class PaymentController {
 
-    @Autowired
-    private PaymentService paymentService;
+  private final PaymentService paymentService;
+  private final PaymentMapper paymentMapper;
 
-    // -----------------------------
-    // Process a payment for an order
-    // -----------------------------
-    @PostMapping("/process")
-    public Payment processPayment(
-            @RequestParam Long orderId,
-            @RequestParam String paymentMethod) {
+  // -----------------------------
+  // Process a payment for an order
+  // -----------------------------
+  @PostMapping("/process")
+  public ResponseEntity<PaymentDTO> processPayment(
+      @RequestParam Long orderId, @RequestParam String paymentMethod) {
 
-        // Normally you would fetch the order from a service or repository
-        Order order = new Order();
-        order.setOrderId(orderId);
+    Order order = new Order();
+    order.setOrderId(orderId);
 
-        return paymentService.processPayment(order, paymentMethod);
+    Payment payment = paymentService.processPayment(order, paymentMethod);
+    return ResponseEntity.ok(paymentMapper.toDTO(payment));
+  }
+
+  // -----------------------------
+  // Issue a refund for an order
+  // -----------------------------
+  @PostMapping("/refund")
+  public ResponseEntity<PaymentDTO> refundPayment(
+      @RequestParam Long orderId, @RequestParam String reason) {
+
+    Order order = new Order();
+    order.setOrderId(orderId);
+
+    Payment payment = paymentService.refundPayment(order, reason);
+    return ResponseEntity.ok(paymentMapper.toDTO(payment));
+  }
+
+  // -----------------------------
+  // Get payments by user
+  // -----------------------------
+  @GetMapping("/user/{userId}")
+  public ResponseEntity<List<PaymentDTO>> getPaymentsByUser(@PathVariable Long userId) {
+    User user = new User();
+    user.setId(userId);
+
+    List<PaymentDTO> payments =
+        paymentService.getPaymentsByUser(user).stream()
+            .map(paymentMapper::toDTO)
+            .collect(Collectors.toList());
+
+    return ResponseEntity.ok(payments);
+  }
+
+  // -----------------------------
+  // Get payment by order ID
+  // -----------------------------
+  @GetMapping("/order/{orderId}")
+  public ResponseEntity<PaymentDTO> getPaymentByOrderId(@PathVariable Long orderId) {
+    Payment payment = paymentService.getPaymentByOrderId(orderId);
+
+    if (payment == null) {
+      return ResponseEntity.notFound().build();
     }
 
-    // -----------------------------
-    // Issue a refund for an order
-    // -----------------------------
-    @PostMapping("/refund")
-    public Payment refundPayment(
-            @RequestParam Long orderId,
-            @RequestParam String reason) {
+    return ResponseEntity.ok(paymentMapper.toDTO(payment));
+  }
 
-        Order order = new Order();
-        order.setOrderId(orderId);
+  // -----------------------------
+  // Calculate total revenue within a period
+  // -----------------------------
+  @GetMapping("/revenue")
+  public ResponseEntity<BigDecimal> calculateTotalRevenue(
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
 
-        return paymentService.refundPayment(order, reason);
-    }
+    return ResponseEntity.ok(paymentService.calculateTotalRevenue(startDate, endDate));
+  }
 
-    // -----------------------------
-    // Get payments by user
-    // -----------------------------
-    @GetMapping("/user/{userId}")
-    public List<Payment> getPaymentsByUser(@PathVariable Long userId) {
-        User user = new User();
-        user.setUserId(userId);
-        return paymentService.getPaymentsByUser(user);
-    }
+  // -----------------------------
+  // Validate a payment method
+  // -----------------------------
+  @PostMapping("/validate")
+  public ResponseEntity<Boolean> validatePaymentMethod(
+      @RequestParam Long userId, @RequestParam String paymentMethod) {
 
-    // -----------------------------
-    // Get payment by order ID
-    // -----------------------------
-    @GetMapping("/order/{orderId}")
-    public Payment getPaymentByOrderId(@PathVariable Long orderId) {
-        return paymentService.getPaymentByOrderId(orderId);
-    }
+    User user = new User();
+    user.setId(userId);
 
-    // -----------------------------
-    // Calculate total revenue within a period
-    // -----------------------------
-    @GetMapping("/revenue")
-    public BigDecimal calculateTotalRevenue(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
-
-        return paymentService.calculateTotalRevenue(startDate, endDate);
-    }
-
-    // -----------------------------
-    // Validate a payment method
-    // -----------------------------
-    @PostMapping("/validate")
-    public boolean validatePaymentMethod(
-            @RequestParam Long userId,
-            @RequestParam String paymentMethod) {
-
-        User user = new User();
-        user.setUserId(userId);
-
-        return paymentService.validatePaymentMethod(user, paymentMethod);
-    }
+    return ResponseEntity.ok(paymentService.validatePaymentMethod(user, paymentMethod));
+  }
 }

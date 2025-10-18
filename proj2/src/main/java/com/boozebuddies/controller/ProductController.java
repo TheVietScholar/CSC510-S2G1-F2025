@@ -1,72 +1,104 @@
 package com.boozebuddies.controller;
 
+import com.boozebuddies.dto.CreateProductRequest;
+import com.boozebuddies.dto.ProductDTO;
 import com.boozebuddies.entity.Product;
+import com.boozebuddies.mapper.ProductMapper;
 import com.boozebuddies.service.ProductService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
+import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/products")
+@RequiredArgsConstructor
 public class ProductController {
 
-    @Autowired
-    private ProductService productService;
+  private final ProductService productService;
+  private final ProductMapper productMapper;
 
-    // -----------------------------
-    // Get all products
-    // -----------------------------
-    @GetMapping
-    public List<Product> getAllProducts() {
-        return productService.getAllProducts();
+  // -----------------------------
+  // Get all products
+  // -----------------------------
+  @GetMapping
+  public ResponseEntity<List<ProductDTO>> getAllProducts() {
+    List<ProductDTO> products =
+        productService.getAllProducts().stream()
+            .map(productMapper::toDTO)
+            .collect(Collectors.toList());
+    return ResponseEntity.ok(products);
+  }
+
+  // -----------------------------
+  // Get a product by ID
+  // -----------------------------
+  @GetMapping("/{id}")
+  public ResponseEntity<ProductDTO> getProductById(@PathVariable Long id) {
+    Product product = productService.getProductById(id);
+
+    if (product == null) {
+      return ResponseEntity.notFound().build();
     }
 
-    // -----------------------------
-    // Get a product by ID
-    // -----------------------------
-    @GetMapping("/{id}")
-    public Product getProductById(@PathVariable Long id) {
-        return productService.getProductById(id);
+    return ResponseEntity.ok(productMapper.toDTO(product));
+  }
+
+  // -----------------------------
+  // Add a new product
+  // -----------------------------
+  @PostMapping
+  public ResponseEntity<ProductDTO> addProduct(@RequestBody CreateProductRequest request) {
+    Product product = productMapper.toEntity(request);
+    Product savedProduct = productService.addProduct(product);
+    return ResponseEntity.status(HttpStatus.CREATED).body(productMapper.toDTO(savedProduct));
+  }
+
+  // -----------------------------
+  // Update an existing product
+  // -----------------------------
+  @PutMapping("/{id}")
+  public ResponseEntity<ProductDTO> updateProduct(
+      @PathVariable Long id, @RequestBody ProductDTO productDTO) {
+    Product product = productMapper.toEntity(productDTO);
+    Product updatedProduct = productService.updateProduct(id, product);
+
+    if (updatedProduct == null) {
+      return ResponseEntity.notFound().build();
     }
 
-    // -----------------------------
-    // Add a new product
-    // -----------------------------
-    @PostMapping
-    public Product addProduct(@RequestBody Product product) {
-        return productService.addProduct(product);
-    }
+    return ResponseEntity.ok(productMapper.toDTO(updatedProduct));
+  }
 
-    // -----------------------------
-    // Update an existing product
-    // -----------------------------
-    @PutMapping("/{id}")
-    public Product updateProduct(@PathVariable Long id, @RequestBody Product product) {
-        return productService.updateProduct(id, product);
-    }
+  // -----------------------------
+  // Delete a product
+  // -----------------------------
+  @DeleteMapping("/{id}")
+  public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
+    productService.deleteProduct(id);
+    return ResponseEntity.noContent().build();
+  }
 
-    // -----------------------------
-    // Delete a product
-    // -----------------------------
-    @DeleteMapping("/{id}")
-    public void deleteProduct(@PathVariable Long id) {
-        productService.deleteProduct(id);
-    }
+  // -----------------------------
+  // Search for products
+  // -----------------------------
+  @GetMapping("/search")
+  public ResponseEntity<List<ProductDTO>> searchProducts(@RequestParam String keyword) {
+    List<ProductDTO> products =
+        productService.searchProducts(keyword).stream()
+            .map(productMapper::toDTO)
+            .collect(Collectors.toList());
+    return ResponseEntity.ok(products);
+  }
 
-    // -----------------------------
-    // Search for products
-    // -----------------------------
-    @GetMapping("/search")
-    public List<Product> searchProducts(@RequestParam String keyword) {
-        return productService.searchProducts(keyword);
-    }
-
-    // -----------------------------
-    // Check if product is available in sufficient quantity
-    // -----------------------------
-    @GetMapping("/{id}/available")
-    public boolean isProductAvailable(@PathVariable Long id, @RequestParam int quantity) {
-        return productService.isProductAvailable(id, quantity);
-    }
+  // -----------------------------
+  // Check if product is available in sufficient quantity
+  // -----------------------------
+  @GetMapping("/{id}/available")
+  public ResponseEntity<Boolean> isProductAvailable(
+      @PathVariable Long id, @RequestParam int quantity) {
+    return ResponseEntity.ok(productService.isProductAvailable(id, quantity));
+  }
 }

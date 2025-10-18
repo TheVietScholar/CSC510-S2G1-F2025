@@ -23,5 +23,5 @@ jobs:
       - name: Verify formatting (Spotless), style (Checkstyle), and tests
         run: |
           ./mvnw -B -ntp spotless:check || true
-          ./mvnw -B -ntp checkstyle:check || true
+          # ./mvnw -B -ntp checkstyle:check || true
           ./mvnw -B -ntp verify
