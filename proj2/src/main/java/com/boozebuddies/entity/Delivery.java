@@ -2,6 +2,7 @@ package com.boozebuddies.entity;
 
 import com.boozebuddies.model.DeliveryStatus;
 import jakarta.persistence.*;
+
 import java.time.LocalDateTime;
 import lombok.*;
 
@@ -37,6 +38,10 @@ public class Delivery {
 
   @Column(name = "delivery_longitude")
   private Double deliveryLongitude;
+
+  @Column(name = "cancellation_reason")
+  @Builder.Default
+  private String cancellationReason = "";
 
   @Column(name = "pickup_time")
   private LocalDateTime pickupTime;

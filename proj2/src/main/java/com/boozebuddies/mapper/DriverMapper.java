@@ -11,7 +11,7 @@ public class DriverMapper {
     if (driver == null) return null;
 
     return DriverDTO.builder()
-        .id(driver.getDriverId())
+        .id(driver.getId())
         .name(driver.getName())
         .email(driver.getEmail())
         .phone(driver.getPhone())

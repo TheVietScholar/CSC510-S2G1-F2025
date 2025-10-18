@@ -12,6 +12,7 @@ public class DeliveryDTO {
   private Long orderId;
   private Long driverId;
   private String status;
+  private String cancellationReason;
   private String deliveryAddress;
   private Double deliveryLatitude;
   private Double deliveryLongitude;
