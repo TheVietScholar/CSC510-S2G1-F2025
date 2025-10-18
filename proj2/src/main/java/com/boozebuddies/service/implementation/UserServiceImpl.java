@@ -1,5 +1,6 @@
 package com.boozebuddies.service.implementation;
 
+import com.boozebuddies.dto.RegisterUserRequest;
 import com.boozebuddies.entity.User;
 import com.boozebuddies.service.UserService;
 import org.springframework.stereotype.Service;
@@ -32,6 +33,31 @@ public class UserServiceImpl implements UserService {
     }
 
     /**
+     * Registers a new user from registration request DTO.
+     */
+    @Override
+    public User registerUser(RegisterUserRequest request) {
+        if (request == null || request.getEmail() == null || request.getPassword() == null) {
+            throw new IllegalArgumentException("Email and password are required");
+        }
+        
+        User user = User.builder()
+                .userId(nextUserId++)
+                .name(request.getName())
+                .email(request.getEmail())
+                .passwordHash(request.getPassword()) // In real app, hash this password!
+                .phone(request.getPhone())
+                .dateOfBirth(request.getDateOfBirth())
+                .build();
+        
+        user.setAgeVerified(verifyAge(user));
+        users.add(user);
+        
+        System.out.println("[USER REGISTER] User ID " + user.getUserId() + " registered with email " + user.getEmail());
+        return user;
+    }
+
+    /**
      * Authenticates a user with email and password.
      */
     @Override
@@ -58,6 +84,14 @@ public class UserServiceImpl implements UserService {
     @Override
     public Optional<User> getUserById(Long userId) {
         return users.stream().filter(u -> u.getUserId().equals(userId)).findFirst();
+    }
+
+    /**
+     * Retrieves all users in the system.
+     */
+    @Override
+    public List<User> getAllUsers() {
+        return new ArrayList<>(users);
     }
 
     /**

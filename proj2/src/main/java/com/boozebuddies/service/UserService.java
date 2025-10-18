@@ -1,6 +1,8 @@
 package com.boozebuddies.service;
 
+import com.boozebuddies.dto.RegisterUserRequest;
 import com.boozebuddies.entity.User;
+import java.util.List;
 import java.util.Optional;
 
 public interface UserService {
@@ -12,6 +14,14 @@ public interface UserService {
      * @return The registered user with generated ID.
      */
     User register(User user);
+
+    /**
+     * Registers a new user from registration request DTO.
+     *
+     * @param request The registration request containing user details.
+     * @return The registered user with generated ID.
+     */
+    User registerUser(RegisterUserRequest request);
 
     /**
      * Authenticates a user with email and password.
@@ -37,6 +47,13 @@ public interface UserService {
      * @return An Optional containing the user if found, otherwise empty.
      */
     Optional<User> getUserById(Long userId);
+
+    /**
+     * Retrieves all users in the system.
+     *
+     * @return A list of all users.
+     */
+    List<User> getAllUsers();
 
     /**
      * Updates a user's information.

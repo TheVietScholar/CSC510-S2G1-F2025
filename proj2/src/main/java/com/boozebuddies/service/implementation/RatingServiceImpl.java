@@ -23,7 +23,7 @@ public class RatingServiceImpl implements RatingService {
      * Allows a user to rate a product they purchased.
      */
     @Override
-    public void rateProduct(User user, Product product, int rating, String review) {
+    public Rating rateProduct(User user, Product product, int rating, String review) {
         if (user == null || product == null || rating < 1 || rating > 5) {
             throw new IllegalArgumentException("Invalid user, product, or rating value");
         }
@@ -32,13 +32,14 @@ public class RatingServiceImpl implements RatingService {
         System.out.println("[RATING] User " + user.getUserId() +
                 " rated Product " + product.getProductId() +
                 " with " + rating + " stars. Review: " + review);
+        return r; 
     }
 
     /**
      * Allows a user to rate a driver.
      */
     @Override
-    public void rateDriver(User user, Driver driver, int rating, String review) {
+    public Rating rateDriver(User user, Driver driver, int rating, String review) {
         if (user == null || driver == null || rating < 1 || rating > 5) {
             throw new IllegalArgumentException("Invalid user, driver, or rating value");
         }
@@ -47,13 +48,14 @@ public class RatingServiceImpl implements RatingService {
         System.out.println("[RATING] User " + user.getUserId() +
                 " rated Driver " + driver.getDriverId() +
                 " with " + rating + " stars. Review: " + review);
+        return r; 
     }
 
     /**
      * Allows a user to rate a merchant.
      */
     @Override
-    public void rateMerchant(User user, Merchant merchant, int rating, String review) {
+    public Rating rateMerchant(User user, Merchant merchant, int rating, String review) {
         if (user == null || merchant == null || rating < 1 || rating > 5) {
             throw new IllegalArgumentException("Invalid user, merchant, or rating value");
         }
@@ -62,6 +64,7 @@ public class RatingServiceImpl implements RatingService {
         System.out.println("[RATING] User " + user.getUserId() +
                 " rated Merchant " + merchant.getMerchantId() +
                 " with " + rating + " stars. Review: " + review);
+        return r;
     }
 
     /**
