@@ -103,7 +103,7 @@ CREATE TABLE IF NOT EXISTS payments (
   CONSTRAINT fk_payments_order FOREIGN KEY (order_id) REFERENCES orders(id)
 );
 
--- Indexes for hot paths
-CREATE INDEX IF NOT EXISTS idx_products_merchant ON products(merchant_id);
-CREATE INDEX IF NOT EXISTS idx_orders_customer ON orders(customer_id);
-CREATE INDEX IF NOT EXISTS idx_deliveries_driver ON deliveries(driver_id);
+-- Indexes for hot paths (MySQL 8.0: CREATE INDEX does not support IF NOT EXISTS reliably)
+CREATE INDEX idx_products_merchant ON products(merchant_id);
+CREATE INDEX idx_orders_customer ON orders(customer_id);
+CREATE INDEX idx_deliveries_driver ON deliveries(driver_id);

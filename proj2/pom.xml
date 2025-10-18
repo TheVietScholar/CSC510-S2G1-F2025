@@ -19,10 +19,10 @@
     <java.version>17</java.version>
     <maven.compiler.release>17</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <checkstyle.config.location>google_checks.xml</checkstyle.config.location>
-    <spotless.plugin.version>3.0.0</spotless.plugin.version>
-    <google.java.format.version>1.22.0</google.java.format.version>
-    <checkstyle.plugin.version>3.6.0</checkstyle.plugin.version>
+    <checkstyle.config.location>config/checkstyle/checkstyle.xml</checkstyle.config.location>
+    <spotless.plugin.version>2.45.0</spotless.plugin.version>
+    <google.java.format.version>1.23.0</google.java.format.version>
+    <checkstyle.plugin.version>3.3.1</checkstyle.plugin.version>
     <checkstyle.version>10.17.0</checkstyle.version>
   </properties>
 
@@ -50,11 +50,20 @@
       <groupId>org.flywaydb</groupId>
       <artifactId>flyway-core</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.flywaydb</groupId>
+      <artifactId>flyway-mysql</artifactId>
+    </dependency>
 
     <!-- Test -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -108,9 +117,12 @@
         </executions>
         <configuration>
           <java>
-            <googleJavaFormat>
-              <version>${google.java.format.version}</version>
-            </googleJavaFormat>
+            <eclipse>
+              <!-- Use Eclipse JDT formatter to avoid JDK-internal API breakages in google-java-format on JDK 23+ -->
+              <version>4.33</version>
+              <!-- Align with Checkstyle's LineLength max=110 and wrapping behavior -->
+              <file>${project.basedir}/config/spotless/eclipse-formatter.prefs</file>
+            </eclipse>
             <removeUnusedImports/>
             <includes>
               <include>src/main/java/**/*.java</include>
@@ -142,7 +154,6 @@
         </executions>
         <configuration>
           <configLocation>${checkstyle.config.location}</configLocation>
-          <encoding>${project.build.sourceEncoding}</encoding>
           <consoleOutput>true</consoleOutput>
           <failsOnError>true</failsOnError>
           <violationSeverity>warning</violationSeverity>
@@ -168,6 +179,48 @@
           </execution>
         </executions>
       </plugin>
+
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>0.8.12</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>report</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>report</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-pmd-plugin</artifactId>
+        <version>3.21.2</version>
+        <configuration>
+          <rulesets>
+            <ruleset>config/pmd/ruleset.xml</ruleset>
+          </rulesets>
+          <printFailingErrors>true</printFailingErrors>
+          <failOnViolation>true</failOnViolation>
+        </configuration>
+        <executions>
+          <execution>
+            <phase>verify</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
     </plugins>
   </build>
 

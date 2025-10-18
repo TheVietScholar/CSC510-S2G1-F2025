@@ -1,8 +1,0 @@
-# Suppressions configuration in YAML format
-# Example:
-# - files: ".*Generated.*"
-#   checks: "JavadocMethod"
-suppressions:
-  - files: ".*Generated.*"
-    checks: "JavadocMethod"
-# Add more suppressions below as needed

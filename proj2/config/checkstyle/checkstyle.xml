@@ -53,7 +53,6 @@
 
     <module name="JavadocType"/>
     <module name="JavadocMethod">
-      <property name="accessModifiers" value="public"/>
       <property name="allowMissingParamTags" value="true"/>
       <!-- <property name="allowMissingThrowsTags" value="true"/> -->
       <property name="allowMissingReturnTag" value="true"/>
@@ -65,8 +64,9 @@
 
     <module name="AnnotationLocation"/>
     <module name="MissingOverride"/>
-  </module>
 
+  </module>
+  
   <!-- Line length: Google default is 100; we use 110 to reduce churn -->
   <module name="LineLength">
     <property name="max" value="110"/>

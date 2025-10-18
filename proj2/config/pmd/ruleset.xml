@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ruleset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         name="BoozeBuddies PMD Rules"
+         xmlns="https://pmd.github.io/ruleset/2.0.0"
+         xsi:schemaLocation="https://pmd.github.io/ruleset/2.0.0 https://pmd.github.io/ruleset_2_0_0.xsd">
+
+  <description>Minimal PMD rule set for CSC510-S2G1-F2025 project.</description>
+
+  <rule ref="category/java/bestpractices.xml/AvoidPrintStackTrace"/>
+  <rule ref="category/java/codestyle.xml/UnnecessaryModifier"/>
+  <rule ref="category/java/errorprone.xml/CloseResource"/>
+  <rule ref="category/java/errorprone.xml/NullAssignment"/>
+  <rule ref="category/java/performance.xml/AvoidInstantiatingObjectsInLoops"/>
+
+</ruleset>

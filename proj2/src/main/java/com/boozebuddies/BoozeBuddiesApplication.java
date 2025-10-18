@@ -4,8 +4,12 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-class BoozeBuddiesApplication {
-  public static void main(String[] args) {
-    SpringApplication.run(BoozeBuddiesApplication.class, args);
-  }
+public class BoozeBuddiesApplication {
+	protected BoozeBuddiesApplication() {
+		// Prevent instantiation
+	}
+
+	public static void main(String[] args) {
+		SpringApplication.run(BoozeBuddiesApplication.class, args);
+	}
 }
