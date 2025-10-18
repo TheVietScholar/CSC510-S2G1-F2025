@@ -1,83 +1,80 @@
 package com.boozebuddies.service.implementation;
 
 import com.boozebuddies.entity.Product;
+import com.boozebuddies.repository.ProductRepository;
 import com.boozebuddies.service.ProductService;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class ProductServiceImpl implements ProductService {
 
-  private final List<Product> products = new ArrayList<>();
-  private long nextProductId = 1;
+    private final ProductRepository productRepository;
 
-  /** Retrieves a list of all available products. */
-  @Override
-  public List<Product> getAllProducts() {
-    return new ArrayList<>(products);
-  }
-
-  /** Retrieves a product by its unique ID. */
-  @Override
-  public Product getProductById(Long productId) {
-    Optional<Product> productOpt =
-        products.stream().filter(p -> p.getProductId().equals(productId)).findFirst();
-    return productOpt.orElse(null);
-  }
-
-  /** Adds a new product to the system. */
-  @Override
-  public Product addProduct(Product product) {
-    product.setProductId(nextProductId++);
-    products.add(product);
-    return product;
-  }
-
-  /** Updates an existing product's information. */
-  @Override
-  public Product updateProduct(Long productId, Product updatedProduct) {
-    Product existingProduct = getProductById(productId);
-    if (existingProduct != null) {
-      existingProduct.setName(updatedProduct.getName());
-      existingProduct.setType(updatedProduct.getType());
-      existingProduct.setPrice(updatedProduct.getPrice());
-      existingProduct.setStockQuantity(updatedProduct.getStockQuantity());
-      existingProduct.setAlcohol(updatedProduct.isAlcohol());
+    /** Retrieves all products. */
+    @Override
+    public List<Product> getAllProducts() {
+        return productRepository.findAll();
     }
-    return existingProduct;
-  }
 
-  /** Deletes a product from the system. */
-  @Override
-  public void deleteProduct(Long productId) {
-    Product product = getProductById(productId);
-    if (product != null) {
-      products.remove(product);
+    /** Retrieves a product by its ID. */
+    @Override
+    public Product getProductById(Long productId) {
+        return productRepository.findById(productId).orElse(null);
     }
-  }
 
-  /** Searches for products by name, type, or other criteria. */
-  @Override
-  public List<Product> searchProducts(String keyword) {
-    if (keyword == null || keyword.isEmpty()) {
-      return getAllProducts();
+    /** Adds a new product. */
+    @Override
+    public Product addProduct(Product product) {
+        return productRepository.save(product);
     }
-    String lowerKeyword = keyword.toLowerCase();
-    return products.stream()
-        .filter(
-            p ->
-                (p.getName() != null && p.getName().toLowerCase().contains(lowerKeyword))
-                    || (p.getType() != null && p.getType().toLowerCase().contains(lowerKeyword)))
-        .collect(Collectors.toList());
-  }
 
-  /** Checks if a product is available in sufficient quantity. */
-  @Override
-  public boolean isProductAvailable(Long productId, int quantity) {
-    Product product = getProductById(productId);
-    return product != null && product.getStockQuantity() >= quantity;
-  }
+    /** Updates an existing product. */
+    @Override
+    public Product updateProduct(Long productId, Product updatedProduct) {
+        return productRepository.findById(productId).map(existingProduct -> {
+            existingProduct.setName(updatedProduct.getName());
+            existingProduct.setCategory(updatedProduct.getCategory());
+            existingProduct.setPrice(updatedProduct.getPrice());
+            existingProduct.setStockQuantity(updatedProduct.getStockQuantity());
+            existingProduct.setAlcohol(updatedProduct.isAlcohol());
+            existingProduct.setAvailable(updatedProduct.isAvailable());
+            existingProduct.setDescription(updatedProduct.getDescription());
+            existingProduct.setAlcoholContent(updatedProduct.getAlcoholContent());
+            existingProduct.setImageUrl(updatedProduct.getImageUrl());
+            return productRepository.save(existingProduct);
+        }).orElse(null);
+    }
+
+    /** Deletes a product by ID. */
+    @Override
+    public void deleteProduct(Long productId) {
+        productRepository.deleteById(productId);
+    }
+
+    /** Searches products by name or category name. */
+    @Override
+    public List<Product> searchProducts(String keyword) {
+        if (keyword == null || keyword.isEmpty()) {
+            return getAllProducts();
+        }
+        String lowerKeyword = keyword.toLowerCase();
+        return productRepository.findAll().stream()
+                .filter(p ->
+                        (p.getName() != null && p.getName().toLowerCase().contains(lowerKeyword)) ||
+                        (p.getCategory() != null && p.getCategory().getName() != null &&
+                                p.getCategory().getName().toLowerCase().contains(lowerKeyword))
+                ).collect(Collectors.toList());
+    }
+
+    /** Checks if a product is available in the requested quantity. */
+    @Override
+    public boolean isProductAvailable(Long productId, int quantity) {
+        return productRepository.findById(productId)
+                .map(product -> product.isAvailable() && product.getStockQuantity() >= quantity)
+                .orElse(false);
+    }
 }
