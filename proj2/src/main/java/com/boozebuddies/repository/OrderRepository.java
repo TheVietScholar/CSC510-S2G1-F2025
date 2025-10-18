@@ -1,5 +1,3 @@
 package com.boozebuddies.repository;
 
-public class OrderRepository {
-
-}
+public class OrderRepository {}
