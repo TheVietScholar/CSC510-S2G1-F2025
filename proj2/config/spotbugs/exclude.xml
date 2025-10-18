@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+  <!-- Example: exclude generated classes or configuration classes if needed -->
+  <!--
+  <Match>
+    <Class name="~.*Generated.*"/>
+  </Match>
+  -->
+</FindBugsFilter>

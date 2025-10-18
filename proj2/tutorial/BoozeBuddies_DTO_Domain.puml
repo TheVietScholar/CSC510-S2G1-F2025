@@ -1,0 +1,421 @@
+@startuml BoozeBuddies_DTO_Domain
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam linetype ortho
+hide circle
+
+title BoozeBuddies – DTO-centered Architecture (Classes, Methods, Relationships)
+
+' =================== PACKAGES ===================
+package "API (Controllers)" as api {
+  class OrderController {
+    +OrderResponse createOrder(OrderCreateRequest req)
+    +OrderResponse getOrder(String orderId)
+  }
+  class DeliveryController {
+    +DeliveryDTO assignDriver(AssignDriverRequest req)
+    +DeliveryDTO pickup(String deliveryId)
+    +DeliveryDTO delivered(String deliveryId, String handoffCode, String proofPhotoUrl)
+  }
+  class UserController {
+    +UserDTO register(RegisterUserRequest req)
+  }
+  class DriverController {
+    +DriverDTO setAvailability(String driverId, AvailabilityRequest req)
+  }
+  class ProductController {
+    +PageDTO~ProductDTO~ listByMerchant(String merchantId, int page, int size)
+  }
+}
+
+package "DTOs" as dto {
+  class MoneyDTO {
+    +long amountCents
+    +String currency
+  }
+  class AddressDTO {
+    +String line1
+    +String line2
+    +String city
+    +String state
+    +String postalCode
+    +Double lat
+    +Double lng
+  }
+  class RegisterUserRequest {
+    +String email
+    +String password
+    +String fullName
+    +LocalDate dateOfBirth
+    +AddressDTO defaultAddress
+  }
+  class UserDTO {
+    +String id
+    +String email
+    +String fullName
+    +LocalDate dateOfBirth
+    +String role
+  }
+  class ProductDTO {
+    +String id
+    +String merchantId
+    +String name
+    +String productType
+    +MoneyDTO price
+    +boolean available
+    +List~String~ tags
+  }
+  class MerchantDTO {
+    +String id
+    +String name
+    +String type
+    +String status
+    +AddressDTO address
+  }
+  class OrderItemRequest {
+    +String productId
+    +int quantity
+  }
+  class OrderCreateRequest {
+    +String customerId
+    +String merchantId
+    +List~OrderItemRequest~ items
+    +String orderType       ' DELIVERY | PICKUP
+    +String deliveryAddressId
+    +Long tipCents
+    +String promoCode
+  }
+  class OrderItemDTO {
+    +String productId
+    +String name
+    +String productType
+    +int quantity
+    +MoneyDTO unitPrice
+    +long lineTotalCents
+  }
+  class OrderResponse {
+    +String id
+    +String status
+    +String orderType
+    +String customerId
+    +String merchantId
+    +AddressDTO deliveryAddress
+    +List~OrderItemDTO~ items
+    +long subtotalCents
+    +long taxCents
+    +long tipCents
+    +long feesCents
+    +long totalCents
+    +String paymentStatus
+    +OffsetDateTime createdAt
+    +OffsetDateTime updatedAt
+  }
+  class AssignDriverRequest {
+  +String orderId
+  }
+  class AvailabilityRequest {
+  +boolean online
+  }
+  class DriverDTO {
+    +String id
+    +String userId
+    +String certificationStatus
+    +boolean online
+    +String vehicleMake
+    +String vehicleModel
+    +String vehiclePlate
+    +Double lastLat
+    +Double lastLng
+    +Double rating
+  }
+  class DeliveryDTO {
+    +String id
+    +String orderId
+    +String driverId
+    +String status
+    +OffsetDateTime assignedAt
+    +OffsetDateTime pickedUpAt
+    +OffsetDateTime deliveredAt
+    +Integer etaSeconds
+    +String proofPhotoUrl
+  }
+  class ProblemDetailsDTO {
+    +String type
+    +String title
+    +int status
+    +String detail
+    +String traceId
+  }
+}
+
+package "Application Services" as app {
+  class OrderService {
+    +Order create(OrderCreateRequest req)
+    +Order get(String orderId)
+    +void accept(String orderId)        ' restaurant accept (optional)
+  }
+  class DeliveryService {
+    +Delivery assignDriver(String orderId)
+    +Delivery pickup(String deliveryId)
+    +Delivery delivered(String deliveryId, String handoffCode, String proofPhotoUrl)
+  }
+  class UserService {
+    +User register(RegisterUserRequest req)
+  }
+  class DriverService {
+    +Driver setAvailability(String driverId, boolean online)
+  }
+  class ProductService {
+    +List~Product~ listByMerchant(String merchantId, int page, int size)
+  }
+  class PaymentService {
+    +Payment authorize(Order order)
+    +void capture(String orderId)
+    +void refund(String orderId, long amountCents, String reason)
+  }
+  class ValidationService {
+    +void validateOrderCreate(OrderCreateRequest req)
+    +boolean validateAge(User user, List~OrderItem~ items)
+    +boolean checkLegalHours(String merchantId)
+    +boolean checkAddressZone(String addressId)
+  }
+  class NotificationService {
+    +void orderStatusChanged(Order order)
+    +void deliveryStatusChanged(Delivery delivery)
+  }
+  class DispatchService {
+    +Driver selectDriverFor(Order order)
+  }
+}
+
+package "Mappers" as map {
+  interface OrderMapper {
+    +Order toEntity(OrderCreateRequest dto)
+    +OrderResponse toResponse(Order order)
+    +OrderItem toEntity(OrderItemRequest dto)
+    +OrderItemDTO toDto(OrderItem item)
+  }
+  interface DeliveryMapper {
+    +DeliveryDTO toDto(Delivery delivery)
+  }
+  interface UserMapper {
+  +User toEntity(RegisterUserRequest req) +UserDTO toDto(User user)
+  }
+  interface ProductMapper {
+  +ProductDTO toDto(Product p) +List~ProductDTO~ toDtos(List~Product~ p)
+  }
+  interface MerchantMapper {
+  +MerchantDTO toDto(Merchant m)
+  }
+}
+
+package "Domain (Entities/Aggregates)" as dom {
+  enum OrderStatus {
+  CREATED; AUTHORIZED; ACCEPTED; PREPARING; READY; PICKED_UP; EN_ROUTE; DELIVERED; CLOSED; CANCELLED; REJECTED; REFUNDED; AUTHORIZATION_FAILED
+  }
+  enum OrderType {
+  DELIVERY; PICKUP
+  }
+  enum DeliveryStatus {
+  UNASSIGNED; ASSIGNED; PICKED_UP; EN_ROUTE; DELIVERED; FAILED; CANCELLED
+  }
+  enum PaymentStatus {
+  AUTHORIZED; CAPTURED; REFUNDED; FAILED
+  }
+  enum Role {
+  CUSTOMER; RESTAURANT_OWNER; DRIVER; ADMIN
+  }
+
+  class User {
+    -Long id
+    -String email
+    -String passwordHash
+    -String fullName
+    -LocalDate dateOfBirth
+    -Role role
+    +boolean isOfLegalAge()
+  }
+
+  class Merchant {
+    -Long id
+    -String name
+    -String type
+    -String status
+    -Address address
+    +boolean isOpenNow()
+  }
+
+  class Product {
+    -Long id
+    -Long merchantId
+    -String name
+    -String productType
+    -int priceCents
+    -boolean available
+    +boolean isAvailable()
+  }
+
+  class Order {
+    -Long id
+    -Long customerId
+    -Long merchantId
+    -OrderStatus status
+    -OrderType orderType
+    -Long deliveryAddressId
+    -long subtotalCents
+    -long taxCents
+    -long tipCents
+    -long feesCents
+    -long totalCents
+    -OffsetDateTime createdAt
+    -OffsetDateTime updatedAt
+    +void calculateTotals(TaxPolicy policy, TipPolicy tip)
+    +void authorize(PaymentService ps)
+    +void accept()
+    +void markPreparing()
+    +void markReady()
+    +void markPickedUp()
+    +void markEnRoute()
+    +void markDelivered()
+    +void cancel(String reason)
+  }
+
+  class OrderItem {
+    -Long id
+    -Long orderId
+    -Long productId
+    -String nameSnapshot
+    -String productTypeSnapshot
+    -int unitPriceCents
+    -int quantity
+    -int lineTotalCents
+  }
+
+  class Payment {
+    -Long id
+    -Long orderId
+    -PaymentStatus status
+    -String provider
+    -String authId
+    -String captureId
+    -int amountAuthorizedCents
+    -int amountCapturedCents
+  }
+
+  class Driver {
+    -Long id
+    -Long userId
+    -String certificationStatus
+    -boolean online
+    -String vehicleMake
+    -String vehicleModel
+    -String vehiclePlate
+    -Double lastLat
+    -Double lastLng
+    +boolean isAssignable()
+  }
+
+  class Delivery {
+    -Long id
+    -Long orderId
+    -Long driverId
+    -DeliveryStatus status
+    -OffsetDateTime assignedAt
+    -OffsetDateTime pickedUpAt
+    -OffsetDateTime deliveredAt
+    -Integer etaSeconds
+    -String handoffCode
+    -String proofPhotoUrl
+    +void assignTo(Driver d)
+    +void pickup()
+    +void delivered(String code, String proofPhotoUrl)
+  }
+
+  class Address {
+    -String line1
+    -String line2
+    -String city
+    -String state
+    -String postalCode
+    -Double lat
+    -Double lng
+  }
+}
+
+package "Persistence (Repositories)" as repo {
+  interface OrderRepository {
+    +Order save(Order o)
+    +Optional~Order~ findById(Long id)
+    +List~Order~ findByCustomer(Long customerId)
+  }
+  interface OrderItemRepository {
+  +void saveAll(List~OrderItem~ items)
+  }
+  interface ProductRepository {
+  +Optional~Product~ findById(Long id) +List~Product~ findByMerchant(Long merchantId, int page, int size)
+  }
+  interface MerchantRepository {
+  +Optional~Merchant~ findById(Long id)
+  }
+  interface MerchantRepository {
+  +Optional~Merchant~ findById(Long id)
+  }
+  interface PaymentRepository { +Optional~Payment~ findByOrderId(Long orderId) +Payment save(Payment p) }
+  interface DriverRepository { +Optional~Driver~ findAssignable() +Optional~Driver~ findById(Long id) +Driver save(Driver d) }
+  interface DeliveryRepository { +Optional~Delivery~ findByOrderId(Long orderId) +Delivery save(Delivery d) }
+  interface UserRepository { +Optional~User~ findById(Long id) +User save(User u) +Optional~User~ findByEmail(String email) }
+}
+
+' =================== RELATIONSHIPS ===================
+
+' Controllers -> Services
+api.OrderController --> app.OrderService
+api.DeliveryController --> app.DeliveryService
+api.UserController --> app.UserService
+api.DriverController --> app.DriverService
+api.ProductController --> app.ProductService
+
+' Services -> Mappers & Repos
+app.OrderService --> map.OrderMapper
+app.OrderService --> repo.OrderRepository
+app.OrderService --> repo.OrderItemRepository
+app.OrderService --> repo.ProductRepository
+app.OrderService --> repo.MerchantRepository
+app.OrderService --> app.PaymentService
+app.OrderService --> app.ValidationService
+app.OrderService --> app.NotificationService
+
+app.DeliveryService --> map.DeliveryMapper
+app.DeliveryService --> repo.DeliveryRepository
+app.DeliveryService --> repo.DriverRepository
+app.DeliveryService --> repo.OrderRepository
+app.DeliveryService --> app.NotificationService
+app.DeliveryService --> app.DispatchService
+
+app.UserService --> map.UserMapper
+app.UserService --> repo.UserRepository
+
+app.ProductService --> map.ProductMapper
+app.ProductService --> repo.ProductRepository
+
+app.DriverService --> repo.DriverRepository
+
+map.OrderMapper ..> dto.OrderCreateRequest
+map.OrderMapper ..> dto.OrderResponse
+map.DeliveryMapper ..> dto.DeliveryDTO
+map.UserMapper ..> dto.UserDTO
+map.ProductMapper ..> dto.ProductDTO
+
+' Domain associations (aggregate relationships)
+dom.Order "1" o-- "1..*" dom.OrderItem : contains
+dom.Order "1" o-- "0..1" dom.Payment : payment
+dom.Order "1" o-- "0..1" dom.Delivery : delivery
+dom.User "1" o-- "0..*" dom.Order : places
+dom.Merchant "1" o-- "0..*" dom.Product : offers
+dom.Merchant "1" o-- "0..*" dom.Order : receives
+dom.Driver "1" o-- "0..*" dom.Delivery : performs
+
+
+
+@enduml
