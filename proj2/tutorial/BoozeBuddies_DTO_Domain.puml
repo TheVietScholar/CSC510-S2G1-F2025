@@ -350,9 +350,17 @@ package "Persistence (Repositories)" as repo {
     +List~Order~ findByCustomer(Long customerId)
   }
   interface OrderItemRepository {
-  +void saveAll(List~OrderItem~ items) }
-  interface ProductRepository { +Optional~Product~ findById(Long id) +List~Product~ findByMerchant(Long merchantId, int page, int size) }
-  interface MerchantRepository { +Optional~Merchant~ findById(Long id) }
+  +void saveAll(List~OrderItem~ items)
+  }
+  interface ProductRepository {
+  +Optional~Product~ findById(Long id) +List~Product~ findByMerchant(Long merchantId, int page, int size)
+  }
+  interface MerchantRepository {
+  +Optional~Merchant~ findById(Long id)
+  }
+  interface MerchantRepository {
+  +Optional~Merchant~ findById(Long id)
+  }
   interface PaymentRepository { +Optional~Payment~ findByOrderId(Long orderId) +Payment save(Payment p) }
   interface DriverRepository { +Optional~Driver~ findAssignable() +Optional~Driver~ findById(Long id) +Driver save(Driver d) }
   interface DeliveryRepository { +Optional~Delivery~ findByOrderId(Long orderId) +Delivery save(Delivery d) }
