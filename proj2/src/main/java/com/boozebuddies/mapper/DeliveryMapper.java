@@ -11,19 +11,20 @@ public class DeliveryMapper {
     if (delivery == null) return null;
 
     return DeliveryDTO.builder()
-        .id(delivery.getDeliveryId())
+        .id(delivery.getId())
         .orderId(delivery.getOrder() != null ? delivery.getOrder().getId() : null)
         .driverId(delivery.getDriver() != null ? delivery.getDriver().getId() : null)
         .status(delivery.getStatus().name())
         .deliveryAddress(delivery.getDeliveryAddress())
         .deliveryLatitude(delivery.getDeliveryLatitude())
         .deliveryLongitude(delivery.getDeliveryLongitude())
+        .cancellationReason(delivery.getCancellationReason())
         .pickupTime(delivery.getPickupTime())
         .deliveredTime(delivery.getDeliveredTime())
         .estimatedDeliveryTime(delivery.getEstimatedDeliveryTime())
         .driverName(delivery.getDriver() != null ? delivery.getDriver().getName() : null)
         .driverPhone(delivery.getDriver() != null ? delivery.getDriver().getPhone() : null)
-        .trackingUrl(delivery.getTrackingUrl())
+        // .trackingUrl(delivery.getTrackingUrl())
         .build();
   }
 }

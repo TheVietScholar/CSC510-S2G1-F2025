@@ -1,6 +1,7 @@
 package com.boozebuddies.entity;
 
 import jakarta.persistence.*;
+import com.boozebuddies.model.CertificationStatus;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -48,7 +49,11 @@ public class Driver {
   @Column(name = "total_deliveries")
   private Integer totalDeliveries = 0;
 
-  @Embedded private CertificationsStatus certificationsStatus;
+  @Builder.Default
+  @Column(name = "certification_status")
+  private CertificationStatus certificationStatus = CertificationStatus.PENDING;
+
+  @Embedded private Certification certification;
 
   @Builder.Default
   @Column(name = "created_at")
