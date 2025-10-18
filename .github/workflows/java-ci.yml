@@ -31,7 +31,7 @@ jobs:
 
       - name: Build (skip tests for now)
         run: |
-          ./mvnw -B -ntp spotless:check
+          ./mvnw -B -ntp spotless:apply
           ./mvnw -B -ntp checkstyle:check
           ./mvnw -B -ntp -DskipTests -DskipITs verify
 
