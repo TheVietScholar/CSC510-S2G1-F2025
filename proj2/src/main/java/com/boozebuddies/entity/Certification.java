@@ -11,7 +11,7 @@ import lombok.*;
 @Getter
 @Setter
 @Builder
-public class CertificationsStatus {
+public class Certification {
   @Column(name = "certification_number")
   private String certificationNumber;
 

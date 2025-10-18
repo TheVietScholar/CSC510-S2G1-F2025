@@ -5,19 +5,23 @@ import com.boozebuddies.dto.DeliveryDTO;
 import com.boozebuddies.entity.Delivery;
 import com.boozebuddies.entity.Driver;
 import com.boozebuddies.entity.Order;
+import com.boozebuddies.mapper.DeliveryMapper;
 import com.boozebuddies.model.DeliveryStatus;
 import com.boozebuddies.service.DeliveryService;
 import java.util.List;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/deliveries")
+@RequiredArgsConstructor
 public class DeliveryController {
 
   @Autowired private DeliveryService deliveryService;
+  private final DeliveryMapper deliveryMapper;
 
   /** Assign a driver to an order and create delivery record */
   @PostMapping("/assign")
@@ -32,7 +36,7 @@ public class DeliveryController {
       driver.setId(driverId);
 
       Delivery delivery = deliveryService.assignDriverToOrder(order, driver);
-      DeliveryDTO deliveryDTO = convertToDTO(delivery);
+      DeliveryDTO deliveryDTO = deliveryMapper.toDTO(delivery);
 
       return ResponseEntity.ok(ApiResponse.success(deliveryDTO, "Driver assigned successfully"));
     } catch (Exception e) {
@@ -50,7 +54,7 @@ public class DeliveryController {
       if (delivery == null) {
         return ResponseEntity.notFound().build();
       }
-      DeliveryDTO deliveryDTO = convertToDTO(delivery);
+      DeliveryDTO deliveryDTO = deliveryMapper.toDTO(delivery);
       return ResponseEntity.ok(
           ApiResponse.success(deliveryDTO, "Delivery status updated successfully"));
     } catch (Exception e) {
@@ -68,7 +72,7 @@ public class DeliveryController {
       if (delivery == null) {
         return ResponseEntity.notFound().build();
       }
-      DeliveryDTO deliveryDTO = convertToDTO(delivery);
+      DeliveryDTO deliveryDTO = deliveryMapper.toDTO(delivery);
       return ResponseEntity.ok(ApiResponse.success(deliveryDTO, "Delivery cancelled successfully"));
     } catch (Exception e) {
       return ResponseEntity.badRequest()
@@ -83,7 +87,7 @@ public class DeliveryController {
     try {
       List<Delivery> deliveries = deliveryService.getDeliveriesByDriver(driverId);
       List<DeliveryDTO> deliveryDTOs =
-          deliveries.stream().map(this::convertToDTO).collect(Collectors.toList());
+          deliveries.stream().map(deliveryMapper::toDTO).collect(Collectors.toList());
       return ResponseEntity.ok(
           ApiResponse.success(deliveryDTOs, "Deliveries retrieved successfully"));
     } catch (Exception e) {
@@ -100,7 +104,7 @@ public class DeliveryController {
       if (delivery == null) {
         return ResponseEntity.notFound().build();
       }
-      DeliveryDTO deliveryDTO = convertToDTO(delivery);
+      DeliveryDTO deliveryDTO = deliveryMapper.toDTO(delivery);
       return ResponseEntity.ok(ApiResponse.success(deliveryDTO, "Delivery retrieved successfully"));
     } catch (Exception e) {
       return ResponseEntity.badRequest()
@@ -114,30 +118,12 @@ public class DeliveryController {
     try {
       List<Delivery> activeDeliveries = deliveryService.getActiveDeliveries();
       List<DeliveryDTO> deliveryDTOs =
-          activeDeliveries.stream().map(this::convertToDTO).collect(Collectors.toList());
+          activeDeliveries.stream().map(deliveryMapper::toDTO).collect(Collectors.toList());
       return ResponseEntity.ok(
           ApiResponse.success(deliveryDTOs, "Active deliveries retrieved successfully"));
     } catch (Exception e) {
       return ResponseEntity.badRequest()
           .body(ApiResponse.error("Failed to retrieve active deliveries: " + e.getMessage()));
     }
-  }
-
-  /** Convert Delivery entity to DeliveryDTO */
-  private DeliveryDTO convertToDTO(Delivery delivery) {
-    return DeliveryDTO.builder()
-        .id(delivery.getDeliveryId())
-        .orderId(delivery.getOrder() != null ? delivery.getOrder().getId() : null)
-        .driverId(delivery.getDriver() != null ? delivery.getDriver().getId() : null)
-        .status(delivery.getStatus().name())
-        .deliveryAddress(delivery.getDeliveryAddress())
-        .deliveryLatitude(delivery.getDeliveryLatitude())
-        .deliveryLongitude(delivery.getDeliveryLongitude())
-        .pickupTime(delivery.getPickupTime())
-        .deliveredTime(delivery.getDeliveredTime())
-        .estimatedDeliveryTime(delivery.getEstimatedDeliveryTime())
-        .driverName(delivery.getDriver() != null ? delivery.getDriver().getName() : null)
-        .driverPhone(delivery.getDriver() != null ? delivery.getDriver().getPhone() : null)
-        .build();
   }
 }

@@ -38,6 +38,10 @@ public class Delivery {
   @Column(name = "delivery_longitude")
   private Double deliveryLongitude;
 
+  @Column(name = "cancellation_reason")
+  @Builder.Default
+  private String cancellationReason = "";
+
   @Column(name = "pickup_time")
   private LocalDateTime pickupTime;
 

@@ -18,7 +18,7 @@ public class DeliveryServiceImpl implements DeliveryService {
   @Override
   public Delivery assignDriverToOrder(Order order, Driver driver) {
     Delivery delivery = new Delivery();
-    delivery.setDeliveryId(nextDeliveryId++);
+    delivery.setId(nextDeliveryId++);
     delivery.setOrder(order);
     delivery.setDriver(driver);
     delivery.setStatus(DeliveryStatus.PENDING);
@@ -51,17 +51,14 @@ public class DeliveryServiceImpl implements DeliveryService {
   @Override
   public List<Delivery> getDeliveriesByDriver(Long driverId) {
     return deliveries.stream()
-        .filter(d -> d.getDriver() != null && d.getDriver().getDriverId().equals(driverId))
+        .filter(d -> d.getDriver() != null && d.getDriver().getId().equals(driverId))
         .collect(Collectors.toList());
   }
 
   /** Finds a delivery by its unique ID. */
   @Override
   public Delivery getDeliveryById(Long deliveryId) {
-    return deliveries.stream()
-        .filter(d -> d.getDeliveryId().equals(deliveryId))
-        .findFirst()
-        .orElse(null);
+    return deliveries.stream().filter(d -> d.getId().equals(deliveryId)).findFirst().orElse(null);
   }
 
   /** Gets all active (non-completed and non-cancelled) deliveries. */
@@ -70,7 +67,7 @@ public class DeliveryServiceImpl implements DeliveryService {
     return deliveries.stream()
         .filter(
             d ->
-                d.getStatus() != DeliveryStatus.COMPLETED
+                d.getStatus() != DeliveryStatus.DELIVERED
                     && d.getStatus() != DeliveryStatus.CANCELLED)
         .collect(Collectors.toList());
   }
