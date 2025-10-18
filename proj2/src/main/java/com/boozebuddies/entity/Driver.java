@@ -1,7 +1,7 @@
 package com.boozebuddies.entity;
 
-import jakarta.persistence.*;
 import com.boozebuddies.model.CertificationStatus;
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;

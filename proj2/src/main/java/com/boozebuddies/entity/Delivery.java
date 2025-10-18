@@ -2,7 +2,6 @@ package com.boozebuddies.entity;
 
 import com.boozebuddies.model.DeliveryStatus;
 import jakarta.persistence.*;
-
 import java.time.LocalDateTime;
 import lombok.*;
 
