@@ -14,6 +14,6 @@ public class RatingDTO {
   private String targetType;
   private Long targetId;
   private Integer rating;
-  private String comment;
+  private String review;
   private LocalDateTime createdAt;
 }

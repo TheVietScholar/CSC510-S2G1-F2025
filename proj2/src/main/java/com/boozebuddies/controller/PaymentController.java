@@ -57,7 +57,7 @@ public class PaymentController {
   @GetMapping("/user/{userId}")
   public ResponseEntity<List<PaymentDTO>> getPaymentsByUser(@PathVariable Long userId) {
     User user = new User();
-    user.setUserId(userId);
+    user.setId(userId);
 
     List<PaymentDTO> payments =
         paymentService.getPaymentsByUser(user).stream()
@@ -100,7 +100,7 @@ public class PaymentController {
       @RequestParam Long userId, @RequestParam String paymentMethod) {
 
     User user = new User();
-    user.setUserId(userId);
+    user.setId(userId);
 
     return ResponseEntity.ok(paymentService.validatePaymentMethod(user, paymentMethod));
   }

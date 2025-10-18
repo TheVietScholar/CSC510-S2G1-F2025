@@ -32,10 +32,10 @@ public class RatingController {
       @RequestParam(required = false) String review) {
 
     User user = new User();
-    user.setUserId(userId);
+    user.setId(userId);
 
     Product product = new Product();
-    product.setProductId(productId);
+    product.setId(productId);
 
     Rating savedRating = ratingService.rateProduct(user, product, rating, review);
     return ResponseEntity.status(HttpStatus.CREATED).body(ratingMapper.toDTO(savedRating));
@@ -52,10 +52,10 @@ public class RatingController {
       @RequestParam(required = false) String review) {
 
     User user = new User();
-    user.setUserId(userId);
+    user.setId(userId);
 
     Driver driver = new Driver();
-    driver.setDriverId(driverId);
+    driver.setId(driverId);
 
     Rating savedRating = ratingService.rateDriver(user, driver, rating, review);
     return ResponseEntity.status(HttpStatus.CREATED).body(ratingMapper.toDTO(savedRating));
@@ -72,10 +72,10 @@ public class RatingController {
       @RequestParam(required = false) String review) {
 
     User user = new User();
-    user.setUserId(userId);
+    user.setId(userId);
 
     Merchant merchant = new Merchant();
-    merchant.setMerchantId(merchantId);
+    merchant.setId(merchantId);
 
     Rating savedRating = ratingService.rateMerchant(user, merchant, rating, review);
     return ResponseEntity.status(HttpStatus.CREATED).body(ratingMapper.toDTO(savedRating));
@@ -87,7 +87,7 @@ public class RatingController {
   @GetMapping("/product/{productId}/average")
   public ResponseEntity<Double> getAverageRatingForProduct(@PathVariable Long productId) {
     Product product = new Product();
-    product.setProductId(productId);
+    product.setId(productId);
 
     double average = ratingService.getAverageRatingForProduct(product);
     return ResponseEntity.ok(average);
@@ -99,7 +99,7 @@ public class RatingController {
   @GetMapping("/driver/{driverId}/average")
   public ResponseEntity<Double> getAverageRatingForDriver(@PathVariable Long driverId) {
     Driver driver = new Driver();
-    driver.setDriverId(driverId);
+    driver.setId(driverId);
 
     double average = ratingService.getAverageRatingForDriver(driver);
     return ResponseEntity.ok(average);
@@ -111,7 +111,7 @@ public class RatingController {
   @GetMapping("/merchant/{merchantId}/average")
   public ResponseEntity<Double> getAverageRatingForMerchant(@PathVariable Long merchantId) {
     Merchant merchant = new Merchant();
-    merchant.setMerchantId(merchantId);
+    merchant.setId(merchantId);
 
     double average = ratingService.getAverageRatingForMerchant(merchant);
     return ResponseEntity.ok(average);
