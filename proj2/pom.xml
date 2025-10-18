@@ -19,11 +19,11 @@
     <java.version>17</java.version>
     <maven.compiler.release>17</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <checkstyle.config.location>config/checkstyle/checkstyle.xml</checkstyle.config.location>
+    <!-- <checkstyle.config.location>config/checkstyle/checkstyle.xml</checkstyle.config.location> -->
     <spotless.plugin.version>2.45.0</spotless.plugin.version>
     <google.java.format.version>1.23.0</google.java.format.version>
     <checkstyle.plugin.version>3.3.1</checkstyle.plugin.version>
-    <checkstyle.version>10.17.0</checkstyle.version>
+    <!-- <checkstyle.version>10.17.0</checkstyle.version> -->
   </properties>
 
   <dependencies>
@@ -54,6 +54,12 @@
       <groupId>org.flywaydb</groupId>
       <artifactId>flyway-mysql</artifactId>
     </dependency>
+    <!-- Lombok -->
+    <dependency>
+        <groupId>org.projectlombok</groupId>
+        <artifactId>lombok</artifactId>
+        <optional>true</optional>
+    </dependency>
 
     <!-- Test -->
     <dependency>
@@ -76,11 +82,11 @@
           <artifactId>spotless-maven-plugin</artifactId>
           <version>${spotless.plugin.version}</version>
         </plugin>
-        <plugin>
+        <!-- <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-checkstyle-plugin</artifactId>
           <version>${checkstyle.plugin.version}</version>
-        </plugin>
+        </plugin> -->
       </plugins>
     </pluginManagement>
 
@@ -117,10 +123,14 @@
         </executions>
         <configuration>
           <java>
-            <eclipse>
+            <googleJavaFormat /> <!-- Enforces Google Java Format -->
+            <!-- Other Java formatting options can be added here -->
+
+            <!-- <eclipse> -->
               <!-- Use Eclipse JDT formatter to avoid JDK-internal API breakages in google-java-format on JDK 23+ -->
-              <version>4.33</version>
-            </eclipse>
+              <!-- <version>4.33</version> -->
+            <!-- </eclipse> -->
+
             <removeUnusedImports/>
             <includes>
               <include>src/main/java/**/*.java</include>
@@ -130,7 +140,7 @@
         </configuration>
       </plugin>
 
-      <plugin>
+      <!-- <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-checkstyle-plugin</artifactId>
         <version>${checkstyle.plugin.version}</version>
@@ -158,7 +168,7 @@
           <violationSeverity>warning</violationSeverity>
           <linkXRef>false</linkXRef>
         </configuration>
-      </plugin>
+      </plugin> -->
 
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

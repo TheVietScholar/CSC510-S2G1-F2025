@@ -1,0 +1,11 @@
+# Eclipse JDT formatter preferences for Spotless
+# Align with Checkstyle's LineLength max=110 and avoid collapsing wrapped lines
+org.eclipse.jdt.core.formatter.lineSplit=110
+org.eclipse.jdt.core.formatter.join_wrapped_lines=false
+
+# Keep stable wrapping behavior
+org.eclipse.jdt.core.formatter.wrap_before_binary_operator=true
+org.eclipse.jdt.core.formatter.wrap_before_assignment_operator=true
+org.eclipse.jdt.core.formatter.wrap_before_conditional_operator=true
+org.eclipse.jdt.core.formatter.wrap_before_logical_operator=true
+org.eclipse.jdt.core.formatter.never_join_lines=true
