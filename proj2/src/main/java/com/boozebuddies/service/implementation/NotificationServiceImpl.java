@@ -22,9 +22,9 @@ public class NotificationServiceImpl implements NotificationService {
     if (driver != null) {
       System.out.println(
           "[DRIVER NOTIFICATION] To Driver ID: "
-              + driver.getDriverId()
+              + driver.getId()
               + " | Delivery ID: "
-              + (delivery != null ? delivery.getDeliveryId() : "N/A")
+              + (delivery != null ? delivery.getId() : "N/A")
               + " | Message: "
               + message);
     }
@@ -34,10 +34,7 @@ public class NotificationServiceImpl implements NotificationService {
   public void notifyMerchant(Merchant merchant, String message) {
     if (merchant != null) {
       System.out.println(
-          "[MERCHANT NOTIFICATION] To Merchant ID: "
-              + merchant.getMerchantId()
-              + " | Message: "
-              + message);
+          "[MERCHANT NOTIFICATION] To Merchant ID: " + merchant.getId() + " | Message: " + message);
     }
   }
 
@@ -48,7 +45,7 @@ public class NotificationServiceImpl implements NotificationService {
           "[DELIVERY STATUS UPDATE] To: "
               + user.getEmail()
               + " | Delivery ID: "
-              + delivery.getDeliveryId()
+              + delivery.getId()
               + " | Status: "
               + delivery.getStatus();
       System.out.println(statusMessage);

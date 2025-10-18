@@ -51,7 +51,7 @@ public class OrderServiceImpl implements OrderService {
     Order savedOrder = orderRepository.save(order);
 
     // Process payment
-    paymentService.processPayment(savedOrder);
+    paymentService.processPayment(savedOrder, null);
 
     // Create delivery record
     createDeliveryRecord(savedOrder);

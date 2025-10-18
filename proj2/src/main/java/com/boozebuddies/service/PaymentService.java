@@ -49,7 +49,7 @@ public interface PaymentService {
    * @param endDate End date for the report (inclusive).
    * @return The total revenue as a BigDecimal.
    */
-  BigDecimal calculateTotalRevenue(java.time.LocalDate startDate, java.time.LocalDate endDate);
+  BigDecimal calculateTotalRevenue(java.time.LocalDateTime startDate, java.time.LocalDateTime endDate);
 
   /**
    * Validates a payment method before processing.

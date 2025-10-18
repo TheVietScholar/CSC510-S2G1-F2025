@@ -29,14 +29,23 @@ public class Payment {
   @Column(nullable = false)
   private PaymentStatus status;
 
+  @ManyToOne
+  @JoinColumn(name = "user_id", nullable = false)
+  private User user;
+
   @Column(name = "payment_method")
   private String paymentMethod;
 
   @Column(name = "transaction_id")
   private String transactionId;
 
+  @Builder.Default
   @Column(name = "failure_reason")
-  private String failureReason;
+  private String failureReason = "";
+
+  @Builder.Default
+  @Column(name = "refund_reason")
+  private String refundReason = "";
 
   @Builder.Default
   @Column(name = "created_at")
