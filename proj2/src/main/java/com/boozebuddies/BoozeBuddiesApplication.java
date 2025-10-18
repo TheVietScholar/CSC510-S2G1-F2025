@@ -5,13 +5,17 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
 public class BoozeBuddiesApplication {
-  public BoozeBuddiesApplication() {
+  protected BoozeBuddiesApplication() {
     // Prevent instantiation
   }
 
 public final class BoozeBuddiesApplication {
   private BoozeBuddiesApplication() {
     // Prevent instantiation
+  }
+
+  public static void main(String[] args) {
+    SpringApplication.run(BoozeBuddiesApplication.class, args);
   }
 
   public static void main(String[] args) {
