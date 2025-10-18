@@ -17,7 +17,7 @@ public class RatingMapper {
         .targetType(rating.getTargetType().name())
         .targetId(rating.getTargetId())
         .rating(rating.getRating())
-        .comment(rating.getComment())
+        .review(rating.getReview())
         .createdAt(rating.getCreatedAt())
         .build();
   }
@@ -27,7 +27,7 @@ public class RatingMapper {
 
     return Rating.builder()
         .rating(ratingDTO.getRating())
-        .comment(ratingDTO.getComment())
+        .review(ratingDTO.getReview())
         .targetId(ratingDTO.getTargetId())
         .build();
   }

@@ -32,7 +32,7 @@ public class RatingController {
       @RequestParam(required = false) String review) {
 
     User user = new User();
-    user.setUserId(userId);
+    user.setId(userId);
 
     Product product = new Product();
     product.setProductId(productId);
@@ -52,7 +52,7 @@ public class RatingController {
       @RequestParam(required = false) String review) {
 
     User user = new User();
-    user.setUserId(userId);
+    user.setId(userId);
 
     Driver driver = new Driver();
     driver.setDriverId(driverId);
