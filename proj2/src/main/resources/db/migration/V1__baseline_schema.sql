@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS products (
 -- Orders
 CREATE TABLE IF NOT EXISTS orders (
   id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  customer_id BIGINT NOT NULL,
+  user_id BIGINT NOT NULL,
   merchant_id BIGINT NOT NULL,
   delivery_address_id BIGINT,
   status VARCHAR(40) NOT NULL,
@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS orders (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NULL,
   version INT DEFAULT 0,
-  CONSTRAINT fk_orders_customer FOREIGN KEY (customer_id) REFERENCES users(id),
+  CONSTRAINT fk_orders_customer FOREIGN KEY (user_id) REFERENCES users(id),
   CONSTRAINT fk_orders_merchant FOREIGN KEY (merchant_id) REFERENCES merchants(id),
   CONSTRAINT fk_orders_address FOREIGN KEY (delivery_address_id) REFERENCES user_addresses(id)
 );
@@ -105,5 +105,5 @@ CREATE TABLE IF NOT EXISTS payments (
 
 -- Indexes for hot paths (MySQL 8.0: CREATE INDEX does not support IF NOT EXISTS reliably)
 CREATE INDEX idx_products_merchant ON products(merchant_id);
-CREATE INDEX idx_orders_customer ON orders(customer_id);
+CREATE INDEX idx_orders_customer ON orders(user_id);
 CREATE INDEX idx_deliveries_driver ON deliveries(driver_id);
