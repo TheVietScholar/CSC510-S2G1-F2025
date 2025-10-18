@@ -25,10 +25,10 @@ public class UserServiceImpl implements UserService {
         if (user == null || user.getEmail() == null || user.getPasswordHash() == null) {
             throw new IllegalArgumentException("User email and password are required");
         }
-        user.setUserId(nextUserId++);
+        user.setId(nextUserId++);
         user.setAgeVerified(verifyAge(user));
         users.add(user);
-        System.out.println("[USER REGISTER] User ID " + user.getUserId() + " registered with email " + user.getEmail());
+        System.out.println("[USER REGISTER] User ID " + user.getId() + " registered with email " + user.getEmail());
         return user;
     }
 
@@ -42,7 +42,7 @@ public class UserServiceImpl implements UserService {
         }
         
         User user = User.builder()
-                .userId(nextUserId++)
+                .id(nextUserId++)
                 .name(request.getName())
                 .email(request.getEmail())
                 .passwordHash(request.getPassword()) // In real app, hash this password!
@@ -53,7 +53,7 @@ public class UserServiceImpl implements UserService {
         user.setAgeVerified(verifyAge(user));
         users.add(user);
         
-        System.out.println("[USER REGISTER] User ID " + user.getUserId() + " registered with email " + user.getEmail());
+        System.out.println("[USER REGISTER] User ID " + user.getId() + " registered with email " + user.getEmail());
         return user;
     }
 
@@ -83,7 +83,7 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     public Optional<User> getUserById(Long userId) {
-        return users.stream().filter(u -> u.getUserId().equals(userId)).findFirst();
+        return users.stream().filter(u -> u.getId().equals(userId)).findFirst();
     }
 
     /**
@@ -118,7 +118,7 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     public void deleteUser(Long userId) {
-        users.removeIf(u -> u.getUserId().equals(userId));
+        users.removeIf(u -> u.getId().equals(userId));
         System.out.println("[USER DELETE] User ID " + userId + " deleted");
     }
 }
