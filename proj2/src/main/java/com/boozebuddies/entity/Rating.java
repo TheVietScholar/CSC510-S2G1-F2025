@@ -31,7 +31,7 @@ public class Rating {
   @Column(nullable = false)
   private Integer rating;
 
-  private String comment;
+  private String review;
 
   @Builder.Default
   @Column(name = "created_at")
