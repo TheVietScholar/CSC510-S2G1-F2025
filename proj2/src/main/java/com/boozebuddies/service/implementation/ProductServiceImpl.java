@@ -24,14 +24,14 @@ public class ProductServiceImpl implements ProductService {
   @Override
   public Product getProductById(Long productId) {
     Optional<Product> productOpt =
-        products.stream().filter(p -> p.getProductId().equals(productId)).findFirst();
+        products.stream().filter(p -> p.getId().equals(productId)).findFirst();
     return productOpt.orElse(null);
   }
 
   /** Adds a new product to the system. */
   @Override
   public Product addProduct(Product product) {
-    product.setProductId(nextProductId++);
+    product.setId(nextProductId++);
     products.add(product);
     return product;
   }
@@ -42,7 +42,7 @@ public class ProductServiceImpl implements ProductService {
     Product existingProduct = getProductById(productId);
     if (existingProduct != null) {
       existingProduct.setName(updatedProduct.getName());
-      existingProduct.setType(updatedProduct.getType());
+      existingProduct.setCategory(updatedProduct.getCategory());
       existingProduct.setPrice(updatedProduct.getPrice());
       existingProduct.setStockQuantity(updatedProduct.getStockQuantity());
       existingProduct.setAlcohol(updatedProduct.isAlcohol());
@@ -70,7 +70,7 @@ public class ProductServiceImpl implements ProductService {
         .filter(
             p ->
                 (p.getName() != null && p.getName().toLowerCase().contains(lowerKeyword))
-                    || (p.getType() != null && p.getType().toLowerCase().contains(lowerKeyword)))
+                    || (p.getCategory() != null && p.getCategory().getName().toLowerCase().contains(lowerKeyword)))
         .collect(Collectors.toList());
   }
 
