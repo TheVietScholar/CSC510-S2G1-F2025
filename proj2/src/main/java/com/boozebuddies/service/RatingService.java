@@ -4,6 +4,7 @@ import com.boozebuddies.entity.User;
 import com.boozebuddies.entity.Driver;
 import com.boozebuddies.entity.Merchant;
 import com.boozebuddies.entity.Product;
+import com.boozebuddies.entity.Rating;
 
 public interface RatingService {
 
@@ -14,8 +15,9 @@ public interface RatingService {
      * @param product The product being rated.
      * @param rating The rating value (e.g., 1-5 stars).
      * @param review Optional textual review.
+     * @return The created Rating entity.
      */
-    void rateProduct(User user, Product product, int rating, String review);
+    Rating rateProduct(User user, Product product, int rating, String review);
 
     /**
      * Allows a user to rate a driver who delivered their order.
@@ -24,8 +26,9 @@ public interface RatingService {
      * @param driver The driver being rated.
      * @param rating The rating value (e.g., 1-5 stars).
      * @param review Optional textual review.
+     * @return The created Rating entity.
      */
-    void rateDriver(User user, Driver driver, int rating, String review);
+    Rating rateDriver(User user, Driver driver, int rating, String review);
 
     /**
      * Allows a user to rate a merchant from whom they purchased.
@@ -34,8 +37,9 @@ public interface RatingService {
      * @param merchant The merchant being rated.
      * @param rating The rating value (e.g., 1-5 stars).
      * @param review Optional textual review.
+     * @return The created Rating entity.
      */
-    void rateMerchant(User user, Merchant merchant, int rating, String review);
+    Rating rateMerchant(User user, Merchant merchant, int rating, String review);
 
     /**
      * Retrieves the average rating for a product.

@@ -3,9 +3,11 @@ package com.boozebuddies.controller;
 import com.boozebuddies.dto.UserDTO;
 import com.boozebuddies.entity.User;
 import com.boozebuddies.dto.RegisterUserRequest;
+import com.boozebuddies.mapper.UserMapper;
 import com.boozebuddies.service.UserService;
 import com.boozebuddies.service.ValidationService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,13 +16,12 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/users")
+@RequiredArgsConstructor
 public class UserController {
 
-    @Autowired
-    private UserService userService;
-    
-    @Autowired
-    private ValidationService validationService;
+    private final UserService userService;
+    private final ValidationService validationService;
+    private final UserMapper userMapper;
 
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody RegisterUserRequest request) {
@@ -31,9 +32,9 @@ public class UserController {
             }
             
             User user = userService.registerUser(request);
-            UserDTO userDTO = convertToDTO(user);
+            UserDTO userDTO = userMapper.toDTO(user);
             
-            return ResponseEntity.ok(userDTO);
+            return ResponseEntity.status(HttpStatus.CREATED).body(userDTO);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
@@ -42,14 +43,14 @@ public class UserController {
     @GetMapping("/{id}")
     public ResponseEntity<UserDTO> getUserById(@PathVariable Long id) {
         return userService.getUserById(id)
-                .map(user -> ResponseEntity.ok(convertToDTO(user)))
+                .map(user -> ResponseEntity.ok(userMapper.toDTO(user)))
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping
     public ResponseEntity<List<UserDTO>> getAllUsers() {
         List<UserDTO> users = userService.getAllUsers().stream()
-                .map(this::convertToDTO)
+                .map(userMapper::toDTO)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(users);
     }
@@ -57,8 +58,8 @@ public class UserController {
     @PutMapping("/{id}")
     public ResponseEntity<UserDTO> updateUser(@PathVariable Long id, @RequestBody UserDTO userDTO) {
         try {
-            User updatedUser = userService.updateUser(id, convertToEntity(userDTO));
-            return ResponseEntity.ok(convertToDTO(updatedUser));
+            User updatedUser = userService.updateUser(id, userMapper.toEntity(userDTO));
+            return ResponseEntity.ok(userMapper.toDTO(updatedUser));
         } catch (Exception e) {
             return ResponseEntity.notFound().build();
         }
@@ -83,29 +84,5 @@ public class UserController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
-    }
-
-    private UserDTO convertToDTO(User user) {
-        UserDTO dto = new UserDTO();
-        dto.setId(user.getId());
-        dto.setName(user.getName());
-        dto.setEmail(user.getEmail());
-        dto.setPhone(user.getPhone());
-        dto.setDateOfBirth(user.getDateOfBirth());
-        dto.setAgeVerified(user.isAgeVerified());
-        dto.setRoles(user.getRoles());
-        return dto;
-    }
-
-    private User convertToEntity(UserDTO dto) {
-        User user = new User();
-        user.setId(dto.getId());
-        user.setName(dto.getName());
-        user.setEmail(dto.getEmail());
-        user.setPhone(dto.getPhone());
-        user.setDateOfBirth(dto.getDateOfBirth());
-        user.setAgeVerified(dto.isAgeVerified());
-        user.setRoles(dto.getRoles());
-        return user;
     }
 }
