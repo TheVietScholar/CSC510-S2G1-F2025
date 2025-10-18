@@ -3,6 +3,8 @@ package com.boozebuddies.service.implementation;
 import com.boozebuddies.entity.Product;
 import com.boozebuddies.entity.User;
 import com.boozebuddies.service.ValidationService;
+
+import java.math.BigDecimal;
 import java.util.regex.Pattern;
 import org.springframework.stereotype.Service;
 
@@ -55,13 +57,13 @@ public class ValidationServiceImpl implements ValidationService {
     if (product.getName() == null || product.getName().isEmpty()) {
       return false;
     }
-    if (product.getPrice() == null || product.getPrice() < 0) {
+    if (product.getPrice() == null || product.getPrice().compareTo(BigDecimal.ZERO) < 0) {
       return false;
     }
     if (product.getStockQuantity() == null || product.getStockQuantity() < 0) {
       return false;
     }
-    if (product.getType() == null || product.getType().isEmpty()) {
+    if (product.getCategory() == null || product.getCategory().getName().isEmpty()) {
       return false;
     }
     return true;
