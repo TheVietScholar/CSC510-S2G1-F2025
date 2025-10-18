@@ -18,7 +18,7 @@ public class DriverServiceImpl implements DriverService {
   /** Registers a new driver in the system. */
   @Override
   public Driver registerDriver(Driver driver) {
-    driver.setDriverId(nextDriverId++);
+    driver.setId(nextDriverId++);
     driver.setCertificationStatus(CertificationStatus.PENDING);
     driver.setAvailable(false);
     drivers.add(driver);
@@ -55,7 +55,7 @@ public class DriverServiceImpl implements DriverService {
   @Override
   public Driver getDriverById(Long driverId) {
     Optional<Driver> driverOpt =
-        drivers.stream().filter(d -> d.getDriverId().equals(driverId)).findFirst();
+        drivers.stream().filter(d -> d.getId().equals(driverId)).findFirst();
     return driverOpt.orElse(null);
   }
 
