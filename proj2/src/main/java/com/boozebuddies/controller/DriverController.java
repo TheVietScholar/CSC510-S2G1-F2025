@@ -8,11 +8,9 @@ import com.boozebuddies.mapper.DriverMapper;
 import com.boozebuddies.model.CertificationStatus;
 import com.boozebuddies.service.DriverService;
 import com.boozebuddies.service.ValidationService;
-
-import lombok.RequiredArgsConstructor;
-
 import java.util.List;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -120,5 +118,4 @@ public class DriverController {
           .body(ApiResponse.error("Failed to retrieve drivers: " + e.getMessage()));
     }
   }
-  
 }

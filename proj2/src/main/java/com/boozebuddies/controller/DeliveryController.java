@@ -5,14 +5,12 @@ import com.boozebuddies.dto.DeliveryDTO;
 import com.boozebuddies.entity.Delivery;
 import com.boozebuddies.entity.Driver;
 import com.boozebuddies.entity.Order;
+import com.boozebuddies.mapper.DeliveryMapper;
 import com.boozebuddies.model.DeliveryStatus;
 import com.boozebuddies.service.DeliveryService;
-import com.boozebuddies.mapper.DeliveryMapper;
-
-import lombok.RequiredArgsConstructor;
-
 import java.util.List;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -128,5 +126,4 @@ public class DeliveryController {
           .body(ApiResponse.error("Failed to retrieve active deliveries: " + e.getMessage()));
     }
   }
-
 }

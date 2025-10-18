@@ -58,10 +58,7 @@ public class DeliveryServiceImpl implements DeliveryService {
   /** Finds a delivery by its unique ID. */
   @Override
   public Delivery getDeliveryById(Long deliveryId) {
-    return deliveries.stream()
-        .filter(d -> d.getId().equals(deliveryId))
-        .findFirst()
-        .orElse(null);
+    return deliveries.stream().filter(d -> d.getId().equals(deliveryId)).findFirst().orElse(null);
   }
 
   /** Gets all active (non-completed and non-cancelled) deliveries. */
