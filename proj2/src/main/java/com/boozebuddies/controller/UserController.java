@@ -71,7 +71,7 @@ public class UserController {
           userService.getUserById(id).orElseThrow(() -> new RuntimeException("User not found"));
 
       // In real app, this would integrate with external age verification service
-      boolean isVerified = validationService.validateAge(user, null);
+      boolean isVerified = validationService.validateAge(user);
 
       if (isVerified) {
         user.setAgeVerified(true);

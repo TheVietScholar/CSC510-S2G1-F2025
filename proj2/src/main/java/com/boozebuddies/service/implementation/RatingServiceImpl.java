@@ -32,7 +32,7 @@ public class RatingServiceImpl implements RatingService {
                          .build();
         productRatings.add(r);
         System.out.println("[RATING] User " + user.getId() + " rated Product " +
-                product.getProductId() + " with " + rating + " stars. Review: " + review);
+                product.getId() + " with " + rating + " stars. Review: " + review);
         return r;
     }
 
@@ -50,7 +50,7 @@ public class RatingServiceImpl implements RatingService {
                          .build();
         driverRatings.add(r);
         System.out.println("[RATING] User " + user.getId() + " rated Driver " +
-                driver.getDriverId() + " with " + rating + " stars. Review: " + review);
+                driver.getId() + " with " + rating + " stars. Review: " + review);
         return r;
     }
 
@@ -68,7 +68,7 @@ public class RatingServiceImpl implements RatingService {
                          .build();
         merchantRatings.add(r);
         System.out.println("[RATING] User " + user.getId() + " rated Merchant " +
-                merchant.getMerchantId() + " with " + rating + " stars. Review: " + review);
+                merchant.getId() + " with " + rating + " stars. Review: " + review);
         return r;
     }
 
