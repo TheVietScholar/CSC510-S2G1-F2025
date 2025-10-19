@@ -24,7 +24,7 @@ public class UserServiceImpl implements UserService {
   private ValidationService validationService;
 
   public UserServiceImpl(ValidationService validationService) {
-  this.validationService = validationService;
+    this.validationService = validationService;
   }
 
   @Override
@@ -64,6 +64,19 @@ public class UserServiceImpl implements UserService {
       throw new IllegalArgumentException("Registration request cannot be null");
     }
     
+    // Validate required fields
+    if (request.getName() == null || request.getName().isEmpty()) {
+      throw new IllegalArgumentException("Name is required");
+    }
+    
+    if (request.getPhone() == null || request.getPhone().isEmpty()) {
+      throw new IllegalArgumentException("Phone is required");
+    }
+    
+    if (request.getDateOfBirth() == null) {
+      throw new IllegalArgumentException("Date of birth is required");
+    }
+    
     // Use ValidationService to validate email
     if (!validationService.validateEmail(request.getEmail())) {
       throw new IllegalArgumentException("Email is invalid or empty");
@@ -98,6 +111,7 @@ public class UserServiceImpl implements UserService {
         "[USER REGISTER] User ID " + user.getId() + " registered with email " + user.getEmail());
     return user;
   }
+  
   /** Authenticates a user with email and password. */
   @Override
   public User login(String email, String password) {

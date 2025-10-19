@@ -158,6 +158,51 @@ class UserServiceImplTest {
   }
 
   @Test
+  @DisplayName("Should verify age on exact 21st birthday")
+  void testRegisterUserOnExact21stBirthday() {
+    User user = User.builder()
+        .name("JustTurned21")
+        .email("justturned21@example.com")
+        .passwordHash("Password123")
+        .dateOfBirth(LocalDate.now().minusYears(21))
+        .build();
+
+    User registered = userService.register(user);
+
+    assertTrue(registered.isAgeVerified());
+  }
+
+  @Test
+  @DisplayName("Should NOT verify age for user one day before 21st birthday")
+  void testRegisterUserOneDayBefore21stBirthday() {
+    User user = User.builder()
+        .name("Almost21")
+        .email("almost21@example.com")
+        .passwordHash("Password123")
+        .dateOfBirth(LocalDate.now().minusYears(21).plusDays(1))
+        .build();
+
+    User registered = userService.register(user);
+
+    assertFalse(registered.isAgeVerified());
+  }
+
+  @Test
+  @DisplayName("Should verify age for user much older than 21")
+  void testRegisterVeryOldUser() {
+    User user = User.builder()
+        .name("Senior")
+        .email("senior@example.com")
+        .passwordHash("Password123")
+        .dateOfBirth(LocalDate.of(1950, 1, 1))
+        .build();
+
+    User registered = userService.register(user);
+
+    assertTrue(registered.isAgeVerified());
+  }
+
+  @Test
   @DisplayName("Should not verify age for minor")
   void testRegisterMinorDoesNotVerifyAge() {
     User user = User.builder()
@@ -216,6 +261,67 @@ class UserServiceImplTest {
     request.setPassword("weak");
 
     assertThrows(IllegalArgumentException.class, () -> userService.registerUser(request));
+  }
+
+  @Test
+  @DisplayName("Should throw exception when name is null")
+  void testRegisterUserFromRequestWithNullName() {
+    RegisterUserRequest request = new RegisterUserRequest();
+    request.setName(null);
+    request.setEmail("jane@example.com");
+    request.setPassword("Password123");
+    request.setPhone("555-1234");
+    request.setDateOfBirth(LocalDate.of(1992, 3, 20));
+
+    assertThrows(IllegalArgumentException.class, () -> userService.registerUser(request));
+  }
+
+  @Test
+  @DisplayName("Should throw exception when phone is null")
+  void testRegisterUserFromRequestWithNullPhone() {
+    RegisterUserRequest request = new RegisterUserRequest();
+    request.setName("Jane Doe");
+    request.setEmail("jane@example.com");
+    request.setPassword("Password123");
+    request.setPhone(null);
+    request.setDateOfBirth(LocalDate.of(1992, 3, 20));
+
+    assertThrows(IllegalArgumentException.class, () -> userService.registerUser(request));
+  }
+
+  @Test
+  @DisplayName("Should throw exception when date of birth is null")
+  void testRegisterUserFromRequestWithNullDateOfBirth() {
+    RegisterUserRequest request = new RegisterUserRequest();
+    request.setName("Jane Doe");
+    request.setEmail("jane@example.com");
+    request.setPassword("Password123");
+    request.setPhone("555-1234");
+    request.setDateOfBirth(null);
+
+    assertThrows(IllegalArgumentException.class, () -> userService.registerUser(request));
+  }
+
+  @Test
+  @DisplayName("Should reject duplicate email in RegisterUserRequest")
+  void testRegisterDuplicateEmailFromRequest() {
+    RegisterUserRequest request1 = new RegisterUserRequest();
+    request1.setName("User One");
+    request1.setEmail("duplicate@example.com");
+    request1.setPassword("Password123");
+    request1.setPhone("555-1111");
+    request1.setDateOfBirth(LocalDate.of(1990, 1, 1));
+
+    userService.registerUser(request1);
+
+    RegisterUserRequest request2 = new RegisterUserRequest();
+    request2.setName("User Two");
+    request2.setEmail("duplicate@example.com");
+    request2.setPassword("Password456");
+    request2.setPhone("555-2222");
+    request2.setDateOfBirth(LocalDate.of(1992, 3, 20));
+
+    assertThrows(IllegalArgumentException.class, () -> userService.registerUser(request2));
   }
 
   // ==================== LOGIN TESTS ====================
