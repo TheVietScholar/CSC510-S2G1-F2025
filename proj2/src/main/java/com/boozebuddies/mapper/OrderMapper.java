@@ -75,7 +75,7 @@ public class OrderMapper {
     return OrderItemDTO.builder()
         .id(orderItem.getId())
         .productId(orderItem.getProduct() != null ? orderItem.getProduct().getId() : null)
-        .productName(orderItem.getProduct() != null ? orderItem.getProduct().getName() : null)
+        .orderId(orderItem.getOrder() != null ? orderItem.getOrder().getId() : null)
         .quantity(orderItem.getQuantity())
         .unitPrice(orderItem.getUnitPrice())
         .subtotal(orderItem.getSubtotal())
