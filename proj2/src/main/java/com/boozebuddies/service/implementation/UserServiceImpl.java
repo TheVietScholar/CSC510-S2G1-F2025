@@ -33,6 +33,19 @@ public class UserServiceImpl implements UserService {
       throw new IllegalArgumentException("User cannot be null");
     }
     
+    // Validate required fields
+    if (user.getName() == null || user.getName().isEmpty()) {
+      throw new IllegalArgumentException("Name is required");
+    }
+    
+    if (user.getPhone() == null || user.getPhone().isEmpty()) {
+      throw new IllegalArgumentException("Phone is required");
+    }
+    
+    if (user.getDateOfBirth() == null) {
+      throw new IllegalArgumentException("Date of birth is required");
+    }
+    
     // Use ValidationService to validate email
     if (!validationService.validateEmail(user.getEmail())) {
       throw new IllegalArgumentException("Email is invalid or empty");
@@ -51,7 +64,7 @@ public class UserServiceImpl implements UserService {
     }
     
     user.setId(nextUserId++);
-    user.setAgeVerified(verifyAge(user));
+    user.setAgeVerified(validationService.validateAge(user));
     users.add(user);
     System.out.println(
         "[USER REGISTER] User ID " + user.getId() + " registered with email " + user.getEmail());
@@ -104,7 +117,7 @@ public class UserServiceImpl implements UserService {
             .dateOfBirth(request.getDateOfBirth())
             .build();
 
-    user.setAgeVerified(verifyAge(user));
+    user.setAgeVerified(validationService.validateAge(user));
     users.add(user);
 
     System.out.println(
@@ -123,14 +136,6 @@ public class UserServiceImpl implements UserService {
     return userOpt.orElse(null);
   }
 
-  /** Verifies that a user is of legal drinking age (21+ in the US). */
-  @Override
-  public boolean verifyAge(User user) {
-    if (user == null || user.getDateOfBirth() == null) return false;
-    int age = Period.between(user.getDateOfBirth(), LocalDate.now()).getYears();
-    return age >= 21;
-  }
-
   /** Retrieves a user by their unique ID. */
   @Override
   public Optional<User> getUserById(Long userId) {
@@ -146,6 +151,9 @@ public class UserServiceImpl implements UserService {
   /** Updates a user's information. */
   @Override
   public User updateUser(Long userId, User updatedUser) {
+    if (updatedUser == null) {
+      throw new IllegalArgumentException("Updated user cannot be null");
+    }
     Optional<User> userOpt = getUserById(userId);
     if (userOpt.isPresent()) {
       User user = userOpt.get();
@@ -154,7 +162,7 @@ public class UserServiceImpl implements UserService {
         user.setPasswordHash(updatedUser.getPasswordHash());
       if (updatedUser.getDateOfBirth() != null) {
         user.setDateOfBirth(updatedUser.getDateOfBirth());
-        user.setAgeVerified(verifyAge(user));
+        user.setAgeVerified(validationService.validateAge(user));
       }
       return user;
     }
@@ -163,8 +171,15 @@ public class UserServiceImpl implements UserService {
 
   /** Deletes a user from the system. */
   @Override
-  public void deleteUser(Long userId) {
-    users.removeIf(u -> u.getId().equals(userId));
+  public boolean deleteUser(Long userId) {
+  if (userId == null) {
+    throw new IllegalArgumentException("User ID cannot be null");
+  }
+  
+  boolean removed = users.removeIf(u -> u.getId().equals(userId));
+  if (removed) {
     System.out.println("[USER DELETE] User ID " + userId + " deleted");
   }
+  return removed;
+}
 }

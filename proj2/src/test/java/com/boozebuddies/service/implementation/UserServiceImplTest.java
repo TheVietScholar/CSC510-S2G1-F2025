@@ -33,6 +33,7 @@ class UserServiceImplTest {
         .email("john@example.com")
         .passwordHash("Password123")
         .dateOfBirth(LocalDate.of(1990, 5, 15))
+        .phone("252-555-1234")
         .build();
 
     User registered = userService.register(user);
@@ -80,6 +81,7 @@ class UserServiceImplTest {
         .email("john@example.com")
         .passwordHash("Password123")
         .dateOfBirth(LocalDate.of(1990, 1, 1))
+        .phone("252-555-1234")
         .build();
     
     userService.register(user1);
@@ -128,6 +130,7 @@ class UserServiceImplTest {
         .email("john@example.com")
         .passwordHash("Password123")
         .dateOfBirth(LocalDate.of(1990, 1, 1))
+        .phone("252-555-1234")
         .build();
     
     userService.register(user1);
@@ -150,6 +153,7 @@ class UserServiceImplTest {
         .email("adult@example.com")
         .passwordHash("Password123")
         .dateOfBirth(LocalDate.of(1990, 1, 1))
+        .phone("252-555-1234")
         .build();
 
     User registered = userService.register(user);
@@ -165,6 +169,7 @@ class UserServiceImplTest {
         .email("justturned21@example.com")
         .passwordHash("Password123")
         .dateOfBirth(LocalDate.now().minusYears(21))
+        .phone("252-555-1234")
         .build();
 
     User registered = userService.register(user);
@@ -180,6 +185,7 @@ class UserServiceImplTest {
         .email("almost21@example.com")
         .passwordHash("Password123")
         .dateOfBirth(LocalDate.now().minusYears(21).plusDays(1))
+        .phone("252-555-1234")
         .build();
 
     User registered = userService.register(user);
@@ -195,6 +201,7 @@ class UserServiceImplTest {
         .email("senior@example.com")
         .passwordHash("Password123")
         .dateOfBirth(LocalDate.of(1950, 1, 1))
+        .phone("252-555-1234")
         .build();
 
     User registered = userService.register(user);
@@ -210,6 +217,7 @@ class UserServiceImplTest {
         .email("minor@example.com")
         .passwordHash("Password123")
         .dateOfBirth(LocalDate.of(2015, 1, 1))
+        .phone("252-555-1234")
         .build();
 
     User registered = userService.register(user);
@@ -224,7 +232,7 @@ class UserServiceImplTest {
     request.setName("Jane Doe");
     request.setEmail("jane@example.com");
     request.setPassword("Password123");
-    request.setPhone("555-1234");
+    request.setPhone("919-555-1234");
     request.setDateOfBirth(LocalDate.of(1992, 3, 20));
 
     User registered = userService.registerUser(request);
@@ -232,7 +240,7 @@ class UserServiceImplTest {
     assertNotNull(registered);
     assertEquals("jane@example.com", registered.getEmail());
     assertEquals("Jane Doe", registered.getName());
-    assertEquals("555-1234", registered.getPhone());
+    assertEquals("919-555-1234", registered.getPhone());
   }
 
   @Test
@@ -270,7 +278,7 @@ class UserServiceImplTest {
     request.setName(null);
     request.setEmail("jane@example.com");
     request.setPassword("Password123");
-    request.setPhone("555-1234");
+    request.setPhone("333-555-1234");
     request.setDateOfBirth(LocalDate.of(1992, 3, 20));
 
     assertThrows(IllegalArgumentException.class, () -> userService.registerUser(request));
@@ -296,7 +304,7 @@ class UserServiceImplTest {
     request.setName("Jane Doe");
     request.setEmail("jane@example.com");
     request.setPassword("Password123");
-    request.setPhone("555-1234");
+    request.setPhone("333-555-1234");
     request.setDateOfBirth(null);
 
     assertThrows(IllegalArgumentException.class, () -> userService.registerUser(request));
@@ -334,6 +342,7 @@ class UserServiceImplTest {
         .email("john@example.com")
         .passwordHash("Password123")
         .dateOfBirth(LocalDate.of(1990, 5, 15))
+        .phone("252-555-1234")
         .build();
     
     userService.register(user);
@@ -352,6 +361,7 @@ class UserServiceImplTest {
         .email("john@example.com")
         .passwordHash("Password123")
         .dateOfBirth(LocalDate.of(1990, 5, 15))
+        .phone("252-555-1234")
         .build();
     
     userService.register(user);
@@ -377,6 +387,7 @@ class UserServiceImplTest {
         .email("john@example.com")
         .passwordHash("Password123")
         .dateOfBirth(LocalDate.of(1990, 5, 15))
+        .phone("252-555-1234")
         .build();
     
     userService.register(user);
@@ -386,51 +397,56 @@ class UserServiceImplTest {
     assertNotNull(loggedIn);
     assertEquals("john@example.com", loggedIn.getEmail());
   }
-
-  // ==================== AGE VERIFICATION TESTS ====================
-
   @Test
-  @DisplayName("Should verify user is 21 or older")
-  void testVerifyAgeAdult() {
+  @DisplayName("Should return null when password is case-sensitive wrong")
+  void testLoginPasswordCaseSensitive() {
     User user = User.builder()
-        .dateOfBirth(LocalDate.of(1990, 1, 1))
+        .name("John Doe")
+        .email("john@example.com")
+        .passwordHash("Password123")
+        .phone("555-123-4567")
+        .dateOfBirth(LocalDate.of(1990, 5, 15))
         .build();
+    
+    userService.register(user);
 
-    assertTrue(userService.verifyAge(user));
+    User loggedIn = userService.login("john@example.com", "password123");
+
+    assertNull(loggedIn);
   }
 
   @Test
-  @DisplayName("Should reject user under 21")
-  void testVerifyAgeMinor() {
+  @DisplayName("Should return null for non-existent email")
+  void testLoginNonExistentEmail() {
+    User loggedIn = userService.login("nonexistent@example.com", "Password123");
+
+    assertNull(loggedIn);
+  }
+
+  @Test
+  @DisplayName("Should return null for empty email")
+  void testLoginEmptyEmail() {
+    User loggedIn = userService.login("", "Password123");
+
+    assertNull(loggedIn);
+  }
+
+  @Test
+  @DisplayName("Should return null for empty password")
+  void testLoginEmptyPassword() {
     User user = User.builder()
-        .dateOfBirth(LocalDate.of(2015, 1, 1))
+        .name("John Doe")
+        .email("john@example.com")
+        .passwordHash("Password123")
+        .phone("555-123-4567")
+        .dateOfBirth(LocalDate.of(1990, 5, 15))
         .build();
+    
+    userService.register(user);
 
-    assertFalse(userService.verifyAge(user));
-  }
+    User loggedIn = userService.login("john@example.com", "");
 
-  @Test
-  @DisplayName("Should return false for null user")
-  void testVerifyAgeNullUser() {
-    assertFalse(userService.verifyAge(null));
-  }
-
-  @Test
-  @DisplayName("Should return false when date of birth is null")
-  void testVerifyAgeNullDateOfBirth() {
-    User user = User.builder().build();
-
-    assertFalse(userService.verifyAge(user));
-  }
-
-  @Test
-  @DisplayName("Should verify exactly 21 years old")
-  void testVerifyAgeExactly21() {
-    User user = User.builder()
-        .dateOfBirth(LocalDate.now().minusYears(21))
-        .build();
-
-    assertTrue(userService.verifyAge(user));
+    assertNull(loggedIn);
   }
 
   // ==================== RETRIEVAL TESTS ====================
@@ -443,6 +459,7 @@ class UserServiceImplTest {
         .email("john@example.com")
         .passwordHash("Password123")
         .dateOfBirth(LocalDate.of(1990, 5, 15))
+        .phone("252-555-1234")
         .build();
     
     User registered = userService.register(user);
@@ -470,12 +487,14 @@ class UserServiceImplTest {
         .email("john@example.com")
         .passwordHash("Password123")
         .dateOfBirth(LocalDate.of(1990, 1, 1))
+        .phone("252-555-1234")
         .build();
     User user2 = User.builder()
         .name("Jane")
         .email("jane@example.com")
         .passwordHash("Password456")
         .dateOfBirth(LocalDate.of(1992, 3, 20))
+        .phone("252-555-1235")
         .build();
 
     userService.register(user1);
@@ -484,6 +503,58 @@ class UserServiceImplTest {
     List<User> allUsers = userService.getAllUsers();
 
     assertEquals(2, allUsers.size());
+  }
+
+  @Test
+  @DisplayName("Should return empty optional for null user ID")
+  void testGetUserByIdNullId() {
+    Optional<User> retrieved = userService.getUserById(null);
+
+    assertFalse(retrieved.isPresent());
+  }
+
+  @Test
+  @DisplayName("Should return empty optional for negative user ID")
+  void testGetUserByIdNegativeId() {
+    Optional<User> retrieved = userService.getUserById(-1L);
+
+    assertFalse(retrieved.isPresent());
+  }
+
+  @Test
+  @DisplayName("Should return empty optional for zero user ID")
+  void testGetUserByIdZeroId() {
+    Optional<User> retrieved = userService.getUserById(0L);
+
+    assertFalse(retrieved.isPresent());
+  }
+
+  @Test
+  @DisplayName("Should retrieve all users returns empty list initially")
+  void testGetAllUsersEmpty() {
+    List<User> allUsers = userService.getAllUsers();
+
+    assertTrue(allUsers.isEmpty());
+  }
+
+  @Test
+  @DisplayName("Should retrieve all users does not affect original list")
+  void testGetAllUsersReturnsIndependentList() {
+    User user = User.builder()
+        .name("John")
+        .email("john@example.com")
+        .passwordHash("Password123")
+        .dateOfBirth(LocalDate.of(1990, 1, 1))
+        .phone("252-555-1234")
+        .build();
+
+    userService.register(user);
+
+    List<User> allUsers = userService.getAllUsers();
+    allUsers.clear();
+
+    // Original list should not be affected
+    assertEquals(1, userService.getAllUsers().size());
   }
 
   // ==================== UPDATE TESTS ====================
@@ -496,6 +567,7 @@ class UserServiceImplTest {
         .email("john@example.com")
         .passwordHash("Password123")
         .dateOfBirth(LocalDate.of(1990, 1, 1))
+        .phone("252-555-1234")
         .build();
     
     User registered = userService.register(user);
@@ -517,6 +589,7 @@ class UserServiceImplTest {
         .email("john@example.com")
         .passwordHash("Password123")
         .dateOfBirth(LocalDate.of(1990, 1, 1))
+        .phone("252-555-1234")
         .build();
     
     User registered = userService.register(user);
@@ -538,6 +611,7 @@ class UserServiceImplTest {
         .email("john@example.com")
         .passwordHash("Password123")
         .dateOfBirth(LocalDate.of(1990, 1, 1))
+        .phone("252-555-1234")
         .ageVerified(true)
         .build();
     
@@ -563,6 +637,107 @@ class UserServiceImplTest {
     assertNull(result);
   }
 
+  @Test
+  @DisplayName("Should update user and preserve other fields")
+  void testUpdateUserPreservesOtherFields() {
+    User user = User.builder()
+        .name("John")
+        .email("john@example.com")
+        .passwordHash("Password123")
+        .dateOfBirth(LocalDate.of(1990, 1, 1))
+        .phone("252-555-1234")
+        .build();
+    
+    User registered = userService.register(user);
+
+    User updatedUser = User.builder()
+        .email("newemail@example.com")
+        .build();
+    User result = userService.updateUser(registered.getId(), updatedUser);
+
+    // Email should be updated
+    assertEquals("newemail@example.com", result.getEmail());
+    // But other fields should remain unchanged
+    assertEquals("John", result.getName());
+    assertEquals("252-555-1234", result.getPhone());
+    assertEquals(LocalDate.of(1990, 1, 1), result.getDateOfBirth());
+  }
+
+  @Test
+  @DisplayName("Should return null when updating with null ID")
+  void testUpdateUserWithNullId() {
+    User updatedUser = User.builder()
+        .email("newemail@example.com")
+        .build();
+    User result = userService.updateUser(null, updatedUser);
+
+    assertNull(result);
+  }
+
+  @Test
+  @DisplayName("Should not update user when updated user is null")
+  void testUpdateUserWithNullUpdatedUser() {
+    User user = User.builder()
+        .name("John")
+        .email("john@example.com")
+        .passwordHash("Password123")
+        .dateOfBirth(LocalDate.of(1990, 1, 1))
+        .phone("252-555-1234")
+        .build();
+    
+    User registered = userService.register(user);
+
+    assertThrows(IllegalArgumentException.class, 
+        () -> userService.updateUser(registered.getId(), null));
+  }
+
+  @Test
+  @DisplayName("Should verify age when updating date of birth to valid age")
+  void testUpdateDateOfBirthToValidAge() {
+    User user = User.builder()
+        .name("John")
+        .email("john@example.com")
+        .passwordHash("Password123")
+        .dateOfBirth(LocalDate.of(2015, 1, 1))
+        .phone("252-555-1234")
+        .ageVerified(false)
+        .build();
+    
+    User registered = userService.register(user);
+
+    User updatedUser = User.builder()
+        .dateOfBirth(LocalDate.of(1990, 1, 1))
+        .build();
+    User result = userService.updateUser(registered.getId(), updatedUser);
+
+    assertTrue(result.isAgeVerified());
+  }
+
+  @Test
+  @DisplayName("Should update multiple fields at once")
+  void testUpdateMultipleFields() {
+    User user = User.builder()
+        .name("John")
+        .email("john@example.com")
+        .passwordHash("Password123")
+        .dateOfBirth(LocalDate.of(1990, 1, 1))
+        .phone("252-555-1234")
+        .build();
+    
+    User registered = userService.register(user);
+
+    User updatedUser = User.builder()
+        .email("newemail@example.com")
+        .passwordHash("NewPassword456")
+        .dateOfBirth(LocalDate.of(1995, 6, 15))
+        .build();
+    User result = userService.updateUser(registered.getId(), updatedUser);
+
+    assertEquals("newemail@example.com", result.getEmail());
+    assertEquals("NewPassword456", result.getPasswordHash());
+    assertEquals(LocalDate.of(1995, 6, 15), result.getDateOfBirth());
+  }
+
   // ==================== DELETE TESTS ====================
 
   @Test
@@ -573,6 +748,7 @@ class UserServiceImplTest {
         .email("john@example.com")
         .passwordHash("Password123")
         .dateOfBirth(LocalDate.of(1990, 1, 1))
+        .phone("252-555-1234")
         .build();
     
     User registered = userService.register(user);
@@ -584,11 +760,13 @@ class UserServiceImplTest {
   }
 
   @Test
-  @DisplayName("Should handle deleting non-existent user")
+  @DisplayName("Should return false when deleting non-existent user")
   void testDeleteNonExistentUser() {
-    assertDoesNotThrow(() -> userService.deleteUser(999L));
+    boolean deleted = userService.deleteUser(999L);
+    
+    assertFalse(deleted);
   }
-
+  
   @Test
   @DisplayName("Should have correct user count after deletion")
   void testUserCountAfterDeletion() {
@@ -597,12 +775,14 @@ class UserServiceImplTest {
         .email("john@example.com")
         .passwordHash("Password123")
         .dateOfBirth(LocalDate.of(1990, 1, 1))
+        .phone("252-555-1235")
         .build();
     User user2 = User.builder()
         .name("Jane")
         .email("jane@example.com")
         .passwordHash("Password456")
         .dateOfBirth(LocalDate.of(1992, 3, 20))
+        .phone("252-555-1234")
         .build();
 
     User registered1 = userService.register(user1);
@@ -611,6 +791,76 @@ class UserServiceImplTest {
     userService.deleteUser(registered1.getId());
 
     assertEquals(1, userService.getAllUsers().size());
+  }
+
+  @Test
+  @DisplayName("Should throw exception when deleting with null ID")
+  void testDeleteUserWithNullId() {
+    assertThrows(IllegalArgumentException.class, () -> userService.deleteUser(null));
+  }
+
+  @Test
+  @DisplayName("Should only delete specified user, not all users")
+  void testDeleteOnlySpecificUser() {
+    User user1 = User.builder()
+        .name("John")
+        .email("john@example.com")
+        .passwordHash("Password123")
+        .dateOfBirth(LocalDate.of(1990, 1, 1))
+        .phone("252-555-1235")
+        .build();
+    User user2 = User.builder()
+        .name("Jane")
+        .email("jane@example.com")
+        .passwordHash("Password456")
+        .dateOfBirth(LocalDate.of(1992, 3, 20))
+        .phone("252-555-1234")
+        .build();
+    User user3 = User.builder()
+        .name("Bob")
+        .email("bob@example.com")
+        .passwordHash("Password789")
+        .dateOfBirth(LocalDate.of(1988, 6, 10))
+        .phone("252-555-1236")
+        .build();
+
+    User registered1 = userService.register(user1);
+    User registered2 = userService.register(user2);
+    userService.register(user3);
+
+    userService.deleteUser(registered1.getId());
+
+    assertEquals(2, userService.getAllUsers().size());
+    assertFalse(userService.getUserById(registered1.getId()).isPresent());
+    assertTrue(userService.getUserById(registered2.getId()).isPresent());
+  }
+
+  @Test
+  @DisplayName("Should delete all users one by one")
+  void testDeleteAllUsersSequentially() {
+    User user1 = User.builder()
+        .name("John")
+        .email("john@example.com")
+        .passwordHash("Password123")
+        .dateOfBirth(LocalDate.of(1990, 1, 1))
+        .phone("252-555-1235")
+        .build();
+    User user2 = User.builder()
+        .name("Jane")
+        .email("jane@example.com")
+        .passwordHash("Password456")
+        .dateOfBirth(LocalDate.of(1992, 3, 20))
+        .phone("252-555-1234")
+        .build();
+
+    User registered1 = userService.register(user1);
+    User registered2 = userService.register(user2);
+
+    userService.deleteUser(registered1.getId());
+    assertEquals(1, userService.getAllUsers().size());
+
+    userService.deleteUser(registered2.getId());
+    assertEquals(0, userService.getAllUsers().size());
   }
 
   // ==================== UNIQUE ID GENERATION TESTS ====================
@@ -623,18 +873,21 @@ class UserServiceImplTest {
         .email("john@example.com")
         .passwordHash("Password123")
         .dateOfBirth(LocalDate.of(1990, 1, 1))
+        .phone("252-555-1235")
         .build();
     User user2 = User.builder()
         .name("Jane")
         .email("jane@example.com")
         .passwordHash("Password456")
         .dateOfBirth(LocalDate.of(1992, 3, 20))
+        .phone("252-555-1236")
         .build();
     User user3 = User.builder()
         .name("Bob")
         .email("bob@example.com")
         .passwordHash("Password789")
         .dateOfBirth(LocalDate.of(1988, 6, 10))
+        .phone("252-555-1234")
         .build();
 
     User registered1 = userService.register(user1);

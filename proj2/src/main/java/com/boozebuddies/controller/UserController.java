@@ -25,16 +25,10 @@ public class UserController {
   @PostMapping("/register")
   public ResponseEntity<?> registerUser(@RequestBody RegisterUserRequest request) {
     try {
-      // Validate registration data
-      if (request.getEmail() == null || request.getPassword() == null) {
-        return ResponseEntity.badRequest().body("Email and password are required");
-      }
-
       User user = userService.registerUser(request);
       UserDTO userDTO = userMapper.toDTO(user);
-
       return ResponseEntity.status(HttpStatus.CREATED).body(userDTO);
-    } catch (Exception e) {
+    } catch (IllegalArgumentException e) {
       return ResponseEntity.badRequest().body(e.getMessage());
     }
   }
@@ -82,6 +76,16 @@ public class UserController {
       }
     } catch (Exception e) {
       return ResponseEntity.badRequest().body(e.getMessage());
+    }
+  }
+
+  @DeleteMapping("/{id}")
+  public ResponseEntity<?> deleteUser(@PathVariable Long id) {
+    boolean deleted = userService.deleteUser(id);
+    if (deleted) {
+      return ResponseEntity.ok("User deleted successfully");
+    } else {
+      return ResponseEntity.notFound().build();
     }
   }
 }
