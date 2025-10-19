@@ -34,41 +34,25 @@ public class MerchantController {
     }
   }
 
-  /** Verify a merchant */
-  @PutMapping("/{merchantId}/verify")
-  public ResponseEntity<ApiResponse<MerchantDTO>> verifyMerchant(
-      @PathVariable Long merchantId, @RequestParam boolean verified) {
-    try {
-      Merchant merchant = merchantService.verifyMerchant(merchantId, verified);
-      if (merchant == null) {
-        return ResponseEntity.notFound().build();
-      }
-      MerchantDTO merchantDTO = convertToDTO(merchant);
-      String message =
-          verified ? "Merchant verified successfully" : "Merchant verification revoked";
-      return ResponseEntity.ok(ApiResponse.success(merchantDTO, message));
-    } catch (Exception e) {
-      return ResponseEntity.badRequest()
-          .body(ApiResponse.error("Failed to update merchant verification: " + e.getMessage()));
-    }
-  }
+  // /** Verify a merchant */
+  // @PutMapping("/{merchantId}/verify")
+  // public ResponseEntity<ApiResponse<MerchantDTO>> verifyMerchant(
+  //     @PathVariable Long merchantId, @RequestParam boolean verified) {
+  //   try {
+  //     Merchant merchant = merchantService.verifyMerchant(merchantId, verified);
+  //     if (merchant == null) {
+  //       return ResponseEntity.notFound().build();
+  //     }
+  //     MerchantDTO merchantDTO = convertToDTO(merchant);
+  //     String message =
+  //         verified ? "Merchant verified successfully" : "Merchant verification revoked";
+  //     return ResponseEntity.ok(ApiResponse.success(merchantDTO, message));
+  //   } catch (Exception e) {
+  //     return ResponseEntity.badRequest()
+  //         .body(ApiResponse.error("Failed to update merchant verification: " + e.getMessage()));
+  //   }
+  // }
 
-  /** Update merchant inventory details */
-  @PutMapping("/{merchantId}/inventory")
-  public ResponseEntity<ApiResponse<MerchantDTO>> updateInventory(
-      @PathVariable Long merchantId, @RequestParam String inventoryDetails) {
-    try {
-      Merchant merchant = merchantService.updateInventory(merchantId, inventoryDetails);
-      if (merchant == null) {
-        return ResponseEntity.notFound().build();
-      }
-      MerchantDTO merchantDTO = convertToDTO(merchant);
-      return ResponseEntity.ok(ApiResponse.success(merchantDTO, "Inventory updated successfully"));
-    } catch (Exception e) {
-      return ResponseEntity.badRequest()
-          .body(ApiResponse.error("Failed to update inventory: " + e.getMessage()));
-    }
-  }
 
   /** Get merchant by ID */
   @GetMapping("/{merchantId}")
@@ -150,7 +134,7 @@ public class MerchantController {
   /** Convert Merchant entity to MerchantDTO */
   private MerchantDTO convertToDTO(Merchant merchant) {
     return MerchantDTO.builder()
-        .id(merchant.getMerchantId())
+        .id(merchant.getId())
         .name(merchant.getName())
         .description(merchant.getDescription())
         .address(merchant.getAddress())
@@ -160,11 +144,9 @@ public class MerchantController {
         .openingTime(merchant.getOpeningTime())
         .closingTime(merchant.getClosingTime())
         .isActive(merchant.isActive())
-        .isVerified(merchant.isVerified())
         .rating(merchant.getRating())
         .totalRatings(merchant.getTotalRatings())
         .imageUrl(merchant.getImageUrl())
-        .inventoryDetails(merchant.getInventoryDetails())
         .build();
   }
 
@@ -173,7 +155,7 @@ public class MerchantController {
     return OrderDTO.builder()
         .id(order.getId())
         .userId(order.getUser() != null ? order.getUser().getId() : null)
-        .merchantId(order.getMerchant() != null ? order.getMerchant().getMerchantId() : null)
+        .merchantId(order.getMerchant() != null ? order.getMerchant().getId() : null)
         .totalAmount(order.getTotalAmount())
         .status(order.getStatus().name())
         .deliveryAddress(order.getDeliveryAddress())

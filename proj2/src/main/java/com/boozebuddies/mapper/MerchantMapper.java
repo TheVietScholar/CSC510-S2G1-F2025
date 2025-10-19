@@ -11,7 +11,7 @@ public class MerchantMapper {
     if (merchant == null) return null;
 
     return MerchantDTO.builder()
-        .id(merchant.getMerchantId())
+        .id(merchant.getId())
         .name(merchant.getName())
         .description(merchant.getDescription())
         .address(merchant.getAddress())
@@ -21,11 +21,9 @@ public class MerchantMapper {
         .openingTime(merchant.getOpeningTime())
         .closingTime(merchant.getClosingTime())
         .isActive(merchant.isActive())
-        .isVerified(merchant.isVerified())
         .rating(merchant.getRating())
         .totalRatings(merchant.getTotalRatings())
         .imageUrl(merchant.getImageUrl())
-        .inventoryDetails(merchant.getInventoryDetails())
         .build();
   }
 

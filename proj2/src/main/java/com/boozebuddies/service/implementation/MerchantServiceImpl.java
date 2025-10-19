@@ -19,37 +19,30 @@ public class MerchantServiceImpl implements MerchantService {
   /** Registers a new merchant on the platform. */
   @Override
   public Merchant registerMerchant(Merchant merchant) {
-    merchant.setMerchantId(nextMerchantId++);
-    merchant.setVerified(false);
+    merchant.setId(nextMerchantId++);
+    merchant.setActive(false);
     merchants.add(merchant);
     return merchant;
   }
 
-  /** Verifies a merchant's credentials or business license. */
+  /** Verifies a merchant's credentials or business license.
+   * might need setVerified here
+   */
   @Override
   public Merchant verifyMerchant(Long merchantId, boolean verified) {
     Merchant merchant = getMerchantById(merchantId);
     if (merchant != null) {
-      merchant.setVerified(verified);
+      merchant.setActive(verified);
     }
     return merchant;
   }
 
-  /** Updates the merchant’s inventory information. */
-  @Override
-  public Merchant updateInventory(Long merchantId, String inventoryDetails) {
-    Merchant merchant = getMerchantById(merchantId);
-    if (merchant != null) {
-      merchant.setInventoryDetails(inventoryDetails);
-    }
-    return merchant;
-  }
 
   /** Retrieves a merchant by their unique ID. */
   @Override
   public Merchant getMerchantById(Long merchantId) {
     Optional<Merchant> merchantOpt =
-        merchants.stream().filter(m -> m.getMerchantId().equals(merchantId)).findFirst();
+        merchants.stream().filter(m -> m.getId().equals(merchantId)).findFirst();
     return merchantOpt.orElse(null);
   }
 
@@ -63,7 +56,7 @@ public class MerchantServiceImpl implements MerchantService {
   @Override
   public List<Order> getOrdersByMerchant(Long merchantId) {
     return orders.stream()
-        .filter(o -> o.getMerchant() != null && o.getMerchant().getMerchantId().equals(merchantId))
+        .filter(o -> o.getMerchant() != null && o.getMerchant().getId().equals(merchantId))
         .collect(Collectors.toList());
   }
 
@@ -75,7 +68,7 @@ public class MerchantServiceImpl implements MerchantService {
       merchants.remove(merchant);
       // Optionally, also remove their orders
       orders.removeIf(
-          o -> o.getMerchant() != null && o.getMerchant().getMerchantId().equals(merchantId));
+          o -> o.getMerchant() != null && o.getMerchant().getId().equals(merchantId));
       return true;
     }
     return false;
