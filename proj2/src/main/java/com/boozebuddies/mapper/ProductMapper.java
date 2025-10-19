@@ -21,7 +21,6 @@ public class ProductMapper {
         .merchantName(product.getMerchant() != null ? product.getMerchant().getName() : null)
         .isAlcohol(product.isAlcohol())
         .alcoholContent(product.getAlcoholContent())
-        .stockQuantity(product.getStockQuantity())
         .imageUrl(product.getImageUrl())
         .available(product.isAvailable())
         .build();
@@ -37,7 +36,6 @@ public class ProductMapper {
         .price(productDTO.getPrice())
         .isAlcohol(productDTO.isAlcohol())
         .alcoholContent(productDTO.getAlcoholContent())
-        .stockQuantity(productDTO.getStockQuantity())
         .imageUrl(productDTO.getImageUrl())
         .available(productDTO.isAvailable())
         .build();
@@ -52,7 +50,6 @@ public class ProductMapper {
         .price(request.getPrice())
         .isAlcohol(request.isAlcohol())
         .alcoholContent(request.getAlcoholContent())
-        .stockQuantity(request.getStockQuantity())
         .imageUrl(request.getImageUrl())
         .available(true) // Default to available
         .build();

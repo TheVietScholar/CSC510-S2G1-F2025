@@ -42,7 +42,6 @@ public class ProductServiceImpl implements ProductService {
               existingProduct.setName(updatedProduct.getName());
               existingProduct.setCategory(updatedProduct.getCategory());
               existingProduct.setPrice(updatedProduct.getPrice());
-              existingProduct.setStockQuantity(updatedProduct.getStockQuantity());
               existingProduct.setAlcohol(updatedProduct.isAlcohol());
               existingProduct.setAvailable(updatedProduct.isAvailable());
               existingProduct.setDescription(updatedProduct.getDescription());
@@ -76,12 +75,37 @@ public class ProductServiceImpl implements ProductService {
         .collect(Collectors.toList());
   }
 
-  /** Checks if a product is available in the requested quantity. */
+  /** Checks if a product is available for ordering. */
   @Override
-  public boolean isProductAvailable(Long productId, int quantity) {
+  public boolean isProductAvailable(Long productId) {
     return productRepository
         .findById(productId)
-        .map(product -> product.isAvailable() && product.getStockQuantity() >= quantity)
+        .map(Product::isAvailable)
         .orElse(false);
+  }
+
+  /** Gets all available products. */
+  @Override
+  public List<Product> getAvailableProducts() {
+    return productRepository.findAll().stream()
+        .filter(Product::isAvailable)
+        .collect(Collectors.toList());
+  }
+
+  /** Gets all products by merchant. */
+  @Override
+  public List<Product> getProductsByMerchant(Long merchantId) {
+    return productRepository.findAll().stream()
+        .filter(p -> p.getMerchant() != null && p.getMerchant().getId().equals(merchantId))
+        .collect(Collectors.toList());
+  }
+
+  /** Gets available products by merchant. */
+  @Override
+  public List<Product> getAvailableProductsByMerchant(Long merchantId) {
+    return productRepository.findAll().stream()
+        .filter(p -> p.getMerchant() != null && p.getMerchant().getId().equals(merchantId))
+        .filter(Product::isAvailable)
+        .collect(Collectors.toList());
   }
 }

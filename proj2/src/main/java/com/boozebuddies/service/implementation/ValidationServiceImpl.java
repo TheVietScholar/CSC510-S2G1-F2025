@@ -59,24 +59,19 @@ public class ValidationServiceImpl implements ValidationService {
     if (product.getPrice() == null || product.getPrice().compareTo(BigDecimal.ZERO) < 0) {
       return false;
     }
-    if (product.getStockQuantity() == null || product.getStockQuantity() < 0) {
-      return false;
-    }
+
     if (product.getCategory() == null || product.getCategory().getName().isEmpty()) {
       return false;
     }
     return true;
   }
 
-  /** Validates that a given quantity is positive and available in stock. */
+  /** Validates if a product is available for ordering. */
   @Override
-  public boolean validateProductQuantity(Product product, int quantity) {
+  public boolean validateProductAvailability(Product product) {
     if (product == null) {
       return false;
     }
-    if (quantity <= 0) {
-      return false;
-    }
-    return product.getStockQuantity() >= quantity;
+    return product.isAvailable();
   }
 }

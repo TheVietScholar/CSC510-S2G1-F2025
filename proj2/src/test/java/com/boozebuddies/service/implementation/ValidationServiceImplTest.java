@@ -18,8 +18,6 @@ public class ValidationServiceImplTest {
         validationService = new ValidationServiceImpl();
     }
 
-    // ===== EMAIL VALIDATION TESTS =====
-    // What it's validating: Email format (must have @ and valid domain)
     @Test
     void testValidateEmail_ValidEmail_ReturnsTrue() {
         assertTrue(validationService.validateEmail("test@example.com"));
@@ -42,8 +40,7 @@ public class ValidationServiceImplTest {
         assertFalse(validationService.validateEmail("   "));
     }
 
-    // ===== PASSWORD VALIDATION TESTS =====
-    // What it's validating: At least 8 chars, must have letters AND numbers
+
     @Test
     void testValidatePassword_ValidPassword_ReturnsTrue() {
         assertTrue(validationService.validatePassword("password123")); // Letters + numbers
@@ -65,8 +62,7 @@ public class ValidationServiceImplTest {
         assertFalse(validationService.validatePassword(""));
     }
 
-    // ===== AGE VALIDATION TESTS =====
-    // What it's validating: User must be 21+ years old for alcohol purchases
+
     @Test
     void testValidateAge_UserOver21_ReturnsTrue() {
         User user = User.builder()
@@ -112,23 +108,6 @@ public class ValidationServiceImplTest {
         assertFalse(validationService.validateAge(user));
     }
 
-    // ===== PRODUCT VALIDATION TESTS =====
-    // What it's validating: Product has all required fields with valid values
-    @Test
-    void testValidateProduct_ValidProduct_ReturnsTrue() {
-        Category category = Category.builder()
-            .name("Beer")
-            .build();
-            
-        Product product = Product.builder()
-            .name("Craft IPA")
-            .price(new BigDecimal("8.99"))
-            .stockQuantity(50)
-            .category(category)
-            .build();
-            
-        assertTrue(validationService.validateProduct(product));
-    }
 
     @Test
     void testValidateProduct_NullProduct_ReturnsFalse() {
@@ -141,7 +120,6 @@ public class ValidationServiceImplTest {
         Product product = Product.builder()
             .name(null) // Missing name
             .price(new BigDecimal("8.99"))
-            .stockQuantity(50)
             .category(category)
             .build();
             
@@ -154,7 +132,6 @@ public class ValidationServiceImplTest {
         Product product = Product.builder()
             .name("") // Empty name
             .price(new BigDecimal("8.99"))
-            .stockQuantity(50)
             .category(category)
             .build();
             
@@ -167,7 +144,6 @@ public class ValidationServiceImplTest {
         Product product = Product.builder()
             .name("Craft IPA")
             .price(new BigDecimal("-5.00")) // Negative price
-            .stockQuantity(50)
             .category(category)
             .build();
             
@@ -180,33 +156,6 @@ public class ValidationServiceImplTest {
         Product product = Product.builder()
             .name("Craft IPA")
             .price(null) // No price
-            .stockQuantity(50)
-            .category(category)
-            .build();
-            
-        assertFalse(validationService.validateProduct(product));
-    }
-
-    @Test
-    void testValidateProduct_ProductWithNegativeStock_ReturnsFalse() {
-        Category category = Category.builder().name("Beer").build();
-        Product product = Product.builder()
-            .name("Craft IPA")
-            .price(new BigDecimal("8.99"))
-            .stockQuantity(-10) // Negative stock
-            .category(category)
-            .build();
-            
-        assertFalse(validationService.validateProduct(product));
-    }
-
-    @Test
-    void testValidateProduct_ProductWithNullStock_ReturnsFalse() {
-        Category category = Category.builder().name("Beer").build();
-        Product product = Product.builder()
-            .name("Craft IPA")
-            .price(new BigDecimal("8.99"))
-            .stockQuantity(null) // No stock quantity
             .category(category)
             .build();
             
@@ -218,7 +167,6 @@ public class ValidationServiceImplTest {
         Product product = Product.builder()
             .name("Craft IPA")
             .price(new BigDecimal("8.99"))
-            .stockQuantity(50)
             .category(null) // No category
             .build();
             
@@ -234,54 +182,48 @@ public class ValidationServiceImplTest {
         Product product = Product.builder()
             .name("Craft IPA")
             .price(new BigDecimal("8.99"))
-            .stockQuantity(50)
             .category(category)
             .build();
             
         assertFalse(validationService.validateProduct(product));
     }
 
-    // ===== PRODUCT QUANTITY VALIDATION TESTS =====
-    // What it's validating: Requested quantity is positive AND available in stock
-    @Test
-    void testValidateProductQuantity_ValidQuantity_ReturnsTrue() {
-        Product product = Product.builder()
-            .stockQuantity(10) // 10 in stock
-            .build();
-            
-        assertTrue(validationService.validateProductQuantity(product, 5)); // Requesting 5
-        assertTrue(validationService.validateProductQuantity(product, 10)); // Requesting all
-    }
 
     @Test
-    void testValidateProductQuantity_InsufficientStock_ReturnsFalse() {
-        Product product = Product.builder()
-            .stockQuantity(5) // Only 5 in stock
-            .build();
-            
-        assertFalse(validationService.validateProductQuantity(product, 10)); // Requesting 10
-    }
+void testValidateProduct_ValidProduct_ReturnsTrue() {
+    Category category = Category.builder()
+        .name("Beer")
+        .build();
+        
+    Product product = Product.builder()
+        .name("Craft IPA")
+        .price(new BigDecimal("8.99"))
+        .available(true) // Just check this boolean
+        .category(category)
+        .build();
+        
+    assertTrue(validationService.validateProduct(product));
+}
 
-    @Test
-    void testValidateProductQuantity_ZeroQuantity_ReturnsFalse() {
-        Product product = Product.builder()
-            .stockQuantity(10)
-            .build();
-            
-        assertFalse(validationService.validateProductQuantity(product, 0)); // Can't order 0
-    }
+// REMOVE these tests since stock quantity doesn't matter:
+// testValidateProduct_ProductWithNegativeStock_ReturnsFalse()
+// testValidateProduct_ProductWithNullStock_ReturnsFalse()
 
-    @Test
-    void testValidateProductQuantity_NegativeQuantity_ReturnsFalse() {
-        Product product = Product.builder()
-            .stockQuantity(10)
-            .build();
-            
-        assertFalse(validationService.validateProductQuantity(product, -5)); // Can't order negative
-    }
+@Test
+void testValidateProductQuantity_ProductAvailable_ReturnsTrue() {
+    Product product = Product.builder()
+        .available(true) // Product is in stock
+        .build();
+        
+    assertTrue(validationService.validateProductAvailability(product));
+}
 
-    @Test
-    void testValidateProductQuantity_NullProduct_ReturnsFalse() {
-        assertFalse(validationService.validateProductQuantity(null, 5));
-    }
+@Test
+void testValidateProductQuantity_ProductNotAvailable_ReturnsFalse() {
+    Product product = Product.builder()
+        .available(false) // Product is out of stock
+        .build();
+        
+    assertFalse(validationService.validateProductAvailability(product)); // Even quantity 1 fails
+}
 }
