@@ -24,15 +24,6 @@ public interface MerchantService {
   Merchant verifyMerchant(Long merchantId, boolean verified);
 
   /**
-   * Updates the merchant’s inventory information.
-   *
-   * @param merchantId The ID of the merchant.
-   * @param inventoryDetails Details or reference to the updated inventory data.
-   * @return The updated Merchant object.
-   */
-  Merchant updateInventory(Long merchantId, String inventoryDetails);
-
-  /**
    * Retrieves a merchant by their unique ID.
    *
    * @param merchantId The ID of the merchant.
