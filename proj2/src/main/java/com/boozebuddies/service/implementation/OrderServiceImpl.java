@@ -7,6 +7,7 @@ import com.boozebuddies.repository.DeliveryRepository;
 import com.boozebuddies.repository.MerchantRepository;
 import com.boozebuddies.repository.OrderRepository;
 import com.boozebuddies.repository.UserRepository;
+import com.boozebuddies.service.DeliveryService;
 import com.boozebuddies.service.NotificationService;
 import com.boozebuddies.service.OrderService;
 import com.boozebuddies.service.PaymentService;
@@ -67,7 +68,7 @@ public class OrderServiceImpl implements OrderService {
   }
 
   public List<Order> getOrdersByUser(Long userId) {
-    return orderRepository.findByUserId(userId);
+    return orderRepository.findByCustomerId(userId);
   }
 
   public List<Order> getAllOrders() {
@@ -164,20 +165,20 @@ public class OrderServiceImpl implements OrderService {
   private void handleStatusChange(Order order, OrderStatus newStatus) {
     switch (newStatus) {
       case CONFIRMED:
-        notificationService.sendOrderConfirmed(order);
+        notificationService.sendDeliveryStatusUpdate(order.getUser(), order.getDelivery());
         break;
       case PREPARING:
-        notificationService.sendOrderPreparing(order);
+        // notificationService.sendOrderPreparing(order);
         break;
       case READY_FOR_PICKUP:
-        notificationService.sendOrderReady(order);
+        // notificationService.sendOrderReady(order);
         break;
       case COMPLETED:
-        paymentService.capturePayment(order);
-        notificationService.sendOrderCompleted(order);
+        // paymentService.capturePayment(order);
+        // notificationService.sendOrderCompleted(order);
         break;
       case CANCELLED:
-        notificationService.sendOrderCancellation(order);
+        // notificationService.sendOrderCancellation(order);
         break;
     }
   }
