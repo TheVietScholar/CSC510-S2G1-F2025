@@ -7,7 +7,7 @@ import com.boozebuddies.mapper.DriverMapper;
 // import com.boozebuddies.entity.Certification;
 import com.boozebuddies.model.CertificationStatus;
 import com.boozebuddies.service.DriverService;
-import com.boozebuddies.service.ValidationService;
+// import com.boozebuddies.service.ValidationService;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 public class DriverController {
 
   private DriverService driverService;
-  private final ValidationService validationService;
+  // private final ValidationService validationService;
   private final DriverMapper driverMapper;
 
   /** Register a new driver */

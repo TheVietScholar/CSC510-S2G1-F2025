@@ -3,9 +3,10 @@ package com.boozebuddies.service.implementation;
 import com.boozebuddies.entity.Order;
 import com.boozebuddies.entity.Payment;
 import com.boozebuddies.entity.User;
+import com.boozebuddies.model.PaymentStatus;
 import com.boozebuddies.service.PaymentService;
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -28,15 +29,16 @@ public class PaymentServiceImpl implements PaymentService {
     payment.setUser(order.getUser());
     payment.setAmount(order.getTotalAmount());
     payment.setPaymentMethod(paymentMethod);
-    payment.setStatus("COMPLETED");
-    payment.setPaymentDate(LocalDate.now());
+    payment.setStatus(PaymentStatus.AUTHORIZED);
+    payment.setCreatedAt(LocalDateTime.now());
+    payment.setUpdatedAt(LocalDateTime.now());
 
     payments.add(payment);
     System.out.println(
         "[PAYMENT] Processed payment of "
             + payment.getAmount()
             + " for Order ID: "
-            + order.getOrderId()
+            + order.getId()
             + " via "
             + paymentMethod);
     return payment;
@@ -45,9 +47,9 @@ public class PaymentServiceImpl implements PaymentService {
   /** Issues a refund for a specific order. */
   @Override
   public Payment refundPayment(Order order, String reason) {
-    Payment payment = getPaymentByOrderId(order.getOrderId());
+    Payment payment = getPaymentByOrderId(order.getId());
     if (payment == null) {
-      throw new RuntimeException("Payment not found for order: " + order.getOrderId());
+      throw new RuntimeException("Payment not found for order: " + order.getId());
     }
 
     Payment refund = new Payment();
@@ -55,8 +57,8 @@ public class PaymentServiceImpl implements PaymentService {
     refund.setUser(order.getUser());
     refund.setAmount(payment.getAmount());
     refund.setPaymentMethod(payment.getPaymentMethod());
-    refund.setStatus("REFUNDED");
-    refund.setPaymentDate(LocalDate.now());
+    refund.setStatus(PaymentStatus.REFUNDED);
+    refund.setUpdatedAt(LocalDateTime.now());
     refund.setRefundReason(reason);
 
     payments.add(refund);
@@ -64,7 +66,7 @@ public class PaymentServiceImpl implements PaymentService {
         "[PAYMENT] Refunded "
             + refund.getAmount()
             + " for Order ID: "
-            + order.getOrderId()
+            + order.getId()
             + " Reason: "
             + reason);
     return refund;
@@ -80,21 +82,21 @@ public class PaymentServiceImpl implements PaymentService {
   @Override
   public Payment getPaymentByOrderId(Long orderId) {
     return payments.stream()
-        .filter(p -> p.getOrder() != null && p.getOrder().getOrderId().equals(orderId))
+        .filter(p -> p.getOrder() != null && p.getOrder().getId().equals(orderId))
         .findFirst()
         .orElse(null);
   }
 
   /** Calculates the total revenue generated within a given period. */
   @Override
-  public BigDecimal calculateTotalRevenue(LocalDate startDate, LocalDate endDate) {
+  public BigDecimal calculateTotalRevenue(LocalDateTime startDate, LocalDateTime endDate) {
     return payments.stream()
         .filter(
             p ->
                 p.getPaymentDate() != null
                     && !p.getPaymentDate().isBefore(startDate)
                     && !p.getPaymentDate().isAfter(endDate)
-                    && "COMPLETED".equals(p.getStatus()))
+                    && p.getStatus() == PaymentStatus.AUTHORIZED)
         .map(Payment::getAmount)
         .reduce(BigDecimal.ZERO, BigDecimal::add);
   }

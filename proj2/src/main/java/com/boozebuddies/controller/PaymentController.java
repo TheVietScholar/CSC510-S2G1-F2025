@@ -7,7 +7,7 @@ import com.boozebuddies.entity.User;
 import com.boozebuddies.mapper.PaymentMapper;
 import com.boozebuddies.service.PaymentService;
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +31,7 @@ public class PaymentController {
       @RequestParam Long orderId, @RequestParam String paymentMethod) {
 
     Order order = new Order();
-    order.setOrderId(orderId);
+    order.setId(orderId);
 
     Payment payment = paymentService.processPayment(order, paymentMethod);
     return ResponseEntity.ok(paymentMapper.toDTO(payment));
@@ -45,7 +45,7 @@ public class PaymentController {
       @RequestParam Long orderId, @RequestParam String reason) {
 
     Order order = new Order();
-    order.setOrderId(orderId);
+    order.setId(orderId);
 
     Payment payment = paymentService.refundPayment(order, reason);
     return ResponseEntity.ok(paymentMapper.toDTO(payment));
@@ -86,8 +86,8 @@ public class PaymentController {
   // -----------------------------
   @GetMapping("/revenue")
   public ResponseEntity<BigDecimal> calculateTotalRevenue(
-      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDateTime startDate,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDateTime endDate) {
 
     return ResponseEntity.ok(paymentService.calculateTotalRevenue(startDate, endDate));
   }

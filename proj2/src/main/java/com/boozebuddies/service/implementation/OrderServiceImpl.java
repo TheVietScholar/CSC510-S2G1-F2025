@@ -51,13 +51,13 @@ public class OrderServiceImpl implements OrderService {
     Order savedOrder = orderRepository.save(order);
 
     // Process payment
-    paymentService.processPayment(savedOrder);
+    paymentService.processPayment(savedOrder, null);
 
     // Create delivery record
-    createDeliveryRecord(savedOrder);
+    Delivery delivery = createDeliveryRecord(savedOrder);
 
     // Notify merchant and user
-    notificationService.sendOrderConfirmation(savedOrder);
+    notificationService.sendOrderConfirmation(delivery);
 
     return savedOrder;
   }
@@ -94,10 +94,10 @@ public class OrderServiceImpl implements OrderService {
     Order cancelledOrder = orderRepository.save(order);
 
     // Process refund if payment was made
-    paymentService.processRefund(cancelledOrder);
+    paymentService.refundPayment(cancelledOrder, "Order cancelled by user");
 
     // Notify user and merchant
-    notificationService.sendOrderCancellation(cancelledOrder);
+    notificationService.sendOrderCancellation(cancelledOrder.getDelivery());
 
     return cancelledOrder;
   }
@@ -151,13 +151,14 @@ public class OrderServiceImpl implements OrderService {
     }
   }
 
-  private void createDeliveryRecord(Order order) {
+  private Delivery createDeliveryRecord(Order order) {
     Delivery delivery = new Delivery();
     delivery.setOrder(order);
     delivery.setStatus(com.boozebuddies.model.DeliveryStatus.PENDING);
     delivery.setDeliveryAddress(order.getDeliveryAddress());
     delivery.setCreatedAt(LocalDateTime.now());
     deliveryRepository.save(delivery);
+    return delivery;
   }
 
   private void handleStatusChange(Order order, OrderStatus newStatus) {

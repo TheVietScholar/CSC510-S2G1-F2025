@@ -13,8 +13,10 @@ public class PaymentDTO {
   private Long orderId;
   private BigDecimal amount;
   private String status;
+  private Long userId;
   private String paymentMethod;
   private String transactionId;
   private LocalDateTime paymentDate;
   private String failureReason;
+  private String refundReason;
 }
