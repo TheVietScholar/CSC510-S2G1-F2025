@@ -46,4 +46,8 @@ public interface NotificationService {
    * @param message The announcement message.
    */
   void broadcastSystemMessage(String message);
+
+  void sendOrderConfirmation(Delivery delivery);
+
+  void sendOrderCancellation(Delivery delivery);
 }
