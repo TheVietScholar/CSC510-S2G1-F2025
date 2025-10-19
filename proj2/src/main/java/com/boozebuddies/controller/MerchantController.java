@@ -53,7 +53,6 @@ public class MerchantController {
   //   }
   // }
 
-
   /** Get merchant by ID */
   @GetMapping("/{merchantId}")
   public ResponseEntity<ApiResponse<MerchantDTO>> getMerchantById(@PathVariable Long merchantId) {

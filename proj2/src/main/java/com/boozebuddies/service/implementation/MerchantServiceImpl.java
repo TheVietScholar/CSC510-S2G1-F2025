@@ -25,9 +25,7 @@ public class MerchantServiceImpl implements MerchantService {
     return merchant;
   }
 
-  /** Verifies a merchant's credentials or business license.
-   * might need setVerified here
-   */
+  /** Verifies a merchant's credentials or business license. might need setVerified here */
   @Override
   public Merchant verifyMerchant(Long merchantId, boolean verified) {
     Merchant merchant = getMerchantById(merchantId);
@@ -36,7 +34,6 @@ public class MerchantServiceImpl implements MerchantService {
     }
     return merchant;
   }
-
 
   /** Retrieves a merchant by their unique ID. */
   @Override
@@ -67,8 +64,7 @@ public class MerchantServiceImpl implements MerchantService {
     if (merchant != null) {
       merchants.remove(merchant);
       // Optionally, also remove their orders
-      orders.removeIf(
-          o -> o.getMerchant() != null && o.getMerchant().getId().equals(merchantId));
+      orders.removeIf(o -> o.getMerchant() != null && o.getMerchant().getId().equals(merchantId));
       return true;
     }
     return false;
