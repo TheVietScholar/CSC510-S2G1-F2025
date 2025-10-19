@@ -3,11 +3,15 @@ package com.boozebuddies.service.implementation;
 import com.boozebuddies.dto.RegisterUserRequest;
 import com.boozebuddies.entity.User;
 import com.boozebuddies.service.UserService;
+import com.boozebuddies.service.ValidationService;
+
 import java.time.LocalDate;
 import java.time.Period;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -16,12 +20,36 @@ public class UserServiceImpl implements UserService {
   private final List<User> users = new ArrayList<>();
   private long nextUserId = 1;
 
-  /** Registers a new user in the system. */
+  @Autowired
+  private ValidationService validationService;
+
+  public UserServiceImpl(ValidationService validationService) {
+  this.validationService = validationService;
+  }
+
   @Override
   public User register(User user) {
-    if (user == null || user.getEmail() == null || user.getPasswordHash() == null) {
-      throw new IllegalArgumentException("User email and password are required");
+    if (user == null) {
+      throw new IllegalArgumentException("User cannot be null");
     }
+    
+    // Use ValidationService to validate email
+    if (!validationService.validateEmail(user.getEmail())) {
+      throw new IllegalArgumentException("Email is invalid or empty");
+    }
+    
+    // Use ValidationService to validate password
+    if (!validationService.validatePassword(user.getPasswordHash())) {
+      throw new IllegalArgumentException("Password must be at least 8 characters with letters and numbers");
+    }
+    
+    // Check for duplicate email (case-insensitive)
+    boolean emailExists = users.stream()
+        .anyMatch(u -> u.getEmail().equalsIgnoreCase(user.getEmail()));
+    if (emailExists) {
+      throw new IllegalArgumentException("Email already registered");
+    }
+    
     user.setId(nextUserId++);
     user.setAgeVerified(verifyAge(user));
     users.add(user);
@@ -30,11 +58,27 @@ public class UserServiceImpl implements UserService {
     return user;
   }
 
-  /** Registers a new user from registration request DTO. */
   @Override
   public User registerUser(RegisterUserRequest request) {
-    if (request == null || request.getEmail() == null || request.getPassword() == null) {
-      throw new IllegalArgumentException("Email and password are required");
+    if (request == null) {
+      throw new IllegalArgumentException("Registration request cannot be null");
+    }
+    
+    // Use ValidationService to validate email
+    if (!validationService.validateEmail(request.getEmail())) {
+      throw new IllegalArgumentException("Email is invalid or empty");
+    }
+    
+    // Use ValidationService to validate password
+    if (!validationService.validatePassword(request.getPassword())) {
+      throw new IllegalArgumentException("Password must be at least 8 characters with letters and numbers");
+    }
+    
+    // Check for duplicate email (case-insensitive)
+    boolean emailExists = users.stream()
+        .anyMatch(u -> u.getEmail().equalsIgnoreCase(request.getEmail()));
+    if (emailExists) {
+      throw new IllegalArgumentException("Email already registered");
     }
 
     User user =
@@ -42,7 +86,7 @@ public class UserServiceImpl implements UserService {
             .id(nextUserId++)
             .name(request.getName())
             .email(request.getEmail())
-            .passwordHash(request.getPassword()) // In real app, hash this password!
+            .passwordHash(request.getPassword())
             .phone(request.getPhone())
             .dateOfBirth(request.getDateOfBirth())
             .build();
@@ -54,7 +98,6 @@ public class UserServiceImpl implements UserService {
         "[USER REGISTER] User ID " + user.getId() + " registered with email " + user.getEmail());
     return user;
   }
-
   /** Authenticates a user with email and password. */
   @Override
   public User login(String email, String password) {

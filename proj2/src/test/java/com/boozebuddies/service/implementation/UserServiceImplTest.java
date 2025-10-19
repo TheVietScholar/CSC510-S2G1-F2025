@@ -2,6 +2,7 @@ package com.boozebuddies.service.implementation;
 
 import com.boozebuddies.dto.RegisterUserRequest;
 import com.boozebuddies.entity.User;
+import com.boozebuddies.service.ValidationService;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -14,11 +15,13 @@ import static org.junit.jupiter.api.Assertions.*;
 class UserServiceImplTest {
 
   private UserServiceImpl userService;
+  private ValidationService validationService;
 
   @BeforeEach
   void setUp() {
-    userService = new UserServiceImpl();
-  }
+    validationService = new ValidationServiceImpl();
+    userService = new UserServiceImpl(validationService);
+  } 
 
   // ==================== REGISTRATION TESTS ====================
 
@@ -28,7 +31,7 @@ class UserServiceImplTest {
     User user = User.builder()
         .name("John Doe")
         .email("john@example.com")
-        .passwordHash("hash123")
+        .passwordHash("Password123")
         .dateOfBirth(LocalDate.of(1990, 5, 15))
         .build();
 
@@ -46,25 +49,97 @@ class UserServiceImplTest {
   }
 
   @Test
-  @DisplayName("Should throw exception when email is null")
-  void testRegisterUserWithoutEmail() {
+  @DisplayName("Should throw exception when email is invalid")
+  void testRegisterUserWithInvalidEmail() {
     User user = User.builder()
         .name("John Doe")
-        .passwordHash("hash123")
+        .email("invalidemail")
+        .passwordHash("Password123")
         .build();
 
     assertThrows(IllegalArgumentException.class, () -> userService.register(user));
   }
 
   @Test
-  @DisplayName("Should throw exception when password is null")
-  void testRegisterUserWithoutPassword() {
+  @DisplayName("Should throw exception when password is invalid")
+  void testRegisterUserWithInvalidPassword() {
     User user = User.builder()
         .name("John Doe")
         .email("john@example.com")
+        .passwordHash("weak")
         .build();
 
     assertThrows(IllegalArgumentException.class, () -> userService.register(user));
+  }
+
+  @Test
+  @DisplayName("Should reject duplicate email registration")
+  void testRegisterDuplicateEmail() {
+    User user1 = User.builder()
+        .name("John Doe")
+        .email("john@example.com")
+        .passwordHash("Password123")
+        .dateOfBirth(LocalDate.of(1990, 1, 1))
+        .build();
+    
+    userService.register(user1);
+
+    User user2 = User.builder()
+        .name("Jane Doe")
+        .email("john@example.com")
+        .passwordHash("Password456")
+        .dateOfBirth(LocalDate.of(1992, 3, 20))
+        .build();
+
+    assertThrows(IllegalArgumentException.class, () -> userService.register(user2));
+  }
+
+  @Test
+  @DisplayName("Should reject empty email string")
+  void testRegisterUserWithEmptyEmail() {
+    User user = User.builder()
+        .name("John Doe")
+        .email("")
+        .passwordHash("Password123")
+        .dateOfBirth(LocalDate.of(1990, 1, 1))
+        .build();
+
+    assertThrows(IllegalArgumentException.class, () -> userService.register(user));
+  }
+
+  @Test
+  @DisplayName("Should reject empty password string")
+  void testRegisterUserWithEmptyPassword() {
+    User user = User.builder()
+        .name("John Doe")
+        .email("john@example.com")
+        .passwordHash("")
+        .dateOfBirth(LocalDate.of(1990, 1, 1))
+        .build();
+
+    assertThrows(IllegalArgumentException.class, () -> userService.register(user));
+  }
+
+  @Test
+  @DisplayName("Should reject duplicate email with different case")
+  void testRegisterDuplicateEmailDifferentCase() {
+    User user1 = User.builder()
+        .name("John Doe")
+        .email("john@example.com")
+        .passwordHash("Password123")
+        .dateOfBirth(LocalDate.of(1990, 1, 1))
+        .build();
+    
+    userService.register(user1);
+
+    User user2 = User.builder()
+        .name("Jane Doe")
+        .email("JOHN@EXAMPLE.COM")
+        .passwordHash("Password456")
+        .dateOfBirth(LocalDate.of(1992, 3, 20))
+        .build();
+
+    assertThrows(IllegalArgumentException.class, () -> userService.register(user2));
   }
 
   @Test
@@ -73,7 +148,7 @@ class UserServiceImplTest {
     User user = User.builder()
         .name("Adult")
         .email("adult@example.com")
-        .passwordHash("hash")
+        .passwordHash("Password123")
         .dateOfBirth(LocalDate.of(1990, 1, 1))
         .build();
 
@@ -88,7 +163,7 @@ class UserServiceImplTest {
     User user = User.builder()
         .name("Minor")
         .email("minor@example.com")
-        .passwordHash("hash")
+        .passwordHash("Password123")
         .dateOfBirth(LocalDate.of(2015, 1, 1))
         .build();
 
@@ -103,7 +178,7 @@ class UserServiceImplTest {
     RegisterUserRequest request = new RegisterUserRequest();
     request.setName("Jane Doe");
     request.setEmail("jane@example.com");
-    request.setPassword("password123");
+    request.setPassword("Password123");
     request.setPhone("555-1234");
     request.setDateOfBirth(LocalDate.of(1992, 3, 20));
 
@@ -122,21 +197,23 @@ class UserServiceImplTest {
   }
 
   @Test
-  @DisplayName("Should throw exception when RegisterUserRequest email is null")
-  void testRegisterUserFromRequestWithoutEmail() {
+  @DisplayName("Should throw exception when RegisterUserRequest email is invalid")
+  void testRegisterUserFromRequestWithInvalidEmail() {
     RegisterUserRequest request = new RegisterUserRequest();
     request.setName("Test");
-    request.setPassword("password123");
+    request.setEmail("invalidemail");
+    request.setPassword("Password123");
 
     assertThrows(IllegalArgumentException.class, () -> userService.registerUser(request));
   }
 
   @Test
-  @DisplayName("Should throw exception when RegisterUserRequest password is null")
-  void testRegisterUserFromRequestWithoutPassword() {
+  @DisplayName("Should throw exception when RegisterUserRequest password is invalid")
+  void testRegisterUserFromRequestWithInvalidPassword() {
     RegisterUserRequest request = new RegisterUserRequest();
     request.setName("Test");
     request.setEmail("test@example.com");
+    request.setPassword("weak");
 
     assertThrows(IllegalArgumentException.class, () -> userService.registerUser(request));
   }
@@ -149,12 +226,13 @@ class UserServiceImplTest {
     User user = User.builder()
         .name("John Doe")
         .email("john@example.com")
-        .passwordHash("hash123")
+        .passwordHash("Password123")
         .dateOfBirth(LocalDate.of(1990, 5, 15))
         .build();
+    
     userService.register(user);
 
-    User loggedIn = userService.login("john@example.com", "hash123");
+    User loggedIn = userService.login("john@example.com", "Password123");
 
     assertNotNull(loggedIn);
     assertEquals("john@example.com", loggedIn.getEmail());
@@ -166,9 +244,10 @@ class UserServiceImplTest {
     User user = User.builder()
         .name("John Doe")
         .email("john@example.com")
-        .passwordHash("hash123")
+        .passwordHash("Password123")
         .dateOfBirth(LocalDate.of(1990, 5, 15))
         .build();
+    
     userService.register(user);
 
     User loggedIn = userService.login("john@example.com", "wrongpassword");
@@ -179,7 +258,7 @@ class UserServiceImplTest {
   @Test
   @DisplayName("Should return null for non-existent user")
   void testLoginUserNotFound() {
-    User loggedIn = userService.login("nonexistent@example.com", "password");
+    User loggedIn = userService.login("nonexistent@example.com", "Password123");
 
     assertNull(loggedIn);
   }
@@ -190,12 +269,13 @@ class UserServiceImplTest {
     User user = User.builder()
         .name("John Doe")
         .email("john@example.com")
-        .passwordHash("hash123")
+        .passwordHash("Password123")
         .dateOfBirth(LocalDate.of(1990, 5, 15))
         .build();
+    
     userService.register(user);
 
-    User loggedIn = userService.login("JOHN@EXAMPLE.COM", "hash123");
+    User loggedIn = userService.login("JOHN@EXAMPLE.COM", "Password123");
 
     assertNotNull(loggedIn);
     assertEquals("john@example.com", loggedIn.getEmail());
@@ -255,9 +335,10 @@ class UserServiceImplTest {
     User user = User.builder()
         .name("John Doe")
         .email("john@example.com")
-        .passwordHash("hash123")
+        .passwordHash("Password123")
         .dateOfBirth(LocalDate.of(1990, 5, 15))
         .build();
+    
     User registered = userService.register(user);
 
     Optional<User> retrieved = userService.getUserById(registered.getId());
@@ -281,13 +362,13 @@ class UserServiceImplTest {
     User user1 = User.builder()
         .name("John")
         .email("john@example.com")
-        .passwordHash("hash1")
+        .passwordHash("Password123")
         .dateOfBirth(LocalDate.of(1990, 1, 1))
         .build();
     User user2 = User.builder()
         .name("Jane")
         .email("jane@example.com")
-        .passwordHash("hash2")
+        .passwordHash("Password456")
         .dateOfBirth(LocalDate.of(1992, 3, 20))
         .build();
 
@@ -307,9 +388,10 @@ class UserServiceImplTest {
     User user = User.builder()
         .name("John")
         .email("john@example.com")
-        .passwordHash("hash123")
+        .passwordHash("Password123")
         .dateOfBirth(LocalDate.of(1990, 1, 1))
         .build();
+    
     User registered = userService.register(user);
 
     User updatedUser = User.builder()
@@ -327,18 +409,19 @@ class UserServiceImplTest {
     User user = User.builder()
         .name("John")
         .email("john@example.com")
-        .passwordHash("hash123")
+        .passwordHash("Password123")
         .dateOfBirth(LocalDate.of(1990, 1, 1))
         .build();
+    
     User registered = userService.register(user);
 
     User updatedUser = User.builder()
-        .passwordHash("newhash456")
+        .passwordHash("NewPassword456")
         .build();
     User result = userService.updateUser(registered.getId(), updatedUser);
 
     assertNotNull(result);
-    assertEquals("newhash456", result.getPasswordHash());
+    assertEquals("NewPassword456", result.getPasswordHash());
   }
 
   @Test
@@ -347,10 +430,11 @@ class UserServiceImplTest {
     User user = User.builder()
         .name("John")
         .email("john@example.com")
-        .passwordHash("hash123")
+        .passwordHash("Password123")
         .dateOfBirth(LocalDate.of(1990, 1, 1))
         .ageVerified(true)
         .build();
+    
     User registered = userService.register(user);
 
     User updatedUser = User.builder()
@@ -381,9 +465,10 @@ class UserServiceImplTest {
     User user = User.builder()
         .name("John")
         .email("john@example.com")
-        .passwordHash("hash123")
+        .passwordHash("Password123")
         .dateOfBirth(LocalDate.of(1990, 1, 1))
         .build();
+    
     User registered = userService.register(user);
 
     userService.deleteUser(registered.getId());
@@ -404,13 +489,13 @@ class UserServiceImplTest {
     User user1 = User.builder()
         .name("John")
         .email("john@example.com")
-        .passwordHash("hash1")
+        .passwordHash("Password123")
         .dateOfBirth(LocalDate.of(1990, 1, 1))
         .build();
     User user2 = User.builder()
         .name("Jane")
         .email("jane@example.com")
-        .passwordHash("hash2")
+        .passwordHash("Password456")
         .dateOfBirth(LocalDate.of(1992, 3, 20))
         .build();
 
@@ -420,5 +505,41 @@ class UserServiceImplTest {
     userService.deleteUser(registered1.getId());
 
     assertEquals(1, userService.getAllUsers().size());
+  }
+
+  // ==================== UNIQUE ID GENERATION TESTS ====================
+
+  @Test
+  @DisplayName("Should generate unique user IDs sequentially")
+  void testUserIdGenerationIsUnique() {
+    User user1 = User.builder()
+        .name("John")
+        .email("john@example.com")
+        .passwordHash("Password123")
+        .dateOfBirth(LocalDate.of(1990, 1, 1))
+        .build();
+    User user2 = User.builder()
+        .name("Jane")
+        .email("jane@example.com")
+        .passwordHash("Password456")
+        .dateOfBirth(LocalDate.of(1992, 3, 20))
+        .build();
+    User user3 = User.builder()
+        .name("Bob")
+        .email("bob@example.com")
+        .passwordHash("Password789")
+        .dateOfBirth(LocalDate.of(1988, 6, 10))
+        .build();
+
+    User registered1 = userService.register(user1);
+    User registered2 = userService.register(user2);
+    User registered3 = userService.register(user3);
+
+    assertNotEquals(registered1.getId(), registered2.getId());
+    assertNotEquals(registered2.getId(), registered3.getId());
+    assertNotEquals(registered1.getId(), registered3.getId());
+
+    assertEquals(registered1.getId() + 1, registered2.getId());
+    assertEquals(registered2.getId() + 1, registered3.getId());
   }
 }
