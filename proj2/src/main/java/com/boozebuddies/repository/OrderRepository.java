@@ -25,12 +25,14 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
   Page<Order> findByMerchantId(@Param("merchantId") Long merchantId, Pageable pageable);
 
   // Ready for dispatch (kitchen/dispatch boards)
-  @Query("SELECT o FROM Order o WHERE o.merchant.id = :merchantId AND o.status IN :statuses ORDER BY o.createdAt ASC")
-  List<Order> findActiveByMerchant(@Param("merchantId") Long merchantId,
-      @Param("statuses") List<OrderStatus> statuses);
+  @Query(
+      "SELECT o FROM Order o WHERE o.merchant.id = :merchantId AND o.status IN :statuses ORDER BY o.createdAt ASC")
+  List<Order> findActiveByMerchant(
+      @Param("merchantId") Long merchantId, @Param("statuses") List<OrderStatus> statuses);
 
   // Search (by item name snapshot or merchant name)
-  @Query("""
+  @Query(
+      """
       SELECT DISTINCT o FROM Order o
       JOIN o.items i
       WHERE LOWER(i.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
@@ -39,18 +41,21 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
   Page<Order> searchOrders(@Param("keyword") String keyword, Pageable pageable);
 
   // Totals & reporting
-  @Query("SELECT o.merchant.id, SUM(o.totalAmount) FROM Order o WHERE o.status = com.boozebuddies.model.OrderStatus.DELIVERED GROUP BY o.merchant.id")
+  @Query(
+      "SELECT o.merchant.id, SUM(o.totalAmount) FROM Order o WHERE o.status = com.boozebuddies.model.OrderStatus.DELIVERED GROUP BY o.merchant.id")
   List<Object[]> sumDeliveredTotalsByMerchant();
 
-  @Query("SELECT o FROM Order o WHERE o.status = com.boozebuddies.model.OrderStatus.DELIVERED AND o.updatedAt BETWEEN :from AND :to")
-  List<Order> findDeliveredBetween(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
+  @Query(
+      "SELECT o FROM Order o WHERE o.status = com.boozebuddies.model.OrderStatus.DELIVERED AND o.updatedAt BETWEEN :from AND :to")
+  List<Order> findDeliveredBetween(
+      @Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
 
   // Promo usage
   List<Order> findByPromoCode(String promoCode);
 
   @Query("SELECT o FROM Order o WHERE o.user.id = :customerId AND o.status IN :statuses")
-  List<Order> findCancellableOrders(@Param("customerId") Long customerId,
-      @Param("statuses") List<OrderStatus> statuses);
+  List<Order> findCancellableOrders(
+      @Param("customerId") Long customerId, @Param("statuses") List<OrderStatus> statuses);
 
   // Shortcut to check existence for a user
   boolean existsByUser_Id(Long customerId);

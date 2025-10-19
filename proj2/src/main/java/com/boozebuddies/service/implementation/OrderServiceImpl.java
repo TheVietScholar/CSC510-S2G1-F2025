@@ -7,7 +7,6 @@ import com.boozebuddies.repository.DeliveryRepository;
 import com.boozebuddies.repository.MerchantRepository;
 import com.boozebuddies.repository.OrderRepository;
 import com.boozebuddies.repository.UserRepository;
-import com.boozebuddies.service.DeliveryService;
 import com.boozebuddies.service.NotificationService;
 import com.boozebuddies.service.OrderService;
 import com.boozebuddies.service.PaymentService;
