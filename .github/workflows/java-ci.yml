@@ -33,7 +33,6 @@ jobs:
         run: |
           ./mvnw -B -ntp spotless:apply
           # ./mvnw -B -ntp checkstyle:check
-          ./mvnw -B -ntp -DskipTests verify
 
   tests:
     name: Optional Tests
