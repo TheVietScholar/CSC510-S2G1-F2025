@@ -2,12 +2,10 @@ package com.boozebuddies.service.implementation;
 
 import com.boozebuddies.dto.RegisterUserRequest;
 import com.boozebuddies.entity.User;
+import com.boozebuddies.repository.UserRepository;
 import com.boozebuddies.service.UserService;
 import com.boozebuddies.service.ValidationService;
 
-import java.time.LocalDate;
-import java.time.Period;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,169 +15,133 @@ import org.springframework.stereotype.Service;
 @Service
 public class UserServiceImpl implements UserService {
 
-  private final List<User> users = new ArrayList<>();
-  private long nextUserId = 1;
+    private final UserRepository userRepository;
+    private final ValidationService validationService;
 
-  @Autowired
-  private ValidationService validationService;
-
-  public UserServiceImpl(ValidationService validationService) {
-    this.validationService = validationService;
-  }
-
-  @Override
-  public User register(User user) {
-    if (user == null) {
-      throw new IllegalArgumentException("User cannot be null");
-    }
-    
-    // Validate required fields
-    if (user.getName() == null || user.getName().isEmpty()) {
-      throw new IllegalArgumentException("Name is required");
-    }
-    
-    if (user.getPhone() == null || user.getPhone().isEmpty()) {
-      throw new IllegalArgumentException("Phone is required");
-    }
-    
-    if (user.getDateOfBirth() == null) {
-      throw new IllegalArgumentException("Date of birth is required");
-    }
-    
-    // Use ValidationService to validate email
-    if (!validationService.validateEmail(user.getEmail())) {
-      throw new IllegalArgumentException("Email is invalid or empty");
-    }
-    
-    // Use ValidationService to validate password
-    if (!validationService.validatePassword(user.getPasswordHash())) {
-      throw new IllegalArgumentException("Password must be at least 8 characters with letters and numbers");
-    }
-    
-    // Check for duplicate email (case-insensitive)
-    boolean emailExists = users.stream()
-        .anyMatch(u -> u.getEmail().equalsIgnoreCase(user.getEmail()));
-    if (emailExists) {
-      throw new IllegalArgumentException("Email already registered");
-    }
-    
-    user.setId(nextUserId++);
-    user.setAgeVerified(validationService.validateAge(user));
-    users.add(user);
-    System.out.println(
-        "[USER REGISTER] User ID " + user.getId() + " registered with email " + user.getEmail());
-    return user;
-  }
-
-  @Override
-  public User registerUser(RegisterUserRequest request) {
-    if (request == null) {
-      throw new IllegalArgumentException("Registration request cannot be null");
-    }
-    
-    // Validate required fields
-    if (request.getName() == null || request.getName().isEmpty()) {
-      throw new IllegalArgumentException("Name is required");
-    }
-    
-    if (request.getPhone() == null || request.getPhone().isEmpty()) {
-      throw new IllegalArgumentException("Phone is required");
-    }
-    
-    if (request.getDateOfBirth() == null) {
-      throw new IllegalArgumentException("Date of birth is required");
-    }
-    
-    // Use ValidationService to validate email
-    if (!validationService.validateEmail(request.getEmail())) {
-      throw new IllegalArgumentException("Email is invalid or empty");
-    }
-    
-    // Use ValidationService to validate password
-    if (!validationService.validatePassword(request.getPassword())) {
-      throw new IllegalArgumentException("Password must be at least 8 characters with letters and numbers");
-    }
-    
-    // Check for duplicate email (case-insensitive)
-    boolean emailExists = users.stream()
-        .anyMatch(u -> u.getEmail().equalsIgnoreCase(request.getEmail()));
-    if (emailExists) {
-      throw new IllegalArgumentException("Email already registered");
+    @Autowired
+    public UserServiceImpl(UserRepository userRepository, ValidationService validationService) {
+        this.userRepository = userRepository;
+        this.validationService = validationService;
     }
 
-    User user =
-        User.builder()
-            .id(nextUserId++)
-            .name(request.getName())
-            .email(request.getEmail())
-            .passwordHash(request.getPassword())
-            .phone(request.getPhone())
-            .dateOfBirth(request.getDateOfBirth())
-            .build();
+    @Override
+    public User register(User user) {
+        if (user == null) {
+            throw new IllegalArgumentException("User cannot be null");
+        }
 
-    user.setAgeVerified(validationService.validateAge(user));
-    users.add(user);
+        if (user.getName() == null || user.getName().isEmpty()) {
+            throw new IllegalArgumentException("Name is required");
+        }
 
-    System.out.println(
-        "[USER REGISTER] User ID " + user.getId() + " registered with email " + user.getEmail());
-    return user;
-  }
-  
-  /** Authenticates a user with email and password. */
-  @Override
-  public User login(String email, String password) {
-    Optional<User> userOpt =
-        users.stream()
-            .filter(
-                u -> u.getEmail().equalsIgnoreCase(email) && u.getPasswordHash().equals(password))
-            .findFirst();
-    return userOpt.orElse(null);
-  }
+        if (user.getPhone() == null || user.getPhone().isEmpty()) {
+            throw new IllegalArgumentException("Phone is required");
+        }
 
-  /** Retrieves a user by their unique ID. */
-  @Override
-  public Optional<User> getUserById(Long userId) {
-    return users.stream().filter(u -> u.getId().equals(userId)).findFirst();
-  }
+        if (user.getDateOfBirth() == null) {
+            throw new IllegalArgumentException("Date of birth is required");
+        }
 
-  /** Retrieves all users in the system. */
-  @Override
-  public List<User> getAllUsers() {
-    return new ArrayList<>(users);
-  }
+        if (!validationService.validateEmail(user.getEmail())) {
+            throw new IllegalArgumentException("Email is invalid or empty");
+        }
 
-  /** Updates a user's information. */
-  @Override
-  public User updateUser(Long userId, User updatedUser) {
-    if (updatedUser == null) {
-      throw new IllegalArgumentException("Updated user cannot be null");
-    }
-    Optional<User> userOpt = getUserById(userId);
-    if (userOpt.isPresent()) {
-      User user = userOpt.get();
-      if (updatedUser.getEmail() != null) user.setEmail(updatedUser.getEmail());
-      if (updatedUser.getPasswordHash() != null)
-        user.setPasswordHash(updatedUser.getPasswordHash());
-      if (updatedUser.getDateOfBirth() != null) {
-        user.setDateOfBirth(updatedUser.getDateOfBirth());
+        if (!validationService.validatePassword(user.getPasswordHash())) {
+            throw new IllegalArgumentException("Password must be at least 8 characters with letters and numbers");
+        }
+
+        if (userRepository.existsByEmailIgnoreCase(user.getEmail())) {
+            throw new IllegalArgumentException("Email already registered");
+        }
+
         user.setAgeVerified(validationService.validateAge(user));
-      }
-      return user;
-    }
-    return null;
-  }
 
-  /** Deletes a user from the system. */
-  @Override
-  public boolean deleteUser(Long userId) {
-  if (userId == null) {
-    throw new IllegalArgumentException("User ID cannot be null");
-  }
-  
-  boolean removed = users.removeIf(u -> u.getId().equals(userId));
-  if (removed) {
-    System.out.println("[USER DELETE] User ID " + userId + " deleted");
-  }
-  return removed;
-}
+        return userRepository.save(user);
+    }
+
+    @Override
+    public User registerUser(RegisterUserRequest request) {
+        if (request == null) {
+            throw new IllegalArgumentException("Registration request cannot be null");
+        }
+
+        if (request.getName() == null || request.getName().isEmpty()) {
+            throw new IllegalArgumentException("Name is required");
+        }
+
+        if (request.getPhone() == null || request.getPhone().isEmpty()) {
+            throw new IllegalArgumentException("Phone is required");
+        }
+
+        if (request.getDateOfBirth() == null) {
+            throw new IllegalArgumentException("Date of birth is required");
+        }
+
+        if (!validationService.validateEmail(request.getEmail())) {
+            throw new IllegalArgumentException("Email is invalid or empty");
+        }
+
+        if (!validationService.validatePassword(request.getPassword())) {
+            throw new IllegalArgumentException("Password must be at least 8 characters with letters and numbers");
+        }
+
+        if (userRepository.existsByEmailIgnoreCase(request.getEmail())) {
+            throw new IllegalArgumentException("Email already registered");
+        }
+
+        User user = User.builder()
+                .name(request.getName())
+                .email(request.getEmail())
+                .passwordHash(request.getPassword())
+                .phone(request.getPhone())
+                .dateOfBirth(request.getDateOfBirth())
+                .build();
+
+        user.setAgeVerified(validationService.validateAge(user));
+
+        return userRepository.save(user);
+    }
+
+    @Override
+    public User login(String email, String password) {
+        Optional<User> userOpt = userRepository.findByEmailIgnoreCase(email);
+        if (userOpt.isPresent() && userOpt.get().getPasswordHash().equals(password)) {
+            return userOpt.get();
+        }
+        return null;
+    }
+
+    @Override
+    public Optional<User> getUserById(Long userId) {
+        return userRepository.findById(userId);
+    }
+
+    @Override
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
+    }
+
+    @Override
+    public User updateUser(Long userId, User updatedUser) {
+        if (updatedUser == null) {
+            throw new IllegalArgumentException("Updated user cannot be null");
+        }
+
+        return userRepository.findById(userId).map(user -> {
+            if (updatedUser.getEmail() != null) user.setEmail(updatedUser.getEmail());
+            if (updatedUser.getPasswordHash() != null) user.setPasswordHash(updatedUser.getPasswordHash());
+            if (updatedUser.getDateOfBirth() != null) {
+                user.setDateOfBirth(updatedUser.getDateOfBirth());
+                user.setAgeVerified(validationService.validateAge(user));
+            }
+            return userRepository.save(user);
+        }).orElse(null);
+    }
+
+    @Override
+    public boolean deleteUser(Long userId) {
+        if (!userRepository.existsById(userId)) return false;
+        userRepository.deleteById(userId);
+        return true;
+    }
 }

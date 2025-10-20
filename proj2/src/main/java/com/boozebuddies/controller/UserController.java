@@ -29,7 +29,7 @@ public class UserController {
       User user = userService.registerUser(request);
       UserDTO userDTO = userMapper.toDTO(user);
       return ResponseEntity.status(HttpStatus.CREATED).body(userDTO);
-    } catch (IllegalArgumentException e) {
+    } catch (Exception e) {
       return ResponseEntity.badRequest().body(e.getMessage());
     }
   }
@@ -48,11 +48,14 @@ public class UserController {
         userService.getAllUsers().stream().map(userMapper::toDTO).collect(Collectors.toList());
     return ResponseEntity.ok(users);
   }
-
+  
   @PutMapping("/{id}")
   public ResponseEntity<UserDTO> updateUser(@PathVariable Long id, @RequestBody UserDTO userDTO) {
     try {
       User updatedUser = userService.updateUser(id, userMapper.toEntity(userDTO));
+      if (updatedUser == null) {
+        return ResponseEntity.notFound().build();
+      }
       return ResponseEntity.ok(userMapper.toDTO(updatedUser));
     } catch (Exception e) {
       return ResponseEntity.notFound().build();

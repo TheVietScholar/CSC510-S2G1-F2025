@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -272,5 +273,74 @@ class UserControllerTest {
     mockMvc.perform(post("/api/users/1/verify-age"))
         .andExpect(status().isBadRequest())
         .andExpect(content().string("Age verification failed"));
+  }
+
+  @Test
+  @DisplayName("PUT /api/users/{id} should return 404 when user not found")
+  void testUpdateUserNotFound() throws Exception {
+    UserDTO updateDTO = new UserDTO();
+    updateDTO.setEmail("newemail@example.com");
+
+    User originalUser = User.builder().id(999L).email("old@example.com").build();
+
+    when(userMapper.toEntity(updateDTO)).thenReturn(originalUser);
+    when(userService.updateUser(eq(999L), any(User.class))).thenReturn(null);
+
+    mockMvc.perform(put("/api/users/999")
+        .contentType("application/json")
+        .content(objectMapper.writeValueAsString(updateDTO)))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  @DisplayName("POST /api/users/{id}/verify-age should return 400 when user not found")
+  void testVerifyAgeUserNotFound() throws Exception {
+    when(userService.getUserById(999L)).thenReturn(java.util.Optional.empty());
+
+    mockMvc.perform(post("/api/users/999/verify-age"))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  @DisplayName("POST /api/users/register should handle unexpected exceptions")
+  void testRegisterUnexpectedException() throws Exception {
+    RegisterUserRequest request = new RegisterUserRequest();
+    request.setName("John Doe");
+    request.setEmail("john@example.com");
+    request.setPassword("Password123");
+    request.setPhone("555-123-4567");
+    request.setDateOfBirth(LocalDate.of(1990, 1, 1));
+
+    when(userService.registerUser(any())).thenThrow(new RuntimeException("Database error"));
+
+    mockMvc.perform(post("/api/users/register")
+        .contentType("application/json")
+        .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  @DisplayName("POST /api/users/login should handle unexpected exceptions")
+  void testLoginUnexpectedException() throws Exception {
+    LoginRequest request = new LoginRequest("john@example.com", "Password123");
+
+    when(userService.login("john@example.com", "Password123"))
+        .thenThrow(new RuntimeException("Database error"));
+
+    mockMvc.perform(post("/api/users/login")
+        .contentType("application/json")
+        .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  @DisplayName("GET /api/users should return empty list when no users exist")
+  void testGetAllUsersEmpty() throws Exception {
+    when(userService.getAllUsers()).thenReturn(List.of());
+
+    mockMvc.perform(get("/api/users"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$").isArray())
+        .andExpect(jsonPath("$.length()").value(0));
   }
 }
