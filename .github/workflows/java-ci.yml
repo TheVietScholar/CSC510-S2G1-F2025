@@ -9,7 +9,7 @@ on:
       run-tests:
         description: "Run unit/integration tests"
         type: boolean
-        default: false
+        default: true
         required: false
 
 jobs:
