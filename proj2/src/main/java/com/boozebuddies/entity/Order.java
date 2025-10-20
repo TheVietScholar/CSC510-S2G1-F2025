@@ -6,6 +6,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.hibernate.annotations.BatchSize;
+
 import lombok.*;
 
 @Entity
@@ -60,9 +63,11 @@ public class Order {
   @Column(name = "estimated_delivery_time")
   private LocalDateTime estimatedDeliveryTime;
 
+  // Order.java
   @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
-  @Builder.Default
-  private List<OrderItem> items = new ArrayList<>();
+  @OrderColumn(name = "line_no")
+  @BatchSize(size = 50) // reduce round trips when loading items
+  private List<OrderItem> items;
 
   @OneToOne(mappedBy = "order", cascade = CascadeType.ALL)
   private Delivery delivery;
@@ -70,9 +75,22 @@ public class Order {
   @OneToOne(mappedBy = "order", cascade = CascadeType.ALL)
   private Payment payment;
 
+  public void addItem(OrderItem item) {
+    item.setOrder(this); // maintain both sides
+    item.setLineNo(items.size() + 1);
+    items.add(item);
+  }
+
+  public void removeItem(OrderItem item) {
+    items.remove(item);
+    item.setOrder(null);
+    // re-normalize line numbers if you care about strict sequence:
+    for (int i = 0; i < items.size(); i++)
+      items.get(i).setLineNo(i + 1);
+  }
+
   public void calculateTotal() {
-    this.totalAmount =
-        items.stream().map(OrderItem::getSubtotal).reduce(BigDecimal.ZERO, BigDecimal::add);
+    this.totalAmount = items.stream().map(OrderItem::getSubtotal).reduce(BigDecimal.ZERO, BigDecimal::add);
   }
 
   public boolean canBeCancelled() {
