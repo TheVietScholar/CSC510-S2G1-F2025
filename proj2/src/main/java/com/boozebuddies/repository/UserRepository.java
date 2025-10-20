@@ -11,18 +11,18 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
 
-    Optional<User> findByEmail(String email);
+  Optional<User> findByEmail(String email);
 
-    boolean existsByEmail(String email);
+  boolean existsByEmail(String email);
 
-    // Simple role filter (roles is ElementCollection<String>)
-    @Query("SELECT u FROM User u JOIN u.roles r WHERE LOWER(r) = LOWER(:role)")
-    Page<User> findByRole(@Param("role") String role, Pageable pageable);
+  // Simple role filter (roles is ElementCollection<String>)
+  @Query("SELECT u FROM User u JOIN u.roles r WHERE LOWER(r) = LOWER(:role)")
+  Page<User> findByRole(@Param("role") String role, Pageable pageable);
 
-    // Age-based (for compliance reports)
-    @Query("SELECT u FROM User u WHERE u.dateOfBirth <= :cutoff")
-    Page<User> findUsersOfLegalAge(@Param("cutoff") LocalDate cutoffDob, Pageable pageable);
+  // Age-based (for compliance reports)
+  @Query("SELECT u FROM User u WHERE u.dateOfBirth <= :cutoff")
+  Page<User> findUsersOfLegalAge(@Param("cutoff") LocalDate cutoffDob, Pageable pageable);
 
-    @Query("SELECT u FROM User u WHERE u.ageVerified = true")
-    Page<User> findAgeVerified(Pageable pageable);
+  @Query("SELECT u FROM User u WHERE u.ageVerified = true")
+  Page<User> findAgeVerified(Pageable pageable);
 }

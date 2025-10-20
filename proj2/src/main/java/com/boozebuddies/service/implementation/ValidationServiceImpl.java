@@ -3,7 +3,6 @@ package com.boozebuddies.service.implementation;
 import com.boozebuddies.entity.Product;
 import com.boozebuddies.entity.User;
 import com.boozebuddies.service.ValidationService;
-
 import java.math.BigDecimal;
 import java.util.regex.Pattern;
 import org.springframework.stereotype.Service;
