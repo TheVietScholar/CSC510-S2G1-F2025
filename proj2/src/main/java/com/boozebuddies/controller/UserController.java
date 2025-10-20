@@ -1,5 +1,6 @@
 package com.boozebuddies.controller;
 
+import com.boozebuddies.dto.LoginRequest;
 import com.boozebuddies.dto.RegisterUserRequest;
 import com.boozebuddies.dto.UserDTO;
 import com.boozebuddies.entity.User;
@@ -86,6 +87,26 @@ public class UserController {
       return ResponseEntity.ok("User deleted successfully");
     } else {
       return ResponseEntity.notFound().build();
+    }
+  }
+
+  @PostMapping("/login")
+  public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+    try {
+      if (request.getEmail() == null || request.getPassword() == null) {
+        return ResponseEntity.badRequest().body("Email and password are required");
+      }
+      
+      User user = userService.login(request.getEmail(), request.getPassword());
+      
+      if (user != null) {
+        UserDTO userDTO = userMapper.toDTO(user);
+        return ResponseEntity.ok(userDTO);
+      } else {
+        return ResponseEntity.badRequest().body("Invalid email or password");
+      }
+    } catch (Exception e) {
+      return ResponseEntity.badRequest().body(e.getMessage());
     }
   }
 }

@@ -3,6 +3,8 @@ package com.boozebuddies.service;
 import com.boozebuddies.entity.Merchant;
 import com.boozebuddies.entity.Order;
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface MerchantService {
 
@@ -19,7 +21,7 @@ public interface MerchantService {
    *
    * @param merchantId The ID of the merchant to verify.
    * @param verified True if the merchant is verified, false otherwise.
-   * @return The updated Merchant object reflecting the verification status.
+   * @return The updated Merchant object reflecting the verification status, or null if not found.
    */
   Merchant verifyMerchant(Long merchantId, boolean verified);
 
@@ -39,12 +41,13 @@ public interface MerchantService {
   List<Merchant> getAllMerchants();
 
   /**
-   * Retrieves all orders placed with a specific merchant.
+   * Retrieves all orders placed with a specific merchant, paginated.
    *
    * @param merchantId The ID of the merchant.
-   * @return A list of orders associated with the merchant.
+   * @param pageable The pagination configuration (page number, size, sort).
+   * @return A paginated list (Page) of orders associated with the merchant.
    */
-  List<Order> getOrdersByMerchant(Long merchantId);
+  Page<Order> getOrdersByMerchant(Long merchantId, Pageable pageable);
 
   /**
    * Deletes a merchant from the system.
