@@ -16,21 +16,28 @@ public class OrderItem {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @ManyToOne(fetch = FetchType.LAZY)
+  // OrderItem.java
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "order_id", nullable = false)
   private Order order;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "product_id", nullable = false)
+  @JoinColumn(name = "product_id") // nullable to preserve history if product is removed
   private Product product;
 
+  @Column(name = "line_no", nullable = false)
+  private Integer lineNo;
+
   @Column(nullable = false)
-  private Integer quantity;
+  private String name; // snapshot
 
   @Column(name = "unit_price", precision = 10, scale = 2, nullable = false)
   private BigDecimal unitPrice;
 
-  @Column(name = "subtotal", precision = 10, scale = 2)
+  @Column(nullable = false)
+  private Integer quantity;
+
+  @Column(nullable = false, precision = 10, scale = 2)
   private BigDecimal subtotal;
 
   @PrePersist
