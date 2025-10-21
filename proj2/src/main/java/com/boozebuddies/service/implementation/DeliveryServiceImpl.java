@@ -9,6 +9,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.stereotype.Service;
+
+@Service 
 public class DeliveryServiceImpl implements DeliveryService {
 
   private final List<Delivery> deliveries = new ArrayList<>();
