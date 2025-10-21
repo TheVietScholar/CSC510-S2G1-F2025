@@ -3,7 +3,7 @@ target/
 **/target/
 
 # --- IDE / Editor ---
-.idea/
+.idea/*
 *.iml
 .classpath
 .project
@@ -12,6 +12,7 @@ target/
 
 # --- OS / Misc ---
 .DS_Store
+**/.DS_Store
 Thumbs.db
 
 # --- Logs & Temp ---
