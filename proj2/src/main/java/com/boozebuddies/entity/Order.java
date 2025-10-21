@@ -63,6 +63,9 @@ public class Order {
   @Column(name = "estimated_delivery_time")
   private LocalDateTime estimatedDeliveryTime;
 
+  @Column(name = "promo_code")
+  private String promoCode;
+
   // Order.java
   @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
   @OrderColumn(name = "line_no")
