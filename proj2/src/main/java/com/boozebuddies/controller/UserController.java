@@ -1,5 +1,6 @@
 package com.boozebuddies.controller;
 
+import com.boozebuddies.dto.LoginRequest;
 import com.boozebuddies.dto.RegisterUserRequest;
 import com.boozebuddies.dto.UserDTO;
 import com.boozebuddies.entity.User;
@@ -25,14 +26,8 @@ public class UserController {
   @PostMapping("/register")
   public ResponseEntity<?> registerUser(@RequestBody RegisterUserRequest request) {
     try {
-      // Validate registration data
-      if (request.getEmail() == null || request.getPassword() == null) {
-        return ResponseEntity.badRequest().body("Email and password are required");
-      }
-
       User user = userService.registerUser(request);
       UserDTO userDTO = userMapper.toDTO(user);
-
       return ResponseEntity.status(HttpStatus.CREATED).body(userDTO);
     } catch (Exception e) {
       return ResponseEntity.badRequest().body(e.getMessage());
@@ -53,11 +48,14 @@ public class UserController {
         userService.getAllUsers().stream().map(userMapper::toDTO).collect(Collectors.toList());
     return ResponseEntity.ok(users);
   }
-
+  
   @PutMapping("/{id}")
   public ResponseEntity<UserDTO> updateUser(@PathVariable Long id, @RequestBody UserDTO userDTO) {
     try {
       User updatedUser = userService.updateUser(id, userMapper.toEntity(userDTO));
+      if (updatedUser == null) {
+        return ResponseEntity.notFound().build();
+      }
       return ResponseEntity.ok(userMapper.toDTO(updatedUser));
     } catch (Exception e) {
       return ResponseEntity.notFound().build();
@@ -79,6 +77,36 @@ public class UserController {
         return ResponseEntity.ok("Age verification successful");
       } else {
         return ResponseEntity.badRequest().body("Age verification failed");
+      }
+    } catch (Exception e) {
+      return ResponseEntity.badRequest().body(e.getMessage());
+    }
+  }
+
+  @DeleteMapping("/{id}")
+  public ResponseEntity<?> deleteUser(@PathVariable Long id) {
+    boolean deleted = userService.deleteUser(id);
+    if (deleted) {
+      return ResponseEntity.ok("User deleted successfully");
+    } else {
+      return ResponseEntity.notFound().build();
+    }
+  }
+
+  @PostMapping("/login")
+  public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+    try {
+      if (request.getEmail() == null || request.getPassword() == null) {
+        return ResponseEntity.badRequest().body("Email and password are required");
+      }
+      
+      User user = userService.login(request.getEmail(), request.getPassword());
+      
+      if (user != null) {
+        UserDTO userDTO = userMapper.toDTO(user);
+        return ResponseEntity.ok(userDTO);
+      } else {
+        return ResponseEntity.badRequest().body("Invalid email or password");
       }
     } catch (Exception e) {
       return ResponseEntity.badRequest().body(e.getMessage());
