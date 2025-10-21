@@ -75,4 +75,4 @@ if [ -z "$MAVEN_PROJECTBASEDIR" ]; then
 fi
 
 # Execute Wrapper main
-exec "$MAVEN_JAVA" --release 17 -Dmaven.multiModuleProjectDirectory="$MAVEN_PROJECTBASEDIR" -cp "$WRAPPER_JAR" org.apache.maven.wrapper.MavenWrapperMain "$@"
+exec "$MAVEN_JAVA" -Dmaven.multiModuleProjectDirectory="$MAVEN_PROJECTBASEDIR" -cp "$WRAPPER_JAR" org.apache.maven.wrapper.MavenWrapperMain "$@"
