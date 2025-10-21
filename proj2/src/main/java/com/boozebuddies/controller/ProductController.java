@@ -33,6 +33,18 @@ public class ProductController {
   }
 
   // -----------------------------
+  // Get all available products
+  // -----------------------------
+  @GetMapping("/available")
+  public ResponseEntity<List<ProductDTO>> getAvailableProducts() {
+    List<ProductDTO> products =
+        productService.getAvailableProducts().stream()
+            .map(productMapper::toDTO)
+            .collect(Collectors.toList());
+    return ResponseEntity.ok(products);
+  }
+
+  // -----------------------------
   // Get a product by ID
   // -----------------------------
   @GetMapping("/{id}")
@@ -94,11 +106,34 @@ public class ProductController {
   }
 
   // -----------------------------
-  // Check if product is available in sufficient quantity
+  // Check if product is available (simple boolean check)
   // -----------------------------
   @GetMapping("/{id}/available")
-  public ResponseEntity<Boolean> isProductAvailable(
-      @PathVariable Long id, @RequestParam int quantity) {
-    return ResponseEntity.ok(productService.isProductAvailable(id, quantity));
+  public ResponseEntity<Boolean> isProductAvailable(@PathVariable Long id) {
+    return ResponseEntity.ok(productService.isProductAvailable(id));
+  }
+
+  // -----------------------------
+  // Get products by merchant
+  // -----------------------------
+  @GetMapping("/merchant/{merchantId}")
+  public ResponseEntity<List<ProductDTO>> getProductsByMerchant(@PathVariable Long merchantId) {
+    List<ProductDTO> products =
+        productService.getProductsByMerchant(merchantId).stream()
+            .map(productMapper::toDTO)
+            .collect(Collectors.toList());
+    return ResponseEntity.ok(products);
+  }
+
+  // -----------------------------
+  // Get available products by merchant
+  // -----------------------------
+  @GetMapping("/merchant/{merchantId}/available")
+  public ResponseEntity<List<ProductDTO>> getAvailableProductsByMerchant(@PathVariable Long merchantId) {
+    List<ProductDTO> products =
+        productService.getAvailableProductsByMerchant(merchantId).stream()
+            .map(productMapper::toDTO)
+            .collect(Collectors.toList());
+    return ResponseEntity.ok(products);
   }
 }
