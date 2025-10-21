@@ -2,8 +2,9 @@ name: CI (proj2 Spring Boot)
 
 on:
   push:
-    branches: [ main, tiehang ]
+    branches: [main, dev]
   pull_request:
+    branches: [main, dev]
   workflow_dispatch:
     inputs:
       run-tests:
@@ -26,7 +27,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: "17"
           cache: maven
 
       - name: Build (skip tests for now)
@@ -49,7 +50,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: "17"
           cache: maven
 
       - name: Run Tests
