@@ -33,14 +33,6 @@ public interface UserService {
   User login(String email, String password);
 
   /**
-   * Verifies that a user is of legal drinking age (e.g., 21+ in the US).
-   *
-   * @param user The user to verify.
-   * @return True if the user is of legal age, false otherwise.
-   */
-  boolean verifyAge(User user);
-
-  /**
    * Retrieves a user by their unique ID.
    *
    * @param userId The ID of the user.
@@ -69,5 +61,5 @@ public interface UserService {
    *
    * @param userId The ID of the user to delete.
    */
-  void deleteUser(Long userId);
+  boolean deleteUser(Long userId);
 }
