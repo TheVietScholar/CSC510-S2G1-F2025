@@ -59,18 +59,19 @@ class CategoryControllerTest {
   // ==================== getAllCategories() Tests ====================
 
   @Test
-  @DisplayName("GET /api/categories should return 200 with list of categories")
+  @DisplayName("GET /api/categories should return 200 with ApiResponse containing list of categories")
   void testGetAllCategories_Success() throws Exception {
     List<Category> categories = List.of(testCategory);
     when(categoryService.getAllCategories()).thenReturn(categories);
     when(categoryMapper.toDTO(testCategory)).thenReturn(testCategoryDTO);
 
-    mockMvc
-        .perform(get("/api/categories"))
+    mockMvc.perform(get("/api/categories"))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$[0].id").value(1L))
-        .andExpect(jsonPath("$[0].name").value("Beer"))
-        .andExpect(jsonPath("$[0].description").value("Alcoholic beverages made from grains"));
+        .andExpect(jsonPath("$.success").value(true))
+        .andExpect(jsonPath("$.message").value("Categories retrieved successfully"))
+        .andExpect(jsonPath("$.data[0].id").value(1L))
+        .andExpect(jsonPath("$.data[0].name").value("Beer"))
+        .andExpect(jsonPath("$.data[0].description").value("Alcoholic beverages made from grains"));
 
     verify(categoryService, times(1)).getAllCategories();
     verify(categoryMapper, times(1)).toDTO(testCategory);
@@ -81,11 +82,12 @@ class CategoryControllerTest {
   void testGetAllCategories_EmptyList() throws Exception {
     when(categoryService.getAllCategories()).thenReturn(new ArrayList<>());
 
-    mockMvc
-        .perform(get("/api/categories"))
+    mockMvc.perform(get("/api/categories"))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$").isArray())
-        .andExpect(jsonPath("$.length()").value(0));
+        .andExpect(jsonPath("$.success").value(true))
+        .andExpect(jsonPath("$.message").value("Categories retrieved successfully"))
+        .andExpect(jsonPath("$.data").isArray())
+        .andExpect(jsonPath("$.data.length()").value(0));
 
     verify(categoryService, times(1)).getAllCategories();
   }
@@ -133,13 +135,15 @@ class CategoryControllerTest {
     when(categoryMapper.toDTO(wineCategory)).thenReturn(wineDTO);
     when(categoryMapper.toDTO(liquorCategory)).thenReturn(liquorDTO);
 
-    mockMvc
-        .perform(get("/api/categories"))
+    mockMvc.perform(get("/api/categories"))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.length()").value(3))
-        .andExpect(jsonPath("$[0].name").value("Beer"))
-        .andExpect(jsonPath("$[1].name").value("Wine"))
-        .andExpect(jsonPath("$[2].name").value("Liquor"));
+        .andExpect(jsonPath("$.success").value(true))
+        .andExpect(jsonPath("$.message").value("Categories retrieved successfully"))
+        .andExpect(jsonPath("$.data").isArray())
+        .andExpect(jsonPath("$.data.length()").value(3))
+        .andExpect(jsonPath("$.data[0].name").value("Beer"))
+        .andExpect(jsonPath("$.data[1].name").value("Wine"))
+        .andExpect(jsonPath("$.data[2].name").value("Liquor"));
   }
 
   @Test
@@ -147,13 +151,15 @@ class CategoryControllerTest {
   void testGetAllCategories_ServiceThrowsException() throws Exception {
     when(categoryService.getAllCategories()).thenThrow(new RuntimeException("Database error"));
 
-    mockMvc
-        .perform(get("/api/categories"))
-        .andExpect(status().isBadRequest());
+    mockMvc.perform(get("/api/categories"))
+        .andExpect(status().isInternalServerError())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(jsonPath("$.message").value("Failed to retrieve categories"));
 
     verify(categoryService, times(1)).getAllCategories();
   }
 
+    
   // ==================== getCategoryById() Tests ====================
 
   @Test
@@ -165,9 +171,11 @@ class CategoryControllerTest {
     mockMvc
         .perform(get("/api/categories/1"))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.id").value(1L))
-        .andExpect(jsonPath("$.name").value("Beer"))
-        .andExpect(jsonPath("$.description").value("Alcoholic beverages made from grains"));
+        .andExpect(jsonPath("$.success").value(true))
+        .andExpect(jsonPath("$.message").value("Category retrieved successfully"))
+        .andExpect(jsonPath("$.data.id").value(1L))
+        .andExpect(jsonPath("$.data.name").value("Beer"))
+        .andExpect(jsonPath("$.data.description").value("Alcoholic beverages made from grains"));
 
     verify(categoryService, times(1)).getCategoryById(1L);
     verify(categoryMapper, times(1)).toDTO(testCategory);
@@ -181,7 +189,10 @@ class CategoryControllerTest {
 
     mockMvc
         .perform(get("/api/categories/999"))
-        .andExpect(status().isBadRequest());
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(jsonPath("$.message").value("Category not found"))
+        .andExpect(jsonPath("$.data").doesNotExist());
 
     verify(categoryService, times(1)).getCategoryById(999L);
   }
@@ -195,7 +206,9 @@ class CategoryControllerTest {
     mockMvc
         .perform(get("/api/categories/0"))
         .andExpect(status().isBadRequest())
-        .andExpect(content().string("Invalid category ID"));
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(jsonPath("$.message").value("Invalid category ID"))
+        .andExpect(jsonPath("$.data").doesNotExist());
 
     verify(categoryService, times(1)).getCategoryById(0L);
   }
@@ -209,7 +222,9 @@ class CategoryControllerTest {
     mockMvc
         .perform(get("/api/categories/-1"))
         .andExpect(status().isBadRequest())
-        .andExpect(content().string("Invalid category ID"));
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(jsonPath("$.message").value("Invalid category ID"))
+        .andExpect(jsonPath("$.data").doesNotExist());
 
     verify(categoryService, times(1)).getCategoryById(-1L);
   }
@@ -222,8 +237,10 @@ class CategoryControllerTest {
 
     mockMvc
         .perform(get("/api/categories/1"))
-        .andExpect(status().isBadRequest())
-        .andExpect(content().string("An error occurred retrieving category"));
+        .andExpect(status().isInternalServerError())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(jsonPath("$.message").value("An error occurred retrieving category"))
+        .andExpect(jsonPath("$.data").doesNotExist());
 
     verify(categoryService, times(1)).getCategoryById(1L);
   }
@@ -254,8 +271,11 @@ class CategoryControllerTest {
     mockMvc
         .perform(get("/api/categories/2"))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.id").value(2L))
-        .andExpect(jsonPath("$.name").value("Wine"));
+        .andExpect(jsonPath("$.success").value(true))
+        .andExpect(jsonPath("$.message").value("Category retrieved successfully"))
+        .andExpect(jsonPath("$.data.id").value(2L))
+        .andExpect(jsonPath("$.data.name").value("Wine"))
+        .andExpect(jsonPath("$.data.description").value("Wine beverages"));
 
     verify(categoryService, times(1)).getCategoryById(2L);
   }
@@ -275,9 +295,11 @@ class CategoryControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(testCategoryDTO)))
         .andExpect(status().isCreated())
-        .andExpect(jsonPath("$.id").value(1L))
-        .andExpect(jsonPath("$.name").value("Beer"))
-        .andExpect(jsonPath("$.description").value("Alcoholic beverages made from grains"));
+        .andExpect(jsonPath("$.success").value(true))
+        .andExpect(jsonPath("$.message").value("Category created successfully"))
+        .andExpect(jsonPath("$.data.id").value(1L))
+        .andExpect(jsonPath("$.data.name").value("Beer"))
+        .andExpect(jsonPath("$.data.description").value("Alcoholic beverages made from grains"));
 
     verify(categoryMapper, times(1)).toEntity(testCategoryDTO);
     verify(categoryService, times(1)).createCategory(testCategory);
@@ -312,7 +334,9 @@ class CategoryControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(nullNameDTO)))
         .andExpect(status().isBadRequest())
-        .andExpect(content().string("Category name is required"));
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(jsonPath("$.message").value("Category name is required"))
+        .andExpect(jsonPath("$.data").doesNotExist());
 
     verify(categoryService, times(1)).createCategory(any());
   }
@@ -345,7 +369,11 @@ class CategoryControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(emptyNameDTO)))
         .andExpect(status().isBadRequest())
-        .andExpect(content().string("Category name is required"));
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(jsonPath("$.message").value("Category name is required"))
+        .andExpect(jsonPath("$.data").doesNotExist());
+
+    verify(categoryService, times(1)).createCategory(any());
   }
 
   @Test
@@ -376,7 +404,11 @@ class CategoryControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(blankNameDTO)))
         .andExpect(status().isBadRequest())
-        .andExpect(content().string("Category name is required"));
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(jsonPath("$.message").value("Category name is required"))
+        .andExpect(jsonPath("$.data").doesNotExist());
+
+    verify(categoryService, times(1)).createCategory(any());
   }
 
   @Test
