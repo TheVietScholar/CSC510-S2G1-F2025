@@ -430,16 +430,17 @@ class CategoryControllerTest {
   void testCreateCategory_DuplicateName() throws Exception {
     when(categoryMapper.toEntity(testCategoryDTO)).thenReturn(testCategory);
     when(categoryService.createCategory(testCategory))
-        .thenThrow(
-            new RuntimeException("Unique constraint violation: Category name already exists"));
+        .thenThrow(new RuntimeException("Unique constraint violation: Category name already exists"));
 
     mockMvc
         .perform(
             post("/api/categories")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(testCategoryDTO)))
-        .andExpect(status().isBadRequest())
-        .andExpect(content().string("An error occurred creating category"));
+        .andExpect(status().isInternalServerError())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(jsonPath("$.message").value("An error occurred creating category"))
+        .andExpect(jsonPath("$.data").doesNotExist());
 
     verify(categoryService, times(1)).createCategory(testCategory);
   }
@@ -456,11 +457,12 @@ class CategoryControllerTest {
             post("/api/categories")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(testCategoryDTO)))
-        .andExpect(status().isBadRequest())
-        .andExpect(content().string("An error occurred creating category"));
+        .andExpect(status().isInternalServerError())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(jsonPath("$.message").value("An error occurred creating category"))
+        .andExpect(jsonPath("$.data").doesNotExist());
   }
-
-  @Test
+   @Test
   @DisplayName("POST /api/categories should accept null description")
   void testCreateCategory_NullDescription() throws Exception {
     CategoryDTO nullDescDTO =
@@ -497,8 +499,11 @@ class CategoryControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(nullDescDTO)))
         .andExpect(status().isCreated())
-        .andExpect(jsonPath("$.name").value("Beer"))
-        .andExpect(jsonPath("$.description").isEmpty());
+        .andExpect(jsonPath("$.success").value(true))
+        .andExpect(jsonPath("$.message").value("Category created successfully"))
+        .andExpect(jsonPath("$.data.id").value(1L))
+        .andExpect(jsonPath("$.data.name").value("Beer"))
+        .andExpect(jsonPath("$.data.description").doesNotExist());
   }
 
   @Test
@@ -538,7 +543,11 @@ class CategoryControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(nullImageDTO)))
         .andExpect(status().isCreated())
-        .andExpect(jsonPath("$.name").value("Wine"));
+        .andExpect(jsonPath("$.success").value(true))
+        .andExpect(jsonPath("$.message").value("Category created successfully"))
+        .andExpect(jsonPath("$.data.id").value(2L))
+        .andExpect(jsonPath("$.data.name").value("Wine"))
+        .andExpect(jsonPath("$.data.imageUrl").doesNotExist());
   }
 
   @Test
@@ -601,6 +610,15 @@ class CategoryControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(specialCharDTO)))
         .andExpect(status().isCreated())
-        .andExpect(jsonPath("$.name").value("Beer@#$"));
-  }
+        .andExpect(jsonPath("$.success").value(true))
+        .andExpect(jsonPath("$.message").value("Category created successfully"))
+        .andExpect(jsonPath("$.data.id").value(4L))
+        .andExpect(jsonPath("$.data.name").value("Beer@#$"))
+        .andExpect(jsonPath("$.data.description").value("Description"))
+        .andExpect(jsonPath("$.data.imageUrl").value("https://example.com/image.jpg"));
+
+    verify(categoryMapper, times(1)).toEntity(specialCharDTO);
+    verify(categoryService, times(1)).createCategory(categoryWithSpecialChars);
+    verify(categoryMapper, times(1)).toDTO(categoryWithSpecialChars);
+  } 
 }
