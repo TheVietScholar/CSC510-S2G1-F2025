@@ -37,7 +37,8 @@ class CategoryServiceImplTest {
             .build();
   }
 
-  // Tests for getAllCategories()
+  // ==================== getAllCategories() Tests ====================
+
   @Test
   void testGetAllCategories_Success() {
     List<Category> categories = List.of(testCategory);
@@ -73,18 +74,29 @@ class CategoryServiceImplTest {
             .products(new ArrayList<>())
             .build();
 
-    List<Category> categories = List.of(testCategory, wineCategory);
+    Category liquorCategory =
+        Category.builder()
+            .id(3L)
+            .name("Liquor")
+            .description("Strong spirits")
+            .imageUrl("https://example.com/liquor.jpg")
+            .products(new ArrayList<>())
+            .build();
+
+    List<Category> categories = List.of(testCategory, wineCategory, liquorCategory);
     when(categoryRepository.findAll()).thenReturn(categories);
 
     List<Category> result = categoryService.getAllCategories();
 
     assertNotNull(result);
-    assertEquals(2, result.size());
+    assertEquals(3, result.size());
     assertEquals("Beer", result.get(0).getName());
     assertEquals("Wine", result.get(1).getName());
+    assertEquals("Liquor", result.get(2).getName());
   }
 
-  // Tests for getCategoryById()
+  // ==================== getCategoryById() Tests ====================
+
   @Test
   void testGetCategoryById_Success() {
     when(categoryRepository.findById(1L)).thenReturn(Optional.of(testCategory));
@@ -109,25 +121,41 @@ class CategoryServiceImplTest {
   }
 
   @Test
-  void testGetCategoryById_WithDifferentId() {
-    Category liquorCategory =
-        Category.builder()
-            .id(3L)
-            .name("Liquor")
-            .description("Strong spirits")
-            .imageUrl("https://example.com/liquor.jpg")
-            .products(new ArrayList<>())
-            .build();
+  void testGetCategoryById_NullId() {
+    assertThrows(IllegalArgumentException.class, () -> categoryService.getCategoryById(null));
 
-    when(categoryRepository.findById(3L)).thenReturn(Optional.of(liquorCategory));
-
-    Category result = categoryService.getCategoryById(3L);
-
-    assertEquals("Liquor", result.getName());
-    assertEquals(3L, result.getId());
+    verify(categoryRepository, never()).findById(null);
   }
 
-  // Tests for createCategory()
+  @Test
+  void testGetCategoryById_ZeroId() {
+    assertThrows(IllegalArgumentException.class, () -> categoryService.getCategoryById(0L));
+
+    verify(categoryRepository, never()).findById(0L);
+  }
+
+  @Test
+  void testGetCategoryById_NegativeId() {
+    assertThrows(
+        IllegalArgumentException.class, () -> categoryService.getCategoryById(-1L));
+
+    verify(categoryRepository, never()).findById(-1L);
+  }
+
+  @Test
+  void testGetCategoryById_LargeId() {
+    Long largeId = Long.MAX_VALUE;
+    when(categoryRepository.findById(largeId)).thenReturn(Optional.empty());
+
+    assertThrows(
+        java.util.NoSuchElementException.class,
+        () -> categoryService.getCategoryById(largeId));
+
+    verify(categoryRepository, times(1)).findById(largeId);
+  }
+
+  // ==================== createCategory() Tests ====================
+
   @Test
   void testCreateCategory_Success() {
     when(categoryRepository.save(testCategory)).thenReturn(testCategory);
@@ -141,115 +169,70 @@ class CategoryServiceImplTest {
   }
 
   @Test
-  void testCreateCategory_WithNewData() {
-    Category newCategory =
-        Category.builder()
-            .name("Vodka")
-            .description("Clear distilled spirit")
-            .imageUrl("https://example.com/vodka.jpg")
-            .products(new ArrayList<>())
-            .build();
-
-    Category savedCategory =
-        Category.builder()
-            .id(4L)
-            .name("Vodka")
-            .description("Clear distilled spirit")
-            .imageUrl("https://example.com/vodka.jpg")
-            .products(new ArrayList<>())
-            .build();
-
-    when(categoryRepository.save(newCategory)).thenReturn(savedCategory);
-
-    Category result = categoryService.createCategory(newCategory);
-
-    assertNotNull(result);
-    assertEquals("Vodka", result.getName());
-    assertEquals(4L, result.getId());
-  }
-
-  @Test
-  void testCreateCategory_SaveThrowsException() {
-    when(categoryRepository.save(any(Category.class)))
-        .thenThrow(new RuntimeException("Database error"));
-
-    assertThrows(RuntimeException.class, () -> categoryService.createCategory(testCategory));
-
-    verify(categoryRepository, times(1)).save(any(Category.class));
-  }
-
-  // Edge Case Tests
-  @Test
   void testCreateCategory_NullCategory() {
     assertThrows(IllegalArgumentException.class, () -> categoryService.createCategory(null));
+
+    verify(categoryRepository, never()).save(any());
   }
 
   @Test
-  void testCreateCategory_DuplicateNameThrowsException() {
-    when(categoryRepository.save(any(Category.class)))
-        .thenThrow(
-            new RuntimeException("Unique constraint violation: Category name already exists"));
-
-    assertThrows(RuntimeException.class, () -> categoryService.createCategory(testCategory));
-
-    verify(categoryRepository, times(1)).save(any(Category.class));
-  }
-
-  @Test
-  void testGetCategoryById_NegativeId() {
-    when(categoryRepository.findById(-1L)).thenReturn(Optional.empty());
-
-    assertThrows(
-        java.util.NoSuchElementException.class, () -> categoryService.getCategoryById(-1L));
-
-    verify(categoryRepository, times(1)).findById(-1L);
-  }
-
-  @Test
-  void testGetCategoryById_ZeroId() {
-    when(categoryRepository.findById(0L)).thenReturn(Optional.empty());
-
-    assertThrows(
-        java.util.NoSuchElementException.class, () -> categoryService.getCategoryById(0L));
-
-    verify(categoryRepository, times(1)).findById(0L);
-  }
-
-  @Test
-  void testGetCategoryById_LargeId() {
-    Long largeId = Long.MAX_VALUE;
-    when(categoryRepository.findById(largeId)).thenReturn(Optional.empty());
-
-    assertThrows(
-        java.util.NoSuchElementException.class, () -> categoryService.getCategoryById(largeId));
-
-    verify(categoryRepository, times(1)).findById(largeId);
-  }
-
-  @Test
-  void testCreateCategory_WithSpecialCharactersInName() {
-    Category categoryWithSpecialChars =
+  void testCreateCategory_NullName() {
+    Category categoryWithNullName =
         Category.builder()
-            .id(5L)
-            .name("Beer@#$%^&*()")
-            .description("Special characters test")
+            .id(4L)
+            .name(null)
+            .description("Description")
             .imageUrl("https://example.com/image.jpg")
             .products(new ArrayList<>())
             .build();
 
-    when(categoryRepository.save(any(Category.class))).thenReturn(categoryWithSpecialChars);
+    assertThrows(
+        IllegalArgumentException.class, () -> categoryService.createCategory(categoryWithNullName));
 
-    Category result = categoryService.createCategory(categoryWithSpecialChars);
+    verify(categoryRepository, never()).save(any());
+  }
 
-    assertNotNull(result);
-    assertEquals("Beer@#$%^&*()", result.getName());
+  @Test
+  void testCreateCategory_EmptyName() {
+    Category categoryWithEmptyName =
+        Category.builder()
+            .id(5L)
+            .name("")
+            .description("Description")
+            .imageUrl("https://example.com/image.jpg")
+            .products(new ArrayList<>())
+            .build();
+
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> categoryService.createCategory(categoryWithEmptyName));
+
+    verify(categoryRepository, never()).save(any());
+  }
+
+  @Test
+  void testCreateCategory_BlankName() {
+    Category categoryWithBlankName =
+        Category.builder()
+            .id(6L)
+            .name("   ")
+            .description("Description")
+            .imageUrl("https://example.com/image.jpg")
+            .products(new ArrayList<>())
+            .build();
+
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> categoryService.createCategory(categoryWithBlankName));
+
+    verify(categoryRepository, never()).save(any());
   }
 
   @Test
   void testCreateCategory_WithNullDescription() {
     Category categoryWithNullDesc =
         Category.builder()
-            .id(6L)
+            .id(7L)
             .name("Beer")
             .description(null)
             .imageUrl("https://example.com/image.jpg")
@@ -262,14 +245,15 @@ class CategoryServiceImplTest {
 
     assertNotNull(result);
     assertNull(result.getDescription());
+    verify(categoryRepository, times(1)).save(categoryWithNullDesc);
   }
 
   @Test
   void testCreateCategory_WithNullImageUrl() {
     Category categoryWithNullImage =
         Category.builder()
-            .id(7L)
-            .name("Beer")
+            .id(8L)
+            .name("Wine")
             .description("Description")
             .imageUrl(null)
             .products(new ArrayList<>())
@@ -281,5 +265,88 @@ class CategoryServiceImplTest {
 
     assertNotNull(result);
     assertNull(result.getImageUrl());
+    verify(categoryRepository, times(1)).save(categoryWithNullImage);
+  }
+
+  @Test
+  void testCreateCategory_WithSpecialCharactersInName() {
+    Category categoryWithSpecialChars =
+        Category.builder()
+            .id(9L)
+            .name("Beer@#$%^&*()")
+            .description("Special characters test")
+            .imageUrl("https://example.com/image.jpg")
+            .products(new ArrayList<>())
+            .build();
+
+    when(categoryRepository.save(categoryWithSpecialChars)).thenReturn(categoryWithSpecialChars);
+
+    Category result = categoryService.createCategory(categoryWithSpecialChars);
+
+    assertNotNull(result);
+    assertEquals("Beer@#$%^&*()", result.getName());
+    verify(categoryRepository, times(1)).save(categoryWithSpecialChars);
+  }
+
+  @Test
+  void testCreateCategory_RepositoryThrowsException() {
+    when(categoryRepository.save(any(Category.class)))
+        .thenThrow(new RuntimeException("Database error"));
+
+    assertThrows(RuntimeException.class, () -> categoryService.createCategory(testCategory));
+
+    verify(categoryRepository, times(1)).save(testCategory);
+  }
+
+  @Test
+  void testCreateCategory_DuplicateNameConstraintViolation() {
+    when(categoryRepository.save(any(Category.class)))
+        .thenThrow(
+            new RuntimeException("Unique constraint violation: Category name already exists"));
+
+    assertThrows(RuntimeException.class, () -> categoryService.createCategory(testCategory));
+
+    verify(categoryRepository, times(1)).save(testCategory);
+  }
+
+  @Test
+  void testCreateCategory_VeryLongCategoryName() {
+    String veryLongName = "B".repeat(500);
+    Category categoryWithLongName =
+        Category.builder()
+            .id(10L)
+            .name(veryLongName)
+            .description("Long name test")
+            .imageUrl("https://example.com/image.jpg")
+            .products(new ArrayList<>())
+            .build();
+
+    when(categoryRepository.save(categoryWithLongName)).thenReturn(categoryWithLongName);
+
+    Category result = categoryService.createCategory(categoryWithLongName);
+
+    assertNotNull(result);
+    assertEquals(500, result.getName().length());
+    verify(categoryRepository, times(1)).save(categoryWithLongName);
+  }
+
+  @Test
+  void testCreateCategory_SingleCharacterName() {
+    Category categoryWithSingleChar =
+        Category.builder()
+            .id(11L)
+            .name("B")
+            .description("Single character test")
+            .imageUrl("https://example.com/image.jpg")
+            .products(new ArrayList<>())
+            .build();
+
+    when(categoryRepository.save(categoryWithSingleChar)).thenReturn(categoryWithSingleChar);
+
+    Category result = categoryService.createCategory(categoryWithSingleChar);
+
+    assertNotNull(result);
+    assertEquals("B", result.getName());
+    verify(categoryRepository, times(1)).save(categoryWithSingleChar);
   }
 }
