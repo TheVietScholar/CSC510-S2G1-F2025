@@ -1,4 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
@@ -6,7 +7,7 @@
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
     <version>3.3.4</version>
-    <relativePath/>
+    <relativePath />
   </parent>
 
   <groupId>com.boozebuddies</groupId>
@@ -62,9 +63,9 @@
     </dependency>
     <!-- Lombok -->
     <dependency>
-        <groupId>org.projectlombok</groupId>
-        <artifactId>lombok</artifactId>
-        <optional>true</optional>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <optional>true</optional>
     </dependency>
 
     <!-- Test -->
@@ -101,14 +102,22 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.11.0</version>
+        <version>3.14.0</version>
         <configuration>
           <release>${maven.compiler.release}</release>
           <showWarnings>true</showWarnings>
           <compilerArgs>
             <arg>-Xlint:deprecation</arg>
             <arg>-Xlint:unchecked</arg>
+            <arg>-parameters</arg>
           </compilerArgs>
+          <annotationProcessorPaths>
+            <path>
+              <groupId>org.projectlombok</groupId>
+              <artifactId>lombok</artifactId>
+              <version>1.18.32</version>
+            </path>
+          </annotationProcessorPaths>
         </configuration>
       </plugin>
       <plugin>
@@ -133,11 +142,12 @@
             <!-- Other Java formatting options can be added here -->
 
             <!-- <eclipse> -->
-              <!-- Use Eclipse JDT formatter to avoid JDK-internal API breakages in google-java-format on JDK 23+ -->
-              <!-- <version>4.33</version> -->
+            <!-- Use Eclipse JDT formatter to avoid JDK-internal API breakages in google-java-format
+            on JDK 23+ -->
+            <!-- <version>4.33</version> -->
             <!-- </eclipse> -->
 
-            <removeUnusedImports/>
+            <removeUnusedImports />
             <includes>
               <include>src/main/java/**/*.java</include>
               <include>src/test/java/**/*.java</include>
