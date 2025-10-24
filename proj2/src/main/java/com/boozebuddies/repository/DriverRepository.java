@@ -19,7 +19,7 @@ public interface DriverRepository extends JpaRepository<Driver, Long> {
 
   List<Driver> findByVehicleType(String vehicleType);
 
-  @Query("SELECT d FROM Driver d WHERE d.isAvailable = true AND d.certificationsStatus = 'VALID'")
+  @Query("SELECT d FROM Driver d WHERE d.isAvailable = true AND d.certificationStatus = 'VERIFIED'")
   List<Driver> findAvailableCertifiedDrivers();
 
   @Query("SELECT d FROM Driver d WHERE d.isAvailable = true ORDER BY d.rating DESC")
