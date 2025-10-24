@@ -4,18 +4,24 @@ import com.boozebuddies.entity.Order;
 import com.boozebuddies.entity.Payment;
 import com.boozebuddies.entity.User;
 import com.boozebuddies.model.PaymentStatus;
+import com.boozebuddies.repository.PaymentRepository;
 import com.boozebuddies.service.PaymentService;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 public class PaymentServiceImpl implements PaymentService {
 
-  private final List<Payment> payments = new ArrayList<>();
+  private final PaymentRepository paymentRepository;
+
+  @Autowired
+  public PaymentServiceImpl(PaymentRepository paymentRepository) {
+    this.paymentRepository = paymentRepository;
+  }
 
   /** Processes a payment for an order. */
   @Override
@@ -33,7 +39,8 @@ public class PaymentServiceImpl implements PaymentService {
     payment.setCreatedAt(LocalDateTime.now());
     payment.setUpdatedAt(LocalDateTime.now());
 
-    payments.add(payment);
+    paymentRepository.save(payment);
+
     System.out.println(
         "[PAYMENT] Processed payment of "
             + payment.getAmount()
@@ -61,7 +68,7 @@ public class PaymentServiceImpl implements PaymentService {
     refund.setUpdatedAt(LocalDateTime.now());
     refund.setRefundReason(reason);
 
-    payments.add(refund);
+    paymentRepository.save(refund);
     System.out.println(
         "[PAYMENT] Refunded "
             + refund.getAmount()
@@ -75,13 +82,15 @@ public class PaymentServiceImpl implements PaymentService {
   /** Retrieves all payments made by a specific user. */
   @Override
   public List<Payment> getPaymentsByUser(User user) {
-    return payments.stream().filter(p -> p.getUser().equals(user)).collect(Collectors.toList());
+    return paymentRepository.findAll().stream()
+        .filter(p -> p.getUser() != null && p.getUser().getId().equals(user.getId()))
+        .collect(Collectors.toList());
   }
 
   /** Retrieves the payment details for a specific order. */
   @Override
   public Payment getPaymentByOrderId(Long orderId) {
-    return payments.stream()
+    return paymentRepository.findAll().stream()
         .filter(p -> p.getOrder() != null && p.getOrder().getId().equals(orderId))
         .findFirst()
         .orElse(null);
@@ -90,7 +99,7 @@ public class PaymentServiceImpl implements PaymentService {
   /** Calculates the total revenue generated within a given period. */
   @Override
   public BigDecimal calculateTotalRevenue(LocalDateTime startDate, LocalDateTime endDate) {
-    return payments.stream()
+    return paymentRepository.findAll().stream()
         .filter(
             p ->
                 p.getPaymentDate() != null

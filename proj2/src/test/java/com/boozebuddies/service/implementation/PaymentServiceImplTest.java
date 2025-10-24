@@ -1,164 +1,209 @@
 package com.boozebuddies.service.implementation;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
 import com.boozebuddies.entity.Order;
 import com.boozebuddies.entity.Payment;
 import com.boozebuddies.entity.User;
 import com.boozebuddies.model.PaymentStatus;
+import com.boozebuddies.repository.OrderRepository;
+import com.boozebuddies.repository.PaymentRepository;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 class PaymentServiceImplTest {
 
-    @Test
-    void testProcessPaymentSuccessAndGetPaymentsByUserAndByOrderId() {
-        PaymentServiceImpl service = new PaymentServiceImpl();
+  @Mock private PaymentRepository paymentRepository;
+  @Mock private OrderRepository orderRepository;
+  @InjectMocks private PaymentServiceImpl paymentService;
 
-        User user = new User();
-        Order order = new Order();
-        order.setId(1L);
-        order.setUser(user);
-        order.setTotalAmount(new BigDecimal("12.50"));
+  private User testUser;
 
-        Payment payment = service.processPayment(order, "credit_card");
+  @BeforeEach
+  void setUp() {
+    testUser =
+        User.builder()
+            .id(1L)
+            .name("John Doe")
+            .email("john@example.com")
+            .passwordHash("SecurePass123")
+            .phone("1234567890")
+            .dateOfBirth(LocalDate.of(1990, 5, 15))
+            .ageVerified(true)
+            .build();
+  }
 
-        assertNotNull(payment);
-        assertEquals(new BigDecimal("12.50"), payment.getAmount());
-        assertEquals(PaymentStatus.AUTHORIZED, payment.getStatus());
-        assertSame(user, payment.getUser());
+  @Test
+  void testProcessPaymentSuccessAndGetPaymentsByUserAndByOrderId() {
+    Order order = new Order();
+    order.setId(1L);
+    order.setUser(testUser);
+    order.setTotalAmount(new BigDecimal("12.50"));
 
-        List<Payment> paymentsByUser = service.getPaymentsByUser(user);
-        assertEquals(1, paymentsByUser.size());
-        assertEquals(payment, paymentsByUser.get(0));
+    Payment payment =
+        Payment.builder()
+            .order(order)
+            .amount(order.getTotalAmount())
+            .status(PaymentStatus.AUTHORIZED)
+            .user(testUser)
+            .build();
 
-        Payment fetched = service.getPaymentByOrderId(1L);
-        assertNotNull(fetched);
-        assertEquals(order.getId(), fetched.getOrder().getId());
-    }
+    when(paymentRepository.save(any(Payment.class))).thenReturn(payment);
+    when(paymentRepository.findByUser_Id(eq(testUser.getId()), any()))
+        .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(payment)));
+    when(paymentRepository.findByOrder_Id(order.getId()))
+        .thenReturn(java.util.Optional.of(payment));
 
-    @Test
-    void testProcessPaymentInvalidMethodThrows() {
-        PaymentServiceImpl service = new PaymentServiceImpl();
-        User user = new User();
-        Order order = new Order();
-        order.setId(2L);
-        order.setUser(user);
-        order.setTotalAmount(new BigDecimal("5.00"));
+    Payment processed = paymentService.processPayment(order, "credit_card");
+    assertNotNull(processed);
+    assertEquals(new BigDecimal("12.50"), processed.getAmount());
+    assertEquals(PaymentStatus.AUTHORIZED, processed.getStatus());
+    assertSame(testUser, processed.getUser());
+    verify(paymentRepository, times(1)).save(any(Payment.class));
 
-        assertThrows(RuntimeException.class, () -> service.processPayment(order, ""));
-        assertThrows(RuntimeException.class, () -> service.processPayment(order, null));
-    }
+    List<Payment> paymentsByUser = paymentService.getPaymentsByUser(testUser);
+    assertEquals(1, paymentsByUser.size());
+    assertEquals(payment, paymentsByUser.get(0));
 
-    @Test
-    void testRefundPaymentAddsRefundRecordAndDoesNotRemoveOriginal() {
-        PaymentServiceImpl service = new PaymentServiceImpl();
+    Payment fetched = paymentService.getPaymentByOrderId(1L);
+    assertNotNull(fetched);
+    assertEquals(order.getId(), fetched.getOrder().getId());
+  }
 
-        User user = new User();
-        Order order = new Order();
-        order.setId(3L);
-        order.setUser(user);
-        order.setTotalAmount(new BigDecimal("20.00"));
+  @Test
+  void testProcessPaymentInvalidMethodThrows() {
+    User user = new User();
+    Order order = new Order();
+    order.setId(2L);
+    order.setUser(user);
+    order.setTotalAmount(new BigDecimal("5.00"));
 
-        Payment authorized = service.processPayment(order, "paypal");
+    assertThrows(RuntimeException.class, () -> paymentService.processPayment(order, ""));
+    assertThrows(RuntimeException.class, () -> paymentService.processPayment(order, null));
+    verify(paymentRepository, never()).save(any());
+  }
 
-        // Refund the payment
-        Payment refunded = service.refundPayment(order, "customer_requested");
+  @Test
+  void testRefundPaymentAddsRefundRecordAndDoesNotRemoveOriginal() {
+    User user = new User();
+    Order order = new Order();
+    order.setId(3L);
+    order.setUser(user);
+    order.setTotalAmount(new BigDecimal("20.00"));
 
-        assertNotNull(refunded);
-        assertEquals(PaymentStatus.REFUNDED, refunded.getStatus());
-        assertEquals("customer_requested", refunded.getRefundReason());
-        // Both payments (original authorized and refund) should exist for the user
-        List<Payment> payments = service.getPaymentsByUser(user);
-        assertEquals(2, payments.size());
+    Payment authorized = paymentService.processPayment(order, "paypal");
 
-        // getPaymentByOrderId returns the first matching payment in the list (likely the original authorized payment)
-        Payment returned = service.getPaymentByOrderId(order.getId());
-        assertNotNull(returned);
-        assertEquals(PaymentStatus.AUTHORIZED, returned.getStatus(),
-                "Implementation currently returns the original AUTHORIZED payment for an order, even after a refund record is created.");
-    }
+    // Refund the payment
+    Payment refunded = paymentService.refundPayment(order, "customer_requested");
 
-    @Test
-    void testRefundPaymentWhenNotFoundThrows() {
-        PaymentServiceImpl service = new PaymentServiceImpl();
+    assertNotNull(refunded);
+    assertEquals(PaymentStatus.REFUNDED, refunded.getStatus());
+    assertEquals("customer_requested", refunded.getRefundReason());
+    // Both payments (original authorized and refund) should exist for the user
+    List<Payment> payments = paymentService.getPaymentsByUser(user);
+    assertEquals(2, payments.size());
 
-        User user = new User();
-        Order order = new Order();
-        order.setId(99L);
-        order.setUser(user);
-        order.setTotalAmount(new BigDecimal("1.00"));
+    // getPaymentByOrderId returns the first matching payment in the list (likely
+    // the original
+    // authorized payment)
+    Payment returned = paymentService.getPaymentByOrderId(order.getId());
+    assertNotNull(returned);
+    assertEquals(
+        PaymentStatus.AUTHORIZED,
+        returned.getStatus(),
+        "Implementation currently returns the original AUTHORIZED payment for an order, even after a refund record is created.");
+  }
 
-        assertThrows(RuntimeException.class, () -> service.refundPayment(order, "no_payment"));
-    }
+  @Test
+  void testRefundPaymentWhenNotFoundThrows() {
+    User user = new User();
+    Order order = new Order();
+    order.setId(99L);
+    order.setUser(user);
+    order.setTotalAmount(new BigDecimal("1.00"));
 
-    @Test
-    void testCalculateTotalRevenueRespectsDateRangeAndStatus() {
-        PaymentServiceImpl service = new PaymentServiceImpl();
+    when(paymentRepository.findByOrder_Id(order.getId())).thenReturn(java.util.Optional.empty());
+    assertThrows(RuntimeException.class, () -> paymentService.refundPayment(order, "no_payment"));
+  }
 
-        User user = new User();
-        Order orderA = new Order();
-        orderA.setId(10L);
-        orderA.setUser(user);
-        orderA.setTotalAmount(new BigDecimal("15.00"));
+  @Test
+  void testCalculateTotalRevenueRespectsDateRangeAndStatus() {
+    User user = new User();
+    Order orderA = new Order();
+    orderA.setId(10L);
+    orderA.setUser(user);
+    orderA.setTotalAmount(new BigDecimal("15.00"));
+    Order orderB = new Order();
+    orderB.setId(11L);
+    orderB.setUser(user);
+    orderB.setTotalAmount(new BigDecimal("7.00"));
 
-        Order orderB = new Order();
-        orderB.setId(11L);
-        orderB.setUser(user);
-        orderB.setTotalAmount(new BigDecimal("7.00"));
+    // Process two payments
+    Payment pA = paymentService.processPayment(orderA, "card");
+    Payment pB = paymentService.processPayment(orderB, "card");
 
-        // Process two payments
-        Payment pA = service.processPayment(orderA, "card");
-        Payment pB = service.processPayment(orderB, "card");
+    // Set payment dates so only pA is in the target range
+    LocalDateTime now = LocalDateTime.now();
+    pA.setPaymentDate(now.minusDays(1));
+    pB.setPaymentDate(now.minusDays(10));
 
-        // Set payment dates so only pA is in the target range
-        LocalDateTime now = LocalDateTime.now();
-        pA.setPaymentDate(now.minusDays(1));
-        pB.setPaymentDate(now.minusDays(10));
+    LocalDateTime rangeStart = now.minusDays(2);
+    LocalDateTime rangeEnd = now.plusDays(1);
 
-        LocalDateTime rangeStart = now.minusDays(2);
-        LocalDateTime rangeEnd = now.plusDays(1);
+    // Only pA is AUTHORIZED and in range -> should be counted
+    BigDecimal revenue = paymentService.calculateTotalRevenue(rangeStart, rangeEnd);
+    assertEquals(new BigDecimal("15.00"), revenue);
 
-        // Only pA is AUTHORIZED and in range -> should be counted
-        BigDecimal revenue = service.calculateTotalRevenue(rangeStart, rangeEnd);
-        assertEquals(new BigDecimal("15.00"), revenue);
+    // Refund pA (creates a separate REFUNDED payment record). Current
+    // implementation leaves the
+    // original AUTHORIZED in place.
+    paymentService.refundPayment(orderA, "returned");
 
-        // Refund pA (creates a separate REFUNDED payment record). Current implementation leaves the original AUTHORIZED in place.
-        service.refundPayment(orderA, "returned");
+    // After refund, because implementation does not change the original AUTHORIZED
+    // payment,
+    // calculateTotalRevenue still counts it.
+    BigDecimal revenueAfterRefund = paymentService.calculateTotalRevenue(rangeStart, rangeEnd);
+    assertEquals(
+        new BigDecimal("15.00"),
+        revenueAfterRefund,
+        "Note: refunded payments currently do not remove or mark the original AUTHORIZED payment; revenue still includes the original amount.");
+  }
 
-        // After refund, because implementation does not change the original AUTHORIZED payment, calculateTotalRevenue still counts it.
-        BigDecimal revenueAfterRefund = service.calculateTotalRevenue(rangeStart, rangeEnd);
-        assertEquals(new BigDecimal("15.00"), revenueAfterRefund,
-                "Note: refunded payments currently do not remove or mark the original AUTHORIZED payment; revenue still includes the original amount.");
-    }
+  @Test
+  void testCalculateTotalRevenueOutsideRangeIsZero() {
+    User user = new User();
+    Order order = new Order();
+    order.setId(20L);
+    order.setUser(user);
+    order.setTotalAmount(new BigDecimal("30.00"));
 
-    @Test
-    void testCalculateTotalRevenueOutsideRangeIsZero() {
-        PaymentServiceImpl service = new PaymentServiceImpl();
+    // p is not used, so removed
 
-        User user = new User();
-        Order order = new Order();
-        order.setId(20L);
-        order.setUser(user);
-        order.setTotalAmount(new BigDecimal("30.00"));
+    when(paymentRepository.findByCreatedAtBetween(any(), any())).thenReturn(List.of());
+    BigDecimal revenue =
+        paymentService.calculateTotalRevenue(
+            LocalDateTime.now().minusDays(1), LocalDateTime.now().plusDays(1));
+    assertEquals(BigDecimal.ZERO, revenue);
+  }
 
-        Payment p = service.processPayment(order, "card");
-        p.setPaymentDate(LocalDateTime.of(2000, 1, 1, 0, 0));
-
-        BigDecimal revenue = service.calculateTotalRevenue(LocalDateTime.now().minusDays(1), LocalDateTime.now().plusDays(1));
-        assertEquals(BigDecimal.ZERO, revenue);
-    }
-
-    @Test
-    void testValidatePaymentMethod() {
-        PaymentServiceImpl service = new PaymentServiceImpl();
-        User user = new User();
-
-        assertTrue(service.validatePaymentMethod(user, "card"));
-        assertFalse(service.validatePaymentMethod(null, "card"));
-        assertFalse(service.validatePaymentMethod(user, ""));
-        assertFalse(service.validatePaymentMethod(user, "   "));
-        assertFalse(service.validatePaymentMethod(user, null));
-    }
+  @Test
+  void testValidatePaymentMethod() {
+    User user = new User();
+    assertTrue(paymentService.validatePaymentMethod(user, "card"));
+    assertFalse(paymentService.validatePaymentMethod(null, "card"));
+    assertFalse(paymentService.validatePaymentMethod(user, ""));
+    assertFalse(paymentService.validatePaymentMethod(user, "   "));
+    assertFalse(paymentService.validatePaymentMethod(user, null));
+  }
 }
