@@ -11,7 +11,8 @@ import org.springframework.stereotype.Service;
 public class ValidationServiceImpl implements ValidationService {
 
   // Simple regex for email validation
-  private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
+  private static final Pattern EMAIL_PATTERN =
+      Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
 
   // Password must be at least 8 characters, contain letters and numbers
   private static final Pattern PASSWORD_PATTERN =

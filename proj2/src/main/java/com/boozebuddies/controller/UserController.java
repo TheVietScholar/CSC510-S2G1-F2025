@@ -57,14 +57,12 @@ public class UserController {
         UserDTO userDTO = userMapper.toDTO(user);
         return ResponseEntity.ok(ApiResponse.success(userDTO, "Login successful"));
       } else {
-        return ResponseEntity.badRequest()
-            .body(ApiResponse.error("Invalid email or password"));
+        return ResponseEntity.badRequest().body(ApiResponse.error("Invalid email or password"));
       }
     } catch (IllegalArgumentException e) {
       return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
     } catch (Exception e) {
-      return ResponseEntity.badRequest()
-          .body(ApiResponse.error("An error occurred during login"));
+      return ResponseEntity.badRequest().body(ApiResponse.error("An error occurred during login"));
     }
   }
 
@@ -79,7 +77,10 @@ public class UserController {
 
       return userService
           .getUserById(id)
-          .map(user -> ResponseEntity.ok(ApiResponse.success(userMapper.toDTO(user), "User retrieved successfully")))
+          .map(
+              user ->
+                  ResponseEntity.ok(
+                      ApiResponse.success(userMapper.toDTO(user), "User retrieved successfully")))
           .orElse(ResponseEntity.notFound().build());
     } catch (Exception e) {
       return ResponseEntity.badRequest()
@@ -91,11 +92,8 @@ public class UserController {
   public ResponseEntity<?> getAllUsers() {
     try {
       List<UserDTO> users =
-          userService.getAllUsers().stream()
-              .map(userMapper::toDTO)
-              .collect(Collectors.toList());
-      return ResponseEntity.ok(
-          ApiResponse.success(users, "Users retrieved successfully"));
+          userService.getAllUsers().stream().map(userMapper::toDTO).collect(Collectors.toList());
+      return ResponseEntity.ok(ApiResponse.success(users, "Users retrieved successfully"));
     } catch (Exception e) {
       return ResponseEntity.badRequest()
           .body(ApiResponse.error("An error occurred retrieving users"));
@@ -105,8 +103,7 @@ public class UserController {
   // ==================== UPDATE ====================
 
   @PutMapping("/{id}")
-  public ResponseEntity<?> updateUser(
-      @PathVariable Long id, @RequestBody UserDTO userDTO) {
+  public ResponseEntity<?> updateUser(@PathVariable Long id, @RequestBody UserDTO userDTO) {
     try {
       if (id == null || id <= 0) {
         return ResponseEntity.badRequest().body(ApiResponse.error("Invalid user ID"));
@@ -121,8 +118,7 @@ public class UserController {
     } catch (IllegalArgumentException e) {
       return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
     } catch (Exception e) {
-      return ResponseEntity.badRequest()
-          .body(ApiResponse.error("An error occurred updating user"));
+      return ResponseEntity.badRequest().body(ApiResponse.error("An error occurred updating user"));
     }
   }
 
@@ -136,9 +132,7 @@ public class UserController {
       }
 
       User user =
-          userService
-              .getUserById(id)
-              .orElseThrow(() -> new RuntimeException("User not found"));
+          userService.getUserById(id).orElseThrow(() -> new RuntimeException("User not found"));
 
       // In real app, this would integrate with external age verification service
       boolean isVerified = validationService.validateAge(user);
@@ -149,8 +143,7 @@ public class UserController {
         return ResponseEntity.ok(
             ApiResponse.success(userMapper.toDTO(user), "Age verification successful"));
       } else {
-        return ResponseEntity.badRequest()
-            .body(ApiResponse.error("Age verification failed"));
+        return ResponseEntity.badRequest().body(ApiResponse.error("Age verification failed"));
       }
     } catch (Exception e) {
       return ResponseEntity.badRequest()
@@ -174,8 +167,7 @@ public class UserController {
         return ResponseEntity.notFound().build();
       }
     } catch (Exception e) {
-      return ResponseEntity.badRequest()
-          .body(ApiResponse.error("An error occurred deleting user"));
+      return ResponseEntity.badRequest().body(ApiResponse.error("An error occurred deleting user"));
     }
   }
 }
