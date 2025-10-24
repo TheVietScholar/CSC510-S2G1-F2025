@@ -16,10 +16,10 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
   // Find all products by merchant
   Page<Product> findByMerchant_Id(Long merchantId, Pageable pageable);
-  
+
   // Find available products by merchant
   Page<Product> findByMerchant_IdAndAvailableTrue(Long merchantId, Pageable pageable);
-  
+
   // Find all available products
   Page<Product> findByAvailableTrue(Pageable pageable);
 
@@ -53,10 +53,10 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
   // Search products by name or category name (non-paged)
   @Query(
-      "SELECT p FROM Product p WHERE " +
-      "(LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-      "LOWER(p.category.name) LIKE LOWER(CONCAT('%', :keyword, '%'))) AND " +
-      "p.available = true")
+      "SELECT p FROM Product p WHERE "
+          + "(LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR "
+          + "LOWER(p.category.name) LIKE LOWER(CONCAT('%', :keyword, '%'))) AND "
+          + "p.available = true")
   List<Product> searchAvailableProducts(@Param("keyword") String keyword);
 
   // Count available products by merchant
