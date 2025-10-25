@@ -61,7 +61,6 @@ public class OrderServiceImplTest {
     when(order.getUser()).thenReturn(user);
     when(order.getMerchant()).thenReturn(merchant);
     when(order.getItems()).thenReturn(List.of(item));
-    when(product.isAlcohol()).thenReturn(true);
     when(order.getTotalAmount()).thenReturn(null);
     when(orderRepository.save(order)).thenReturn(order);
     // Make deliveryRepository.save return the same delivery instance passed
@@ -96,12 +95,13 @@ public class OrderServiceImplTest {
     when(order.getUser()).thenReturn(user);
     when(order.getMerchant()).thenReturn(merchant);
     when(order.getItems()).thenReturn(List.of(item));
+    when(item.getProduct()).thenReturn(product);
     when(product.isAlcohol()).thenReturn(true);
     when(user.isAgeVerified()).thenReturn(false);
 
     RuntimeException ex =
         assertThrows(RuntimeException.class, () -> orderService.createOrder(order));
-    assertTrue(ex.getMessage().contains("User must be age verified"));
+    assertEquals(ex.getMessage(), "User must be age verified for alcohol orders");
     verify(orderRepository, never()).save(any());
   }
 
