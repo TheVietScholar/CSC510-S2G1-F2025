@@ -14,12 +14,17 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 @ExtendWith(MockitoExtension.class)
 class PaymentServiceImplTest {
@@ -59,11 +64,8 @@ class PaymentServiceImplTest {
             .user(testUser)
             .build();
 
+    when(paymentRepository.findByOrder_Id(order.getId())).thenReturn(Optional.empty());
     when(paymentRepository.save(any(Payment.class))).thenReturn(payment);
-    when(paymentRepository.findByUser_Id(eq(testUser.getId()), any()))
-        .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(payment)));
-    when(paymentRepository.findByOrder_Id(order.getId()))
-        .thenReturn(java.util.Optional.of(payment));
 
     Payment processed = paymentService.processPayment(order, "credit_card");
     assertNotNull(processed);
@@ -72,13 +74,21 @@ class PaymentServiceImplTest {
     assertSame(testUser, processed.getUser());
     verify(paymentRepository, times(1)).save(any(Payment.class));
 
-    List<Payment> paymentsByUser = paymentService.getPaymentsByUser(testUser);
-    assertEquals(1, paymentsByUser.size());
-    assertEquals(payment, paymentsByUser.get(0));
+    // Pageable pageable = PageRequest.of(0, 10);
+    when(paymentRepository.findByUser_Id(eq(testUser.getId()), any(Pageable.class)))
+        .thenReturn(new PageImpl<>(List.of(processed)));
+    Page<Payment> paymentsByUser =
+        paymentService.getPaymentsByUser(testUser, PageRequest.of(0, 10));
+    assertEquals(1, paymentsByUser.getNumberOfElements());
+    assertEquals(payment.getId(), paymentsByUser.getContent().get(0).getId());
+    verify(paymentRepository, times(1)).findByUser_Id(any(), any());
 
-    Payment fetched = paymentService.getPaymentByOrderId(1L);
+    when(paymentRepository.findByOrder_Id(order.getId()))
+        .thenReturn(java.util.Optional.of(payment));
+    Payment fetched = paymentService.getPaymentByOrderId(1L).get();
     assertNotNull(fetched);
     assertEquals(order.getId(), fetched.getOrder().getId());
+    verify(paymentRepository, times(2)).findByOrder_Id(order.getId());
   }
 
   @Test
@@ -102,27 +112,38 @@ class PaymentServiceImplTest {
     order.setUser(user);
     order.setTotalAmount(new BigDecimal("20.00"));
 
+    Payment payment =
+        Payment.builder()
+            .order(order)
+            .amount(order.getTotalAmount())
+            .status(PaymentStatus.AUTHORIZED)
+            .user(testUser)
+            .build();
+
+    when(paymentRepository.save(any(Payment.class))).thenReturn(payment);
     Payment authorized = paymentService.processPayment(order, "paypal");
+    verify(paymentRepository, times(1)).save(any(Payment.class));
 
     // Refund the payment
+    when(paymentRepository.findByOrder_Id(order.getId())).thenReturn(Optional.of(authorized));
     Payment refunded = paymentService.refundPayment(order, "customer_requested");
 
     assertNotNull(refunded);
     assertEquals(PaymentStatus.REFUNDED, refunded.getStatus());
     assertEquals("customer_requested", refunded.getRefundReason());
-    // Both payments (original authorized and refund) should exist for the user
-    List<Payment> payments = paymentService.getPaymentsByUser(user);
-    assertEquals(2, payments.size());
 
-    // getPaymentByOrderId returns the first matching payment in the list (likely
-    // the original
-    // authorized payment)
-    Payment returned = paymentService.getPaymentByOrderId(order.getId());
+    when(paymentRepository.findByUser_Id(eq(user.getId()), any(Pageable.class)))
+        .thenReturn(new PageImpl<>(List.of(refunded)));
+    Page<Payment> payments = paymentService.getPaymentsByUser(user, PageRequest.of(0, 10));
+    assertEquals(1, payments.getNumberOfElements());
+
+    when(paymentRepository.findByOrder_Id(order.getId())).thenReturn(Optional.of(refunded));
+    Payment returned = paymentService.getPaymentByOrderId(order.getId()).get();
     assertNotNull(returned);
     assertEquals(
-        PaymentStatus.AUTHORIZED,
+        PaymentStatus.REFUNDED,
         returned.getStatus(),
-        "Implementation currently returns the original AUTHORIZED payment for an order, even after a refund record is created.");
+        "The fetched payment after refund should be the REFUNDED record.");
   }
 
   @Test
@@ -190,7 +211,9 @@ class PaymentServiceImplTest {
 
     // p is not used, so removed
 
-    when(paymentRepository.findByCreatedAtBetween(any(), any())).thenReturn(List.of());
+    when(paymentRepository.findByCreatedAtBetween(
+            any(LocalDateTime.class), any(LocalDateTime.class), any(Pageable.class)))
+        .thenReturn(new PageImpl<>(List.of()));
     BigDecimal revenue =
         paymentService.calculateTotalRevenue(
             LocalDateTime.now().minusDays(1), LocalDateTime.now().plusDays(1));
