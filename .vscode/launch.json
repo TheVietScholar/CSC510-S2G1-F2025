@@ -1,0 +1,14 @@
+{
+  "configurations": [
+    {
+      "type": "java",
+      "name": "Spring Boot-BoozeBuddiesApplication<boozebuddies>",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "mainClass": "com.boozebuddies.BoozeBuddiesApplication",
+      "projectName": "boozebuddies",
+      "args": "",
+      "envFile": "${workspaceFolder}/.env"
+    }
+  ]
+}

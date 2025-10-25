@@ -4,74 +4,76 @@ import com.boozebuddies.entity.Delivery;
 import com.boozebuddies.entity.Driver;
 import com.boozebuddies.entity.Order;
 import com.boozebuddies.model.DeliveryStatus;
+import com.boozebuddies.repository.DeliveryRepository;
 import com.boozebuddies.service.DeliveryService;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
-
+import java.util.Optional;
 import org.springframework.stereotype.Service;
+import lombok.RequiredArgsConstructor;
 
-@Service 
+@Service
+@RequiredArgsConstructor
 public class DeliveryServiceImpl implements DeliveryService {
 
-  private final List<Delivery> deliveries = new ArrayList<>();
-  private long nextDeliveryId = 1;
+  private final DeliveryRepository deliveryRepository;
 
   /** Assigns a driver to a specific order and creates a new delivery record. */
   @Override
   public Delivery assignDriverToOrder(Order order, Driver driver) {
     Delivery delivery = new Delivery();
-    delivery.setId(nextDeliveryId++);
     delivery.setOrder(order);
     delivery.setDriver(driver);
     delivery.setStatus(DeliveryStatus.PENDING);
-    deliveries.add(delivery);
-    return delivery;
+    return deliveryRepository.save(delivery);
   }
 
   /** Updates the delivery status. */
   @Override
   public Delivery updateDeliveryStatus(Long deliveryId, DeliveryStatus status) {
-    Delivery delivery = getDeliveryById(deliveryId);
-    if (delivery != null) {
-      delivery.setStatus(status);
+    Optional<Delivery> deliveryOpt = deliveryRepository.findById(deliveryId);
+    if (deliveryOpt.isEmpty()) {
+      return null;
     }
-    return delivery;
+    Delivery delivery = deliveryOpt.get();
+    delivery.setStatus(status);
+    return deliveryRepository.save(delivery);
   }
 
   /** Cancels a delivery and provides a reason. */
   @Override
   public Delivery cancelDelivery(Long deliveryId, String reason) {
-    Delivery delivery = getDeliveryById(deliveryId);
-    if (delivery != null) {
-      delivery.setStatus(DeliveryStatus.CANCELLED);
-      delivery.setCancellationReason(reason);
+    Optional<Delivery> deliveryOpt = deliveryRepository.findById(deliveryId);
+    if (deliveryOpt.isEmpty()) {
+      return null;
     }
-    return delivery;
+    Delivery delivery = deliveryOpt.get();
+    delivery.setStatus(DeliveryStatus.CANCELLED);
+    delivery.setCancellationReason(reason);
+    return deliveryRepository.save(delivery);
   }
 
   /** Retrieves all deliveries assigned to a specific driver. */
   @Override
   public List<Delivery> getDeliveriesByDriver(Long driverId) {
-    return deliveries.stream()
-        .filter(d -> d.getDriver() != null && d.getDriver().getId().equals(driverId))
-        .collect(Collectors.toList());
+    return deliveryRepository.findByDriverId(driverId);
   }
 
   /** Finds a delivery by its unique ID. */
   @Override
   public Delivery getDeliveryById(Long deliveryId) {
-    return deliveries.stream().filter(d -> d.getId().equals(deliveryId)).findFirst().orElse(null);
+    return deliveryRepository.findById(deliveryId).orElse(null);
   }
 
   /** Gets all active (non-completed and non-cancelled) deliveries. */
   @Override
   public List<Delivery> getActiveDeliveries() {
-    return deliveries.stream()
-        .filter(
-            d ->
-                d.getStatus() != DeliveryStatus.DELIVERED
-                    && d.getStatus() != DeliveryStatus.CANCELLED)
-        .collect(Collectors.toList());
+    List<Delivery> active = new ArrayList<>();
+    active.addAll(deliveryRepository.findByStatus(DeliveryStatus.PENDING));
+    active.addAll(deliveryRepository.findByStatus(DeliveryStatus.ASSIGNED));
+    active.addAll(deliveryRepository.findByStatus(DeliveryStatus.PICKED_UP));
+    active.addAll(deliveryRepository.findByStatus(DeliveryStatus.IN_TRANSIT));
+    active.addAll(deliveryRepository.findByStatus(DeliveryStatus.FAILED));
+    return active;
   }
 }
