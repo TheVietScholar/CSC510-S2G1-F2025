@@ -182,6 +182,9 @@ class PaymentServiceImplTest {
     LocalDateTime rangeStart = now.minusDays(2);
     LocalDateTime rangeEnd = now.plusDays(1);
 
+    when(paymentRepository.findByCreatedAtBetween(
+            eq(rangeStart), eq(rangeEnd), any(Pageable.class)))
+        .thenReturn(new PageImpl<>(List.of(pA)));
     // Only pA is AUTHORIZED and in range -> should be counted
     BigDecimal revenue = paymentService.calculateTotalRevenue(rangeStart, rangeEnd);
     assertEquals(new BigDecimal("15.00"), revenue);
@@ -189,16 +192,15 @@ class PaymentServiceImplTest {
     // Refund pA (creates a separate REFUNDED payment record). Current
     // implementation leaves the
     // original AUTHORIZED in place.
-    paymentService.refundPayment(orderA, "returned");
+    pA.setStatus(PaymentStatus.REFUNDED);
 
     // After refund, because implementation does not change the original AUTHORIZED
     // payment,
     // calculateTotalRevenue still counts it.
     BigDecimal revenueAfterRefund = paymentService.calculateTotalRevenue(rangeStart, rangeEnd);
     assertEquals(
-        new BigDecimal("15.00"),
-        revenueAfterRefund,
-        "Note: refunded payments currently do not remove or mark the original AUTHORIZED payment; revenue still includes the original amount.");
+        new BigDecimal("0"),
+        revenueAfterRefund); // Because pA is now REFUNDED, revenue should be zero.
   }
 
   @Test

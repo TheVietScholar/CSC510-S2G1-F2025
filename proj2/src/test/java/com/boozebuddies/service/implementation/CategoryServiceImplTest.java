@@ -114,8 +114,7 @@ class CategoryServiceImplTest {
     when(categoryRepository.findById(999L)).thenReturn(Optional.empty());
 
     assertThrows(
-        java.util.NoSuchElementException.class,
-        () -> categoryService.getCategoryById(999L));
+        java.util.NoSuchElementException.class, () -> categoryService.getCategoryById(999L));
 
     verify(categoryRepository, times(1)).findById(999L);
   }
@@ -136,8 +135,7 @@ class CategoryServiceImplTest {
 
   @Test
   void testGetCategoryById_NegativeId() {
-    assertThrows(
-        IllegalArgumentException.class, () -> categoryService.getCategoryById(-1L));
+    assertThrows(IllegalArgumentException.class, () -> categoryService.getCategoryById(-1L));
 
     verify(categoryRepository, never()).findById(-1L);
   }
@@ -148,8 +146,7 @@ class CategoryServiceImplTest {
     when(categoryRepository.findById(largeId)).thenReturn(Optional.empty());
 
     assertThrows(
-        java.util.NoSuchElementException.class,
-        () -> categoryService.getCategoryById(largeId));
+        java.util.NoSuchElementException.class, () -> categoryService.getCategoryById(largeId));
 
     verify(categoryRepository, times(1)).findById(largeId);
   }
