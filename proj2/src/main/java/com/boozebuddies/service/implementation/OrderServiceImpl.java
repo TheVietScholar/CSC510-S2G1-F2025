@@ -20,17 +20,17 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class OrderServiceImpl implements OrderService {
 
-  @Autowired private OrderRepository orderRepository;
+  @Autowired
+  private OrderRepository orderRepository;
 
-  @Autowired private UserRepository userRepository;
+  @Autowired
+  private DeliveryRepository deliveryRepository;
 
-  @Autowired private MerchantRepository merchantRepository;
+  @Autowired
+  private PaymentService paymentService;
 
-  @Autowired private DeliveryRepository deliveryRepository;
-
-  @Autowired private PaymentService paymentService;
-
-  @Autowired private NotificationService notificationService;
+  @Autowired
+  private NotificationService notificationService;
 
   @Transactional
   public Order createOrder(Order order) {
@@ -76,10 +76,9 @@ public class OrderServiceImpl implements OrderService {
 
   @Transactional
   public Order cancelOrder(Long orderId) {
-    Order order =
-        orderRepository
-            .findById(orderId)
-            .orElseThrow(() -> new RuntimeException("Order not found"));
+    Order order = orderRepository
+        .findById(orderId)
+        .orElseThrow(() -> new RuntimeException("Order not found"));
 
     // Check if order can be cancelled
     if (!order.canBeCancelled()) {
@@ -104,10 +103,9 @@ public class OrderServiceImpl implements OrderService {
 
   @Transactional
   public Order updateOrderStatus(Long orderId, String status) {
-    Order order =
-        orderRepository
-            .findById(orderId)
-            .orElseThrow(() -> new RuntimeException("Order not found"));
+    Order order = orderRepository
+        .findById(orderId)
+        .orElseThrow(() -> new RuntimeException("Order not found"));
 
     OrderStatus newStatus = OrderStatus.valueOf(status.toUpperCase());
 
@@ -142,9 +140,8 @@ public class OrderServiceImpl implements OrderService {
     }
 
     // Check if user is age verified for alcohol products
-    boolean hasAlcohol =
-        order.getItems().stream()
-            .anyMatch(item -> item.getProduct() != null && item.getProduct().isAlcohol());
+    boolean hasAlcohol = order.getItems().stream()
+        .anyMatch(item -> item.getProduct() != null && item.getProduct().isAlcohol());
 
     if (hasAlcohol && !order.getUser().isAgeVerified()) {
       throw new RuntimeException("User must be age verified for alcohol orders");

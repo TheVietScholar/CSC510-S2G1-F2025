@@ -200,4 +200,94 @@ public class OrderServiceImplTest {
     assertNotNull(orders);
     verify(orderRepository).findAll();
   }
+
+  @Test
+  public void createOrder_missingUser_throwsException() {
+    Order order = mock(Order.class);
+    when(order.getUser()).thenReturn(null);
+
+    RuntimeException ex =
+        assertThrows(RuntimeException.class, () -> orderService.createOrder(order));
+    assertEquals("User is required", ex.getMessage());
+    verify(orderRepository, never()).save(any());
+  }
+
+  @Test
+  public void createOrder_missingMerchant_throwsException() {
+    Order order = mock(Order.class);
+    when(order.getUser()).thenReturn(user);
+    when(order.getMerchant()).thenReturn(null);
+
+    RuntimeException ex =
+        assertThrows(RuntimeException.class, () -> orderService.createOrder(order));
+    assertEquals("Merchant is required", ex.getMessage());
+    verify(orderRepository, never()).save(any());
+  }
+
+  @Test
+  public void createOrder_emptyItems_throwsException() {
+    Order order = mock(Order.class);
+    when(order.getUser()).thenReturn(user);
+    when(order.getMerchant()).thenReturn(merchant);
+    when(order.getItems()).thenReturn(List.of());
+
+    RuntimeException ex =
+        assertThrows(RuntimeException.class, () -> orderService.createOrder(order));
+    assertEquals("Order must contain at least one item", ex.getMessage());
+    verify(orderRepository, never()).save(any());
+  }
+
+  @Test
+  public void cancelOrder_nonExistentOrder_throwsException() {
+    Long id = 99L;
+    when(orderRepository.findById(id)).thenReturn(Optional.empty());
+
+    RuntimeException ex =
+        assertThrows(RuntimeException.class, () -> orderService.cancelOrder(id));
+    assertEquals("Order not found", ex.getMessage());
+    verify(orderRepository, never()).save(any());
+    verify(paymentService, never()).refundPayment(any(), any());
+  }
+
+  @Test
+  public void updateOrderStatus_preparing_noNotification() {
+    Long id = 7L;
+    Order order = mock(Order.class);
+    when(orderRepository.findById(id)).thenReturn(Optional.of(order));
+    when(order.isValidStatusTransition(OrderStatus.PREPARING)).thenReturn(true);
+    when(orderRepository.save(order)).thenReturn(order);
+
+    Order result = orderService.updateOrderStatus(id, "PREPARING");
+
+    assertSame(order, result);
+    verify(order).setStatus(OrderStatus.PREPARING);
+    verify(order).setUpdatedAt(any());
+    verify(orderRepository).save(order);
+    verify(notificationService, never()).sendDeliveryStatusUpdate(any(), any());
+  }
+
+  @Test
+  public void updateOrderStatus_invalidStatus_throwsException() {
+    Long id = 8L;
+    Order order = mock(Order.class);
+    when(orderRepository.findById(id)).thenReturn(Optional.of(order));
+
+    RuntimeException ex =
+        assertThrows(RuntimeException.class,
+            () -> orderService.updateOrderStatus(id, "INVALID_STATUS"));
+    assertTrue(ex instanceof IllegalArgumentException);
+    verify(orderRepository, never()).save(any());
+  }
+
+  @Test
+  public void updateOrderStatus_nonExistentOrder_throwsException() {
+    Long id = 99L;
+    when(orderRepository.findById(id)).thenReturn(Optional.empty());
+
+    RuntimeException ex =
+        assertThrows(RuntimeException.class,
+            () -> orderService.updateOrderStatus(id, "CONFIRMED"));
+    assertEquals("Order not found", ex.getMessage());
+    verify(orderRepository, never()).save(any());
+  }
 }
