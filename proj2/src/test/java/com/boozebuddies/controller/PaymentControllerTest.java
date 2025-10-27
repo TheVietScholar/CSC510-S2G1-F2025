@@ -32,14 +32,11 @@ import org.springframework.http.ResponseEntity;
 @ExtendWith(MockitoExtension.class)
 public class PaymentControllerTest {
 
-  @Mock
-  private PaymentService paymentService;
+  @Mock private PaymentService paymentService;
 
-  @Mock
-  private PaymentMapper paymentMapper;
+  @Mock private PaymentMapper paymentMapper;
 
-  @InjectMocks
-  private PaymentController paymentController;
+  @InjectMocks private PaymentController paymentController;
 
   private Payment testPayment;
   private PaymentDTO testPaymentDTO;
@@ -48,35 +45,30 @@ public class PaymentControllerTest {
 
   @BeforeEach
   void setUp() {
-    testUser = User.builder()
-        .id(1L)
-        .name("John Doe")
-        .build();
+    testUser = User.builder().id(1L).name("John Doe").build();
 
-    testOrder = Order.builder()
-        .id(1L)
-        .user(testUser)
-        .totalAmount(new BigDecimal("99.99"))
-        .build();
+    testOrder = Order.builder().id(1L).user(testUser).totalAmount(new BigDecimal("99.99")).build();
 
-    testPayment = Payment.builder()
-        .id(1L)
-        .order(testOrder)
-        .user(testUser)
-        .amount(new BigDecimal("99.99"))
-        .status(PaymentStatus.AUTHORIZED)
-        .paymentMethod("credit_card")
-        .createdAt(LocalDateTime.now())
-        .build();
+    testPayment =
+        Payment.builder()
+            .id(1L)
+            .order(testOrder)
+            .user(testUser)
+            .amount(new BigDecimal("99.99"))
+            .status(PaymentStatus.AUTHORIZED)
+            .paymentMethod("credit_card")
+            .createdAt(LocalDateTime.now())
+            .build();
 
-    testPaymentDTO = PaymentDTO.builder()
-        .id(1L)
-        .orderId(1L)
-        .userId(1L)
-        .amount(new BigDecimal("99.99"))
-        .status(PaymentStatus.AUTHORIZED.name())
-        .paymentMethod("credit_card")
-        .build();
+    testPaymentDTO =
+        PaymentDTO.builder()
+            .id(1L)
+            .orderId(1L)
+            .userId(1L)
+            .amount(new BigDecimal("99.99"))
+            .status(PaymentStatus.AUTHORIZED.name())
+            .paymentMethod("credit_card")
+            .build();
   }
 
   @Test
@@ -85,7 +77,8 @@ public class PaymentControllerTest {
         .thenReturn(testPayment);
     when(paymentMapper.toDTO(testPayment)).thenReturn(testPaymentDTO);
 
-    ResponseEntity<ApiResponse<PaymentDTO>> response = paymentController.processPayment(1L, "credit_card");
+    ResponseEntity<ApiResponse<PaymentDTO>> response =
+        paymentController.processPayment(1L, "credit_card");
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
     ApiResponse<PaymentDTO> body = response.getBody();
@@ -97,28 +90,31 @@ public class PaymentControllerTest {
 
   @Test
   void refundPayment_Success() {
-    Payment refundedPayment = Payment.builder()
-        .id(2L)
-        .order(testOrder)
-        .user(testUser)
-        .amount(new BigDecimal("99.99"))
-        .status(PaymentStatus.REFUNDED)
-        .refundReason("customer_request")
-        .build();
+    Payment refundedPayment =
+        Payment.builder()
+            .id(2L)
+            .order(testOrder)
+            .user(testUser)
+            .amount(new BigDecimal("99.99"))
+            .status(PaymentStatus.REFUNDED)
+            .refundReason("customer_request")
+            .build();
 
-    PaymentDTO refundedDTO = PaymentDTO.builder()
-        .id(2L)
-        .orderId(1L)
-        .userId(1L)
-        .amount(new BigDecimal("99.99"))
-        .status(PaymentStatus.REFUNDED.name())
-        .build();
+    PaymentDTO refundedDTO =
+        PaymentDTO.builder()
+            .id(2L)
+            .orderId(1L)
+            .userId(1L)
+            .amount(new BigDecimal("99.99"))
+            .status(PaymentStatus.REFUNDED.name())
+            .build();
 
     when(paymentService.refundPayment(any(Order.class), eq("customer_request")))
         .thenReturn(refundedPayment);
     when(paymentMapper.toDTO(refundedPayment)).thenReturn(refundedDTO);
 
-    ResponseEntity<ApiResponse<PaymentDTO>> response = paymentController.refundPayment(1L, "customer_request");
+    ResponseEntity<ApiResponse<PaymentDTO>> response =
+        paymentController.refundPayment(1L, "customer_request");
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
     ApiResponse<PaymentDTO> body = response.getBody();
@@ -175,8 +171,7 @@ public class PaymentControllerTest {
     LocalDateTime end = LocalDateTime.now();
     BigDecimal expectedRevenue = new BigDecimal("299.97");
 
-    when(paymentService.calculateTotalRevenue(any(), any()))
-        .thenReturn(expectedRevenue);
+    when(paymentService.calculateTotalRevenue(any(), any())).thenReturn(expectedRevenue);
 
     ResponseEntity<?> response = paymentController.calculateTotalRevenue(start, end);
 
@@ -190,8 +185,7 @@ public class PaymentControllerTest {
   @Test
   @SuppressWarnings("unchecked")
   void validatePaymentMethod_Valid() {
-    when(paymentService.validatePaymentMethod(any(User.class), eq("credit_card")))
-        .thenReturn(true);
+    when(paymentService.validatePaymentMethod(any(User.class), eq("credit_card"))).thenReturn(true);
 
     ResponseEntity<?> response = paymentController.validatePaymentMethod(1L, "credit_card");
 

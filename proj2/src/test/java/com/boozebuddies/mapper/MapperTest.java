@@ -2,21 +2,20 @@ package com.boozebuddies.mapper;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.boozebuddies.dto.PaymentDTO;
-import com.boozebuddies.dto.PaymentRequest;
-import com.boozebuddies.entity.Payment;
-import com.boozebuddies.model.PaymentStatus;
-
 import com.boozebuddies.dto.CreateOrderRequest;
 import com.boozebuddies.dto.OrderDTO;
 import com.boozebuddies.dto.OrderItemRequest;
+import com.boozebuddies.dto.PaymentDTO;
+import com.boozebuddies.dto.PaymentRequest;
 import com.boozebuddies.entity.Driver;
 import com.boozebuddies.entity.Merchant;
 import com.boozebuddies.entity.Order;
 import com.boozebuddies.entity.OrderItem;
+import com.boozebuddies.entity.Payment;
 import com.boozebuddies.entity.Product;
 import com.boozebuddies.entity.User;
 import com.boozebuddies.model.OrderStatus;
+import com.boozebuddies.model.PaymentStatus;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -176,16 +175,17 @@ public class MapperTest {
 
   @Test
   void paymentToDTO_fullPayment_mapsAllFields() {
-    testPayment = Payment.builder()
-        .id(1L)
-        .order(testOrder)
-        .amount(new BigDecimal("20.00"))
-        .status(PaymentStatus.CAPTURED)
-        .paymentMethod("CREDIT_CARD")
-        .transactionId("txn_123")
-        .paymentDate(now)
-        .failureReason(null)
-        .build();
+    testPayment =
+        Payment.builder()
+            .id(1L)
+            .order(testOrder)
+            .amount(new BigDecimal("20.00"))
+            .status(PaymentStatus.CAPTURED)
+            .paymentMethod("CREDIT_CARD")
+            .transactionId("txn_123")
+            .paymentDate(now)
+            .failureReason(null)
+            .build();
 
     PaymentDTO dto = paymentMapper.toDTO(testPayment);
 
@@ -207,12 +207,13 @@ public class MapperTest {
 
   @Test
   void paymentToDTO_paymentWithNullFields_mapsWithNulls() {
-    testPayment = Payment.builder()
-        .id(1L)
-        .order(null)
-        .amount(new BigDecimal("20.00"))
-        .status(PaymentStatus.CAPTURED)
-        .build();
+    testPayment =
+        Payment.builder()
+            .id(1L)
+            .order(null)
+            .amount(new BigDecimal("20.00"))
+            .status(PaymentStatus.CAPTURED)
+            .build();
 
     PaymentDTO dto = paymentMapper.toDTO(testPayment);
 

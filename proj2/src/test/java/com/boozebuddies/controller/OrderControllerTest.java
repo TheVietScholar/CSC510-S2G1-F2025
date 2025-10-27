@@ -5,12 +5,22 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
+import com.boozebuddies.dto.ApiResponse;
+import com.boozebuddies.dto.CreateOrderRequest;
+import com.boozebuddies.dto.OrderDTO;
+import com.boozebuddies.dto.OrderItemRequest;
+import com.boozebuddies.entity.Merchant;
+import com.boozebuddies.entity.Order;
+import com.boozebuddies.entity.OrderItem;
+import com.boozebuddies.entity.Product;
+import com.boozebuddies.entity.User;
+import com.boozebuddies.model.OrderStatus;
+import com.boozebuddies.service.OrderService;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,26 +30,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import com.boozebuddies.dto.ApiResponse;
-import com.boozebuddies.dto.CreateOrderRequest;
-import com.boozebuddies.dto.OrderDTO;
-import com.boozebuddies.dto.OrderItemRequest;
-import com.boozebuddies.entity.Order;
-import com.boozebuddies.entity.OrderItem;
-import com.boozebuddies.entity.Product;
-import com.boozebuddies.entity.User;
-import com.boozebuddies.entity.Merchant;
-import com.boozebuddies.model.OrderStatus;
-import com.boozebuddies.service.OrderService;
-
 @ExtendWith(MockitoExtension.class)
 public class OrderControllerTest {
 
-  @Mock
-  private OrderService orderService;
+  @Mock private OrderService orderService;
 
-  @InjectMocks
-  private OrderController orderController;
+  @InjectMocks private OrderController orderController;
 
   private Order testOrder;
   private User testUser;
@@ -50,50 +46,49 @@ public class OrderControllerTest {
 
   @BeforeEach
   void setUp() {
-    testUser = User.builder()
-        .id(1L)
-        .name("John Doe")
-        .build();
+    testUser = User.builder().id(1L).name("John Doe").build();
 
-    testMerchant = Merchant.builder()
-        .id(1L)
-        .name("Test Liquor Store")
-        .build();
+    testMerchant = Merchant.builder().id(1L).name("Test Liquor Store").build();
 
-    testProduct = Product.builder()
-        .id(1L)
-        .name("Test Beer")
-        .price(new BigDecimal("19.99"))
-        .merchant(testMerchant)
-        .build();
+    testProduct =
+        Product.builder()
+            .id(1L)
+            .name("Test Beer")
+            .price(new BigDecimal("19.99"))
+            .merchant(testMerchant)
+            .build();
 
-    testOrderItem = OrderItem.builder()
-        .id(1L)
-        .product(testProduct)
-        .quantity(2)
-        .unitPrice(new BigDecimal("19.99"))
-        .build();
+    testOrderItem =
+        OrderItem.builder()
+            .id(1L)
+            .product(testProduct)
+            .quantity(2)
+            .unitPrice(new BigDecimal("19.99"))
+            .build();
 
-    testOrder = Order.builder()
-        .id(1L)
-        .user(testUser)
-        .merchant(testMerchant)
-        .items(List.of(testOrderItem))
-        .totalAmount(new BigDecimal("39.98"))
-        .status(OrderStatus.PENDING)
-        .createdAt(LocalDateTime.now())
-        .build();
+    testOrder =
+        Order.builder()
+            .id(1L)
+            .user(testUser)
+            .merchant(testMerchant)
+            .items(List.of(testOrderItem))
+            .totalAmount(new BigDecimal("39.98"))
+            .status(OrderStatus.PENDING)
+            .createdAt(LocalDateTime.now())
+            .build();
 
-    testCreateRequest = CreateOrderRequest.builder()
-        .userId(1L)
-        .merchantId(1L)
-        .items(Arrays.asList(
-            OrderItemRequest.builder()
-                .productId(1L)
-                .quantity(2)
-                .unitPrice(new BigDecimal("10.00"))
-                .build()))
-        .build();
+    testCreateRequest =
+        CreateOrderRequest.builder()
+            .userId(1L)
+            .merchantId(1L)
+            .items(
+                Arrays.asList(
+                    OrderItemRequest.builder()
+                        .productId(1L)
+                        .quantity(2)
+                        .unitPrice(new BigDecimal("10.00"))
+                        .build()))
+            .build();
   }
 
   @Test
@@ -133,8 +128,7 @@ public class OrderControllerTest {
 
   @Test
   void getOrdersByUser_Success() {
-    when(orderService.getOrdersByUser(1L))
-        .thenReturn(List.of(testOrder));
+    when(orderService.getOrdersByUser(1L)).thenReturn(List.of(testOrder));
 
     ResponseEntity<ApiResponse<List<OrderDTO>>> response = orderController.getOrdersByUser(1L);
 
@@ -147,10 +141,10 @@ public class OrderControllerTest {
 
   @Test
   void updateOrderStatus_Success() {
-    when(orderService.updateOrderStatus(eq(1L), eq("CONFIRMED")))
-        .thenReturn(testOrder);
+    when(orderService.updateOrderStatus(eq(1L), eq("CONFIRMED"))).thenReturn(testOrder);
 
-    ResponseEntity<ApiResponse<OrderDTO>> response = orderController.updateOrderStatus(1L, "CONFIRMED");
+    ResponseEntity<ApiResponse<OrderDTO>> response =
+        orderController.updateOrderStatus(1L, "CONFIRMED");
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
     ApiResponse<OrderDTO> body = response.getBody();
@@ -164,7 +158,8 @@ public class OrderControllerTest {
     when(orderService.updateOrderStatus(eq(99L), anyString()))
         .thenThrow(new IllegalArgumentException("Order not found"));
 
-    ResponseEntity<ApiResponse<OrderDTO>> response = orderController.updateOrderStatus(99L, "CONFIRMED");
+    ResponseEntity<ApiResponse<OrderDTO>> response =
+        orderController.updateOrderStatus(99L, "CONFIRMED");
 
     assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     ApiResponse<OrderDTO> body = response.getBody();
@@ -175,10 +170,7 @@ public class OrderControllerTest {
 
   @Test
   void cancelOrder_Success() {
-    Order cancelledOrder = Order.builder()
-        .id(1L)
-        .status(OrderStatus.CANCELLED)
-        .build();
+    Order cancelledOrder = Order.builder().id(1L).status(OrderStatus.CANCELLED).build();
 
     when(orderService.cancelOrder(1L)).thenReturn(cancelledOrder);
 
@@ -193,8 +185,7 @@ public class OrderControllerTest {
 
   @Test
   void cancelOrder_NotFound() {
-    when(orderService.cancelOrder(99L))
-        .thenThrow(new IllegalArgumentException("Order not found"));
+    when(orderService.cancelOrder(99L)).thenThrow(new IllegalArgumentException("Order not found"));
 
     ResponseEntity<ApiResponse<OrderDTO>> response = orderController.cancelOrder(99L);
 
@@ -222,7 +213,8 @@ public class OrderControllerTest {
 
   @Test
   void updateOrderStatus_InvalidStatus() {
-    ResponseEntity<ApiResponse<OrderDTO>> response = orderController.updateOrderStatus(1L, "INVALID_STATUS");
+    ResponseEntity<ApiResponse<OrderDTO>> response =
+        orderController.updateOrderStatus(1L, "INVALID_STATUS");
 
     assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     ApiResponse<OrderDTO> body = response.getBody();

@@ -242,8 +242,7 @@ public class OrderServiceImplTest {
     Long id = 99L;
     when(orderRepository.findById(id)).thenReturn(Optional.empty());
 
-    RuntimeException ex =
-        assertThrows(RuntimeException.class, () -> orderService.cancelOrder(id));
+    RuntimeException ex = assertThrows(RuntimeException.class, () -> orderService.cancelOrder(id));
     assertEquals("Order not found", ex.getMessage());
     verify(orderRepository, never()).save(any());
     verify(paymentService, never()).refundPayment(any(), any());
@@ -273,8 +272,8 @@ public class OrderServiceImplTest {
     when(orderRepository.findById(id)).thenReturn(Optional.of(order));
 
     RuntimeException ex =
-        assertThrows(RuntimeException.class,
-            () -> orderService.updateOrderStatus(id, "INVALID_STATUS"));
+        assertThrows(
+            RuntimeException.class, () -> orderService.updateOrderStatus(id, "INVALID_STATUS"));
     assertTrue(ex instanceof IllegalArgumentException);
     verify(orderRepository, never()).save(any());
   }
@@ -285,8 +284,7 @@ public class OrderServiceImplTest {
     when(orderRepository.findById(id)).thenReturn(Optional.empty());
 
     RuntimeException ex =
-        assertThrows(RuntimeException.class,
-            () -> orderService.updateOrderStatus(id, "CONFIRMED"));
+        assertThrows(RuntimeException.class, () -> orderService.updateOrderStatus(id, "CONFIRMED"));
     assertEquals("Order not found", ex.getMessage());
     verify(orderRepository, never()).save(any());
   }
