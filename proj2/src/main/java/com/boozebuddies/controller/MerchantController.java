@@ -36,7 +36,9 @@ public class MerchantController {
       Merchant merchant = merchantMapper.toEntity(merchantDTO);
       Merchant registered = merchantService.registerMerchant(merchant);
       return ResponseEntity.status(HttpStatus.CREATED)
-          .body(ApiResponse.success(merchantMapper.toDTO(registered), "Merchant registered successfully"));
+          .body(
+              ApiResponse.success(
+                  merchantMapper.toDTO(registered), "Merchant registered successfully"));
     } catch (IllegalArgumentException e) {
       return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
     } catch (Exception e) {
@@ -48,8 +50,7 @@ public class MerchantController {
   // ==================== VERIFY ====================
 
   @PutMapping("/{id}/verify")
-  public ResponseEntity<?> verifyMerchant(
-      @PathVariable Long id, @RequestParam boolean verified) {
+  public ResponseEntity<?> verifyMerchant(@PathVariable Long id, @RequestParam boolean verified) {
     try {
       Merchant verifiedMerchant = merchantService.verifyMerchant(id, verified);
       return ResponseEntity.ok(
@@ -86,11 +87,8 @@ public class MerchantController {
   public ResponseEntity<?> getAllMerchants() {
     try {
       List<MerchantDTO> merchants =
-          merchantService.getAllMerchants().stream()
-              .map(merchantMapper::toDTO)
-              .toList();
-      return ResponseEntity.ok(
-          ApiResponse.success(merchants, "Merchants retrieved successfully"));
+          merchantService.getAllMerchants().stream().map(merchantMapper::toDTO).toList();
+      return ResponseEntity.ok(ApiResponse.success(merchants, "Merchants retrieved successfully"));
     } catch (Exception e) {
       return ResponseEntity.badRequest()
           .body(ApiResponse.error("An error occurred retrieving merchants"));
@@ -132,8 +130,7 @@ public class MerchantController {
       }
       Pageable pageable = PageRequest.of(page, size);
       Page<Order> orders = merchantService.getOrdersByMerchant(id, pageable);
-      return ResponseEntity.ok(
-          ApiResponse.success(orders, "Orders retrieved successfully"));
+      return ResponseEntity.ok(ApiResponse.success(orders, "Orders retrieved successfully"));
     } catch (IllegalArgumentException e) {
       return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
     } catch (Exception e) {

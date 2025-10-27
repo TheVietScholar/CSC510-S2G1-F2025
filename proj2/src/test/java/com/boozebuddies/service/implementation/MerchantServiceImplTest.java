@@ -8,6 +8,8 @@ import com.boozebuddies.entity.Merchant;
 import com.boozebuddies.entity.Order;
 import com.boozebuddies.repository.MerchantRepository;
 import com.boozebuddies.repository.OrderRepository;
+import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,32 +21,27 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
-import java.util.List;
-import java.util.Optional;
-
 @ExtendWith(MockitoExtension.class)
 class MerchantServiceImplTest {
 
-  @Mock
-  private MerchantRepository merchantRepository;
+  @Mock private MerchantRepository merchantRepository;
 
-  @Mock
-  private OrderRepository orderRepository;
+  @Mock private OrderRepository orderRepository;
 
-  @InjectMocks
-  private MerchantServiceImpl merchantService;
+  @InjectMocks private MerchantServiceImpl merchantService;
 
   private Merchant testMerchant;
 
   @BeforeEach
   void setUp() {
-    testMerchant = Merchant.builder()
-        .id(1L)
-        .name("Test Merchant")
-        .email("merchant@example.com")
-        .phone("555-1234")
-        .isActive(false)
-        .build();
+    testMerchant =
+        Merchant.builder()
+            .id(1L)
+            .name("Test Merchant")
+            .email("merchant@example.com")
+            .phone("555-1234")
+            .isActive(false)
+            .build();
   }
 
   // ==================== registerMerchant Tests ====================
@@ -62,49 +59,63 @@ class MerchantServiceImplTest {
 
   @Test
   void testRegisterMerchant_MerchantNull() {
-    assertThrows(IllegalArgumentException.class, () -> merchantService.registerMerchant(null),
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> merchantService.registerMerchant(null),
         "Merchant cannot be null");
   }
 
   @Test
   void testRegisterMerchant_NameNull() {
     testMerchant.setName(null);
-    assertThrows(IllegalArgumentException.class, () -> merchantService.registerMerchant(testMerchant),
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> merchantService.registerMerchant(testMerchant),
         "Merchant name is required");
   }
 
   @Test
   void testRegisterMerchant_NameEmpty() {
     testMerchant.setName("");
-    assertThrows(IllegalArgumentException.class, () -> merchantService.registerMerchant(testMerchant),
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> merchantService.registerMerchant(testMerchant),
         "Merchant name is required");
   }
 
   @Test
   void testRegisterMerchant_EmailNull() {
     testMerchant.setEmail(null);
-    assertThrows(IllegalArgumentException.class, () -> merchantService.registerMerchant(testMerchant),
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> merchantService.registerMerchant(testMerchant),
         "Merchant email is required");
   }
 
   @Test
   void testRegisterMerchant_EmailEmpty() {
     testMerchant.setEmail("");
-    assertThrows(IllegalArgumentException.class, () -> merchantService.registerMerchant(testMerchant),
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> merchantService.registerMerchant(testMerchant),
         "Merchant email is required");
   }
 
   @Test
   void testRegisterMerchant_PhoneNull() {
     testMerchant.setPhone(null);
-    assertThrows(IllegalArgumentException.class, () -> merchantService.registerMerchant(testMerchant),
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> merchantService.registerMerchant(testMerchant),
         "Merchant phone is required");
   }
 
   @Test
   void testRegisterMerchant_PhoneEmpty() {
     testMerchant.setPhone("");
-    assertThrows(IllegalArgumentException.class, () -> merchantService.registerMerchant(testMerchant),
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> merchantService.registerMerchant(testMerchant),
         "Merchant phone is required");
   }
 
@@ -146,19 +157,25 @@ class MerchantServiceImplTest {
 
   @Test
   void testVerifyMerchant_MerchantIdNull() {
-    assertThrows(IllegalArgumentException.class, () -> merchantService.verifyMerchant(null, true),
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> merchantService.verifyMerchant(null, true),
         "Invalid merchant ID");
   }
 
   @Test
   void testVerifyMerchant_MerchantIdZero() {
-    assertThrows(IllegalArgumentException.class, () -> merchantService.verifyMerchant(0L, true),
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> merchantService.verifyMerchant(0L, true),
         "Invalid merchant ID");
   }
 
   @Test
   void testVerifyMerchant_MerchantIdNegative() {
-    assertThrows(IllegalArgumentException.class, () -> merchantService.verifyMerchant(-1L, true),
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> merchantService.verifyMerchant(-1L, true),
         "Invalid merchant ID");
   }
 
@@ -166,7 +183,9 @@ class MerchantServiceImplTest {
   void testVerifyMerchant_MerchantNotFound() {
     when(merchantRepository.findById(999L)).thenReturn(Optional.empty());
 
-    assertThrows(IllegalArgumentException.class, () -> merchantService.verifyMerchant(999L, true),
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> merchantService.verifyMerchant(999L, true),
         "Merchant not found");
   }
 
@@ -184,19 +203,25 @@ class MerchantServiceImplTest {
 
   @Test
   void testGetMerchantById_MerchantIdNull() {
-    assertThrows(IllegalArgumentException.class, () -> merchantService.getMerchantById(null),
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> merchantService.getMerchantById(null),
         "Invalid merchant ID");
   }
 
   @Test
   void testGetMerchantById_MerchantIdZero() {
-    assertThrows(IllegalArgumentException.class, () -> merchantService.getMerchantById(0L),
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> merchantService.getMerchantById(0L),
         "Invalid merchant ID");
   }
 
   @Test
   void testGetMerchantById_MerchantIdNegative() {
-    assertThrows(IllegalArgumentException.class, () -> merchantService.getMerchantById(-5L),
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> merchantService.getMerchantById(-5L),
         "Invalid merchant ID");
   }
 
@@ -204,7 +229,9 @@ class MerchantServiceImplTest {
   void testGetMerchantById_NotFound() {
     when(merchantRepository.findById(999L)).thenReturn(Optional.empty());
 
-    assertThrows(IllegalArgumentException.class, () -> merchantService.getMerchantById(999L),
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> merchantService.getMerchantById(999L),
         "Merchant not found");
   }
 
@@ -234,13 +261,14 @@ class MerchantServiceImplTest {
 
   @Test
   void testGetAllMerchants_MultipleMerchants() {
-    Merchant merchant2 = Merchant.builder()
-        .id(2L)
-        .name("Second Merchant")
-        .email("merchant2@example.com")
-        .phone("555-5678")
-        .isActive(true)
-        .build();
+    Merchant merchant2 =
+        Merchant.builder()
+            .id(2L)
+            .name("Second Merchant")
+            .email("merchant2@example.com")
+            .phone("555-5678")
+            .isActive(true)
+            .build();
 
     List<Merchant> merchants = List.of(testMerchant, merchant2);
     when(merchantRepository.findAll()).thenReturn(merchants);
@@ -274,19 +302,25 @@ class MerchantServiceImplTest {
 
   @Test
   void testDeleteMerchant_MerchantIdNull() {
-    assertThrows(IllegalArgumentException.class, () -> merchantService.deleteMerchant(null),
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> merchantService.deleteMerchant(null),
         "Invalid merchant ID");
   }
 
   @Test
   void testDeleteMerchant_MerchantIdZero() {
-    assertThrows(IllegalArgumentException.class, () -> merchantService.deleteMerchant(0L),
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> merchantService.deleteMerchant(0L),
         "Invalid merchant ID");
   }
 
   @Test
   void testDeleteMerchant_MerchantIdNegative() {
-    assertThrows(IllegalArgumentException.class, () -> merchantService.deleteMerchant(-1L),
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> merchantService.deleteMerchant(-1L),
         "Invalid merchant ID");
   }
 
@@ -312,7 +346,9 @@ class MerchantServiceImplTest {
   void testGetOrdersByMerchant_MerchantIdNull() {
     Pageable pageable = PageRequest.of(0, 10);
 
-    assertThrows(IllegalArgumentException.class, () -> merchantService.getOrdersByMerchant(null, pageable),
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> merchantService.getOrdersByMerchant(null, pageable),
         "Invalid merchant ID");
   }
 
@@ -320,13 +356,17 @@ class MerchantServiceImplTest {
   void testGetOrdersByMerchant_MerchantIdZero() {
     Pageable pageable = PageRequest.of(0, 10);
 
-    assertThrows(IllegalArgumentException.class, () -> merchantService.getOrdersByMerchant(0L, pageable),
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> merchantService.getOrdersByMerchant(0L, pageable),
         "Invalid merchant ID");
   }
 
   @Test
   void testGetOrdersByMerchant_PageableNull() {
-    assertThrows(IllegalArgumentException.class, () -> merchantService.getOrdersByMerchant(1L, null),
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> merchantService.getOrdersByMerchant(1L, null),
         "Pageable cannot be null");
   }
 
@@ -335,7 +375,9 @@ class MerchantServiceImplTest {
     Pageable pageable = PageRequest.of(0, 10);
     when(merchantRepository.existsById(999L)).thenReturn(false);
 
-    assertThrows(IllegalArgumentException.class, () -> merchantService.getOrdersByMerchant(999L, pageable),
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> merchantService.getOrdersByMerchant(999L, pageable),
         "Merchant not found");
   }
 

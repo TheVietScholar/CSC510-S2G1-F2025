@@ -248,8 +248,7 @@ class MerchantControllerTest {
   @Test
   @DisplayName("GET /api/merchants/{id} should handle unexpected exceptions")
   void testGetMerchantById_UnexpectedException() throws Exception {
-    when(merchantService.getMerchantById(1L))
-        .thenThrow(new RuntimeException("Database error"));
+    when(merchantService.getMerchantById(1L)).thenThrow(new RuntimeException("Database error"));
 
     mockMvc
         .perform(get("/api/merchants/1"))
@@ -263,16 +262,8 @@ class MerchantControllerTest {
   @Test
   @DisplayName("GET /api/merchants should return 200 with list of merchants")
   void testGetAllMerchants_Success() throws Exception {
-    MerchantDTO dto2 =
-        MerchantDTO.builder()
-            .id(2L)
-            .name("Second Restaurant")
-            .build();
-    Merchant merchant2 =
-        Merchant.builder()
-            .id(2L)
-            .name("Second Restaurant")
-            .build();
+    MerchantDTO dto2 = MerchantDTO.builder().id(2L).name("Second Restaurant").build();
+    Merchant merchant2 = Merchant.builder().id(2L).name("Second Restaurant").build();
 
     when(merchantService.getAllMerchants()).thenReturn(List.of(testMerchant, merchant2));
     when(merchantMapper.toDTO(testMerchant)).thenReturn(testMerchantDTO);
@@ -306,8 +297,7 @@ class MerchantControllerTest {
   @Test
   @DisplayName("GET /api/merchants should handle unexpected exceptions")
   void testGetAllMerchants_UnexpectedException() throws Exception {
-    when(merchantService.getAllMerchants())
-        .thenThrow(new RuntimeException("Database error"));
+    when(merchantService.getAllMerchants()).thenThrow(new RuntimeException("Database error"));
 
     mockMvc
         .perform(get("/api/merchants"))
