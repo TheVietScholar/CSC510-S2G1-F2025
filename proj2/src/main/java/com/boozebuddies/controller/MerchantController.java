@@ -2,13 +2,16 @@ package com.boozebuddies.controller;
 
 import com.boozebuddies.dto.ApiResponse;
 import com.boozebuddies.dto.MerchantDTO;
-import com.boozebuddies.dto.OrderDTO;
 import com.boozebuddies.entity.Merchant;
 import com.boozebuddies.entity.Order;
+import com.boozebuddies.mapper.MerchantMapper;
 import com.boozebuddies.service.MerchantService;
 import java.util.List;
-import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,149 +19,123 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/merchants")
 public class MerchantController {
 
-  @Autowired private MerchantService merchantService;
+  private final MerchantService merchantService;
+  private final MerchantMapper merchantMapper;
 
-  /** Register a new merchant */
+  @Autowired
+  public MerchantController(MerchantService merchantService, MerchantMapper merchantMapper) {
+    this.merchantService = merchantService;
+    this.merchantMapper = merchantMapper;
+  }
+
+  // ==================== REGISTER ====================
+
   @PostMapping("/register")
-  public ResponseEntity<ApiResponse<MerchantDTO>> registerMerchant(
-      @RequestBody MerchantDTO merchantDTO) {
+  public ResponseEntity<?> registerMerchant(@RequestBody MerchantDTO merchantDTO) {
     try {
-      Merchant merchant = convertToEntity(merchantDTO);
-      Merchant registeredMerchant = merchantService.registerMerchant(merchant);
-      MerchantDTO responseDTO = convertToDTO(registeredMerchant);
+      Merchant merchant = merchantMapper.toEntity(merchantDTO);
+      Merchant registered = merchantService.registerMerchant(merchant);
+      return ResponseEntity.status(HttpStatus.CREATED)
+          .body(
+              ApiResponse.success(
+                  merchantMapper.toDTO(registered), "Merchant registered successfully"));
+    } catch (IllegalArgumentException e) {
+      return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+    } catch (Exception e) {
+      return ResponseEntity.badRequest()
+          .body(ApiResponse.error("An error occurred during registration"));
+    }
+  }
+
+  // ==================== VERIFY ====================
+
+  @PutMapping("/{id}/verify")
+  public ResponseEntity<?> verifyMerchant(@PathVariable Long id, @RequestParam boolean verified) {
+    try {
+      Merchant verifiedMerchant = merchantService.verifyMerchant(id, verified);
       return ResponseEntity.ok(
-          ApiResponse.success(responseDTO, "Merchant registered successfully"));
+          ApiResponse.success(
+              merchantMapper.toDTO(verifiedMerchant), "Merchant verified successfully"));
+    } catch (IllegalArgumentException e) {
+      return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
     } catch (Exception e) {
       return ResponseEntity.badRequest()
-          .body(ApiResponse.error("Failed to register merchant: " + e.getMessage()));
+          .body(ApiResponse.error("An error occurred during verification"));
     }
   }
 
-  // /** Verify a merchant */
-  // @PutMapping("/{merchantId}/verify")
-  // public ResponseEntity<ApiResponse<MerchantDTO>> verifyMerchant(
-  //     @PathVariable Long merchantId, @RequestParam boolean verified) {
-  //   try {
-  //     Merchant merchant = merchantService.verifyMerchant(merchantId, verified);
-  //     if (merchant == null) {
-  //       return ResponseEntity.notFound().build();
-  //     }
-  //     MerchantDTO merchantDTO = convertToDTO(merchant);
-  //     String message =
-  //         verified ? "Merchant verified successfully" : "Merchant verification revoked";
-  //     return ResponseEntity.ok(ApiResponse.success(merchantDTO, message));
-  //   } catch (Exception e) {
-  //     return ResponseEntity.badRequest()
-  //         .body(ApiResponse.error("Failed to update merchant verification: " + e.getMessage()));
-  //   }
-  // }
+  // ==================== RETRIEVE ====================
 
-  /** Get merchant by ID */
-  @GetMapping("/{merchantId}")
-  public ResponseEntity<ApiResponse<MerchantDTO>> getMerchantById(@PathVariable Long merchantId) {
+  @GetMapping("/{id}")
+  public ResponseEntity<?> getMerchantById(@PathVariable Long id) {
     try {
-      Merchant merchant = merchantService.getMerchantById(merchantId);
-      if (merchant == null) {
-        return ResponseEntity.notFound().build();
+      if (id == null || id <= 0) {
+        return ResponseEntity.badRequest().body(ApiResponse.error("Invalid merchant ID"));
       }
-      MerchantDTO merchantDTO = convertToDTO(merchant);
-      return ResponseEntity.ok(ApiResponse.success(merchantDTO, "Merchant retrieved successfully"));
+      Merchant merchant = merchantService.getMerchantById(id);
+      return ResponseEntity.ok(
+          ApiResponse.success(merchantMapper.toDTO(merchant), "Merchant retrieved successfully"));
+    } catch (IllegalArgumentException e) {
+      return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
     } catch (Exception e) {
       return ResponseEntity.badRequest()
-          .body(ApiResponse.error("Failed to retrieve merchant: " + e.getMessage()));
+          .body(ApiResponse.error("An error occurred retrieving merchant"));
     }
   }
 
-  /** Get all merchants */
   @GetMapping
-  public ResponseEntity<ApiResponse<List<MerchantDTO>>> getAllMerchants() {
+  public ResponseEntity<?> getAllMerchants() {
     try {
-      List<Merchant> allMerchants = merchantService.getAllMerchants();
-      List<MerchantDTO> merchantDTOs =
-          allMerchants.stream().map(this::convertToDTO).collect(Collectors.toList());
-      return ResponseEntity.ok(
-          ApiResponse.success(merchantDTOs, "All merchants retrieved successfully"));
+      List<MerchantDTO> merchants =
+          merchantService.getAllMerchants().stream().map(merchantMapper::toDTO).toList();
+      return ResponseEntity.ok(ApiResponse.success(merchants, "Merchants retrieved successfully"));
     } catch (Exception e) {
       return ResponseEntity.badRequest()
-          .body(ApiResponse.error("Failed to retrieve merchants: " + e.getMessage()));
+          .body(ApiResponse.error("An error occurred retrieving merchants"));
     }
   }
 
-  /** Get all orders for a specific merchant */
-  @GetMapping("/{merchantId}/orders")
-  public ResponseEntity<ApiResponse<List<OrderDTO>>> getOrdersByMerchant(
-      @PathVariable Long merchantId) {
-    try {
-      List<Order> orders = merchantService.getOrdersByMerchant(merchantId);
-      List<OrderDTO> orderDTOs =
-          orders.stream().map(this::convertOrderToDTO).collect(Collectors.toList());
-      return ResponseEntity.ok(
-          ApiResponse.success(orderDTOs, "Merchant orders retrieved successfully"));
-    } catch (Exception e) {
-      return ResponseEntity.badRequest()
-          .body(ApiResponse.error("Failed to retrieve merchant orders: " + e.getMessage()));
-    }
-  }
+  // ==================== DELETE ====================
 
-  /** Delete a merchant */
-  @DeleteMapping("/{merchantId}")
-  public ResponseEntity<ApiResponse<Void>> deleteMerchant(@PathVariable Long merchantId) {
+  @DeleteMapping("/{id}")
+  public ResponseEntity<?> deleteMerchant(@PathVariable Long id) {
     try {
-      boolean deleted = merchantService.deleteMerchant(merchantId);
-      if (!deleted) {
+      if (id == null || id <= 0) {
+        return ResponseEntity.badRequest().body(ApiResponse.error("Invalid merchant ID"));
+      }
+      boolean deleted = merchantService.deleteMerchant(id);
+      if (deleted) {
+        return ResponseEntity.ok(ApiResponse.success(null, "Merchant deleted successfully"));
+      } else {
         return ResponseEntity.notFound().build();
       }
-      return ResponseEntity.ok(ApiResponse.success(null, "Merchant deleted successfully"));
+    } catch (IllegalArgumentException e) {
+      return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
     } catch (Exception e) {
       return ResponseEntity.badRequest()
-          .body(ApiResponse.error("Failed to delete merchant: " + e.getMessage()));
+          .body(ApiResponse.error("An error occurred during deletion"));
     }
   }
 
-  /** Convert MerchantDTO to Merchant entity */
-  private Merchant convertToEntity(MerchantDTO merchantDTO) {
-    return Merchant.builder()
-        .name(merchantDTO.getName())
-        .description(merchantDTO.getDescription())
-        .address(merchantDTO.getAddress())
-        .phone(merchantDTO.getPhone())
-        .email(merchantDTO.getEmail())
-        .cuisineType(merchantDTO.getCuisineType())
-        .openingTime(merchantDTO.getOpeningTime())
-        .closingTime(merchantDTO.getClosingTime())
-        .imageUrl(merchantDTO.getImageUrl())
-        .build();
-  }
+  // ==================== ORDERS BY MERCHANT ====================
 
-  /** Convert Merchant entity to MerchantDTO */
-  private MerchantDTO convertToDTO(Merchant merchant) {
-    return MerchantDTO.builder()
-        .id(merchant.getId())
-        .name(merchant.getName())
-        .description(merchant.getDescription())
-        .address(merchant.getAddress())
-        .phone(merchant.getPhone())
-        .email(merchant.getEmail())
-        .cuisineType(merchant.getCuisineType())
-        .openingTime(merchant.getOpeningTime())
-        .closingTime(merchant.getClosingTime())
-        .isActive(merchant.isActive())
-        .rating(merchant.getRating())
-        .totalRatings(merchant.getTotalRatings())
-        .imageUrl(merchant.getImageUrl())
-        .build();
-  }
-
-  /** Convert Order entity to OrderDTO (simplified for merchant orders) */
-  private OrderDTO convertOrderToDTO(Order order) {
-    return OrderDTO.builder()
-        .id(order.getId())
-        .userId(order.getUser() != null ? order.getUser().getId() : null)
-        .merchantId(order.getMerchant() != null ? order.getMerchant().getId() : null)
-        .totalAmount(order.getTotalAmount())
-        .status(order.getStatus().name())
-        .deliveryAddress(order.getDeliveryAddress())
-        .createdAt(order.getCreatedAt())
-        .build();
+  @GetMapping("/{id}/orders")
+  public ResponseEntity<?> getOrdersByMerchant(
+      @PathVariable Long id,
+      @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "10") int size) {
+    try {
+      if (id == null || id <= 0) {
+        return ResponseEntity.badRequest().body(ApiResponse.error("Invalid merchant ID"));
+      }
+      Pageable pageable = PageRequest.of(page, size);
+      Page<Order> orders = merchantService.getOrdersByMerchant(id, pageable);
+      return ResponseEntity.ok(ApiResponse.success(orders, "Orders retrieved successfully"));
+    } catch (IllegalArgumentException e) {
+      return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+    } catch (Exception e) {
+      return ResponseEntity.badRequest()
+          .body(ApiResponse.error("An error occurred retrieving orders"));
+    }
   }
 }

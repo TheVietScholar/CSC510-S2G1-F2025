@@ -53,11 +53,33 @@ public interface ProductService {
   List<Product> searchProducts(String keyword);
 
   /**
-   * Checks if a product is available in sufficient quantity.
+   * Checks if a product is available for ordering.
    *
    * @param productId The ID of the product.
-   * @param quantity The required quantity.
    * @return True if the product is available, false otherwise.
    */
-  boolean isProductAvailable(Long productId, int quantity);
+  boolean isProductAvailable(Long productId);
+
+  /**
+   * Retrieves all available products.
+   *
+   * @return A list of available products.
+   */
+  List<Product> getAvailableProducts();
+
+  /**
+   * Retrieves all products for a specific merchant.
+   *
+   * @param merchantId The ID of the merchant.
+   * @return A list of products for the merchant.
+   */
+  List<Product> getProductsByMerchant(Long merchantId);
+
+  /**
+   * Retrieves available products for a specific merchant.
+   *
+   * @param merchantId The ID of the merchant.
+   * @return A list of available products for the merchant.
+   */
+  List<Product> getAvailableProductsByMerchant(Long merchantId);
 }

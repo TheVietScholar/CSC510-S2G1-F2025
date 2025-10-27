@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class DriverController {
 
-  private DriverService driverService;
+  private final DriverService driverService;
   // private final ValidationService validationService;
   private final DriverMapper driverMapper;
 

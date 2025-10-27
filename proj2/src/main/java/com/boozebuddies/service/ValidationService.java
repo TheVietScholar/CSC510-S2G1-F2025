@@ -37,12 +37,6 @@ public interface ValidationService {
    */
   boolean validateProduct(Product product);
 
-  /**
-   * Validates that a given quantity is positive and available in stock.
-   *
-   * @param product The product to check.
-   * @param quantity The quantity to validate.
-   * @return True if the quantity is valid and available, false otherwise.
-   */
-  boolean validateProductQuantity(Product product, int quantity);
+  /** Validates if a product is available for ordering. */
+  public boolean validateProductAvailability(Product product);
 }

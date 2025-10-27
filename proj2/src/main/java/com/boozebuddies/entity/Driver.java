@@ -49,6 +49,7 @@ public class Driver {
   @Column(name = "total_deliveries")
   private Integer totalDeliveries = 0;
 
+  @Enumerated(EnumType.STRING)
   @Builder.Default
   @Column(name = "certification_status")
   private CertificationStatus certificationStatus = CertificationStatus.PENDING;

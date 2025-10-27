@@ -4,12 +4,9 @@ import com.boozebuddies.model.OrderStatus;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
-
-import org.hibernate.annotations.BatchSize;
-
 import lombok.*;
+import org.hibernate.annotations.BatchSize;
 
 @Entity
 @Table(name = "orders")
@@ -63,6 +60,9 @@ public class Order {
   @Column(name = "estimated_delivery_time")
   private LocalDateTime estimatedDeliveryTime;
 
+  @Column(name = "promo_code")
+  private String promoCode;
+
   // Order.java
   @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
   @OrderColumn(name = "line_no")
@@ -85,12 +85,12 @@ public class Order {
     items.remove(item);
     item.setOrder(null);
     // re-normalize line numbers if you care about strict sequence:
-    for (int i = 0; i < items.size(); i++)
-      items.get(i).setLineNo(i + 1);
+    for (int i = 0; i < items.size(); i++) items.get(i).setLineNo(i + 1);
   }
 
   public void calculateTotal() {
-    this.totalAmount = items.stream().map(OrderItem::getSubtotal).reduce(BigDecimal.ZERO, BigDecimal::add);
+    this.totalAmount =
+        items.stream().map(OrderItem::getSubtotal).reduce(BigDecimal.ZERO, BigDecimal::add);
   }
 
   public boolean canBeCancelled() {

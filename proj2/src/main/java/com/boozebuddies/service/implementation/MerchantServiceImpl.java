@@ -2,71 +2,112 @@ package com.boozebuddies.service.implementation;
 
 import com.boozebuddies.entity.Merchant;
 import com.boozebuddies.entity.Order;
+import com.boozebuddies.repository.MerchantRepository;
+import com.boozebuddies.repository.OrderRepository;
 import com.boozebuddies.service.MerchantService;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
 public class MerchantServiceImpl implements MerchantService {
 
-  private final List<Merchant> merchants = new ArrayList<>();
-  private final List<Order> orders = new ArrayList<>(); // Simulated order storage
-  private long nextMerchantId = 1;
+  private final MerchantRepository merchantRepository;
+  private final OrderRepository orderRepository;
 
-  /** Registers a new merchant on the platform. */
+  @Autowired
+  public MerchantServiceImpl(
+      MerchantRepository merchantRepository, OrderRepository orderRepository) {
+    this.merchantRepository = merchantRepository;
+    this.orderRepository = orderRepository;
+  }
+
   @Override
   public Merchant registerMerchant(Merchant merchant) {
-    merchant.setId(nextMerchantId++);
+    if (merchant == null) {
+      throw new IllegalArgumentException("Merchant cannot be null");
+    }
+
+    if (merchant.getName() == null || merchant.getName().isEmpty()) {
+      throw new IllegalArgumentException("Merchant name is required");
+    }
+
+    if (merchant.getEmail() == null || merchant.getEmail().isEmpty()) {
+      throw new IllegalArgumentException("Merchant email is required");
+    }
+
+    if (merchant.getPhone() == null || merchant.getPhone().isEmpty()) {
+      throw new IllegalArgumentException("Merchant phone is required");
+    }
+
     merchant.setActive(false);
-    merchants.add(merchant);
-    return merchant;
+    return merchantRepository.save(merchant);
   }
 
-  /** Verifies a merchant's credentials or business license. might need setVerified here */
   @Override
   public Merchant verifyMerchant(Long merchantId, boolean verified) {
-    Merchant merchant = getMerchantById(merchantId);
-    if (merchant != null) {
-      merchant.setActive(verified);
+    if (merchantId == null || merchantId <= 0) {
+      throw new IllegalArgumentException("Invalid merchant ID");
     }
-    return merchant;
+
+    Optional<Merchant> opt = merchantRepository.findById(merchantId);
+    if (opt.isEmpty()) {
+      throw new IllegalArgumentException("Merchant not found");
+    }
+
+    Merchant merchant = opt.get();
+    merchant.setActive(verified);
+    return merchantRepository.save(merchant);
   }
 
-  /** Retrieves a merchant by their unique ID. */
   @Override
   public Merchant getMerchantById(Long merchantId) {
-    Optional<Merchant> merchantOpt =
-        merchants.stream().filter(m -> m.getId().equals(merchantId)).findFirst();
-    return merchantOpt.orElse(null);
+    if (merchantId == null || merchantId <= 0) {
+      throw new IllegalArgumentException("Invalid merchant ID");
+    }
+
+    return merchantRepository
+        .findById(merchantId)
+        .orElseThrow(() -> new IllegalArgumentException("Merchant not found"));
   }
 
-  /** Retrieves all merchants currently registered on the platform. */
   @Override
   public List<Merchant> getAllMerchants() {
-    return new ArrayList<>(merchants);
+    return merchantRepository.findAll();
   }
 
-  /** Retrieves all orders placed with a specific merchant. */
-  @Override
-  public List<Order> getOrdersByMerchant(Long merchantId) {
-    return orders.stream()
-        .filter(o -> o.getMerchant() != null && o.getMerchant().getId().equals(merchantId))
-        .collect(Collectors.toList());
-  }
-
-  /** Deletes a merchant from the system. */
   @Override
   public boolean deleteMerchant(Long merchantId) {
-    Merchant merchant = getMerchantById(merchantId);
-    if (merchant != null) {
-      merchants.remove(merchant);
-      // Optionally, also remove their orders
-      orders.removeIf(o -> o.getMerchant() != null && o.getMerchant().getId().equals(merchantId));
-      return true;
+    if (merchantId == null || merchantId <= 0) {
+      throw new IllegalArgumentException("Invalid merchant ID");
     }
-    return false;
+
+    if (!merchantRepository.existsById(merchantId)) {
+      return false;
+    }
+
+    merchantRepository.deleteById(merchantId);
+    return true;
+  }
+
+  @Override
+  public Page<Order> getOrdersByMerchant(Long merchantId, Pageable pageable) {
+    if (merchantId == null || merchantId <= 0) {
+      throw new IllegalArgumentException("Invalid merchant ID");
+    }
+
+    if (pageable == null) {
+      throw new IllegalArgumentException("Pageable cannot be null");
+    }
+
+    // Verify merchant exists
+    if (!merchantRepository.existsById(merchantId)) {
+      throw new IllegalArgumentException("Merchant not found");
+    }
+
+    return orderRepository.findByMerchantId(merchantId, pageable);
   }
 }

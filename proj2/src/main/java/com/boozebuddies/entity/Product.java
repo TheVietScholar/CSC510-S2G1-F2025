@@ -41,9 +41,9 @@ public class Product {
   @Column(name = "alcohol_content")
   private Double alcoholContent;
 
-  @Builder.Default
-  @Column(name = "stock_quantity")
-  private Integer stockQuantity = 0;
+  // @Builder.Default
+  // @Column(name = "stock_quantity")
+  // private Integer stockQuantity = 0;
 
   @Builder.Default private boolean available = true;
 
@@ -59,6 +59,6 @@ public class Product {
   private List<Rating> ratings = new ArrayList<>();
 
   public boolean isAvailable() {
-    return available && stockQuantity > 0;
+    return available;
   }
 }

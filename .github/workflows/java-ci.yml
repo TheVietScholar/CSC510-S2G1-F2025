@@ -9,7 +9,7 @@ on:
       run-tests:
         description: "Run unit/integration tests"
         type: boolean
-        default: false
+        default: true
         required: false
 
 jobs:
@@ -33,11 +33,10 @@ jobs:
         run: |
           ./mvnw -B -ntp spotless:apply
           # ./mvnw -B -ntp checkstyle:check
-          ./mvnw -B -ntp -DskipTests -DskipITs verify
 
   tests:
     name: Optional Tests
-    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run-tests == true }}
+    if: ${{ github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.run-tests == true) }}
     runs-on: ubuntu-latest
     defaults:
       run:

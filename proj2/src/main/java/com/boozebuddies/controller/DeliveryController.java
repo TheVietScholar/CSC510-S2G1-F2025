@@ -11,7 +11,6 @@ import com.boozebuddies.service.DeliveryService;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class DeliveryController {
 
-  @Autowired private DeliveryService deliveryService;
+  private final DeliveryService deliveryService;
   private final DeliveryMapper deliveryMapper;
 
   /** Assign a driver to an order and create delivery record */
@@ -28,7 +27,8 @@ public class DeliveryController {
   public ResponseEntity<ApiResponse<DeliveryDTO>> assignDriverToOrder(
       @RequestParam Long orderId, @RequestParam Long driverId) {
     try {
-      // In a real implementation, you'd fetch Order and Driver entities from repositories
+      // In a real implementation, you'd fetch Order and Driver entities from
+      // repositories
       Order order = new Order();
       order.setId(orderId);
 

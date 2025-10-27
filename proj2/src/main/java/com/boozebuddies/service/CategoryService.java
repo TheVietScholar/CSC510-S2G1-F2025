@@ -1,12 +1,12 @@
 package com.boozebuddies.service;
 
-import com.boozebuddies.dto.CategoryDTO;
+import com.boozebuddies.entity.Category;
 import java.util.List;
 
 public interface CategoryService {
-  List<CategoryDTO> getAllCategories();
+  List<Category> getAllCategories();
 
-  CategoryDTO getCategoryById(Long id);
+  Category getCategoryById(Long id);
 
-  CategoryDTO createCategory(CategoryDTO dto);
+  Category createCategory(Category category);
 }
