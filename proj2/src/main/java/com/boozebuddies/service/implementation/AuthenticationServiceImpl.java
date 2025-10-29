@@ -1,3 +1,4 @@
+// AuthenticationServiceImpl.java
 package com.boozebuddies.service.implementation;
 
 import com.boozebuddies.dto.AuthenticationRequest;
@@ -14,7 +15,6 @@ import com.boozebuddies.service.UserService;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -47,113 +47,117 @@ public class AuthenticationServiceImpl implements AuthenticationService {
   @Override
   @Transactional
   public AuthenticationResponse register(RegisterUserRequest request) {
-    User created = userService.registerUser(request);
+    // Register user (UserService handles validation and password encryption)
+    User user = userService.registerUser(request);
 
-    // Generate tokens
-    String accessToken = jwtUtil.generateToken(created);
-    // Use id + secret pattern for refresh tokens so we can store hashed secret in DB
-    String refreshTokenId = UUID.randomUUID().toString();
-    String refreshTokenSecret = UUID.randomUUID().toString();
-    String clientRefreshToken = refreshTokenId + "." + refreshTokenSecret;
-    LocalDateTime refreshExpiry =
-        Instant.now()
-            .plusMillis(refreshExpirationMs)
-            .atZone(ZoneId.systemDefault())
-            .toLocalDateTime();
+    // Generate access token (short-lived)
+    String accessToken = jwtUtil.generateToken(user);
+    
+    // Generate refresh token (long-lived)
+    String refreshToken = jwtUtil.generateToken(user);
+    LocalDateTime refreshExpiry = Instant.now()
+        .plusMillis(refreshExpirationMs)
+        .atZone(ZoneId.systemDefault())
+        .toLocalDateTime();
 
-    userService.saveRefreshToken(
-        created.getId(), refreshTokenId, refreshTokenSecret, refreshExpiry);
+    // Save refresh token in database
+    userService.saveRefreshToken(user.getId(), refreshToken, refreshExpiry);
 
     return AuthenticationResponse.builder()
         .token(accessToken)
-        .refreshToken(clientRefreshToken)
-        .user(userMapper.toDTO(created))
-        .message("Registered and authenticated")
+        .refreshToken(refreshToken)
+        .user(userMapper.toDTO(user))
+        .message("Registration successful")
         .build();
   }
 
   @Override
+  @Transactional
   public AuthenticationResponse login(AuthenticationRequest request) {
+    // Validate request
     if (request == null || request.getEmail() == null || request.getPassword() == null) {
-      throw new InvalidCredentialsException("Invalid login request");
+      throw new InvalidCredentialsException("Email and password are required");
     }
 
-    User user =
-        userService
-            .findByEmail(request.getEmail())
-            .orElseThrow(() -> new InvalidCredentialsException("Invalid credentials"));
+    // Find user by email
+    User user = userService.findByEmail(request.getEmail())
+        .orElseThrow(() -> new InvalidCredentialsException("Invalid email or password"));
 
+    // Verify password
     if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
-      throw new InvalidCredentialsException("Invalid credentials");
+      throw new InvalidCredentialsException("Invalid email or password");
     }
 
+    // Check if account is active
+    if (!user.isActive()) {
+      throw new InvalidCredentialsException("Account is deactivated. Please contact support.");
+    }
+
+    // Update last login timestamp
     userService.updateLastLogin(user.getId());
 
+    // Generate tokens
     String accessToken = jwtUtil.generateToken(user);
-    String refreshTokenId = UUID.randomUUID().toString();
-    String refreshTokenSecret = UUID.randomUUID().toString();
-    String clientRefreshToken = refreshTokenId + "." + refreshTokenSecret;
-    LocalDateTime refreshExpiry =
-        Instant.now()
-            .plusMillis(refreshExpirationMs)
-            .atZone(ZoneId.systemDefault())
-            .toLocalDateTime();
+    String refreshToken = jwtUtil.generateToken(user);
+    LocalDateTime refreshExpiry = Instant.now()
+        .plusMillis(refreshExpirationMs)
+        .atZone(ZoneId.systemDefault())
+        .toLocalDateTime();
 
-    userService.saveRefreshToken(user.getId(), refreshTokenId, refreshTokenSecret, refreshExpiry);
+    // Save refresh token
+    userService.saveRefreshToken(user.getId(), refreshToken, refreshExpiry);
 
     return AuthenticationResponse.builder()
         .token(accessToken)
-        .refreshToken(clientRefreshToken)
+        .refreshToken(refreshToken)
         .user(userMapper.toDTO(user))
-        .message("Authenticated")
+        .message("Login successful")
         .build();
   }
 
   @Override
+  @Transactional
   public AuthenticationResponse refreshToken(RefreshTokenRequest request) {
+    // Validate request
     if (request == null || request.getRefreshToken() == null) {
-      throw new InvalidTokenException("Missing refresh token");
+      throw new InvalidTokenException("Refresh token is required");
     }
 
-    if (!userService.isRefreshTokenValid(request.getRefreshToken())) {
-      throw new InvalidTokenException("Refresh token invalid or expired");
+    String refreshToken = request.getRefreshToken();
+
+    // Validate refresh token exists and is not expired
+    if (!userService.isRefreshTokenValid(refreshToken)) {
+      throw new InvalidTokenException("Invalid or expired refresh token");
     }
 
-    // Extract id from token and lookup user
-    String[] parts = request.getRefreshToken().split("\\.");
-    if (parts.length != 2) {
-      throw new InvalidTokenException("Invalid refresh token format");
+    // Find user by refresh token
+    User user = userService.findByRefreshToken(refreshToken)
+        .orElseThrow(() -> new InvalidTokenException("Refresh token not found"));
+
+    // Verify token matches user
+    String email = jwtUtil.extractUsername(refreshToken);
+    if (!user.getEmail().equals(email)) {
+      throw new InvalidTokenException("Token does not match user");
     }
-    String id = parts[0];
 
-    User user =
-        userService
-            .findByRefreshTokenId(id)
-            .orElseThrow(
-                () -> new InvalidTokenException("Refresh token not associated with a user"));
+    // Check if account is active
+    if (!user.isActive()) {
+      throw new InvalidCredentialsException("Account is deactivated");
+    }
 
-    // Rotate: issue new refresh token and persist hashed secret
-    String newRefreshTokenId = UUID.randomUUID().toString();
-    String newRefreshSecret = UUID.randomUUID().toString();
-    String clientNewRefresh = newRefreshTokenId + "." + newRefreshSecret;
-    LocalDateTime refreshExpiry =
-        Instant.now()
-            .plusMillis(refreshExpirationMs)
-            .atZone(ZoneId.systemDefault())
-            .toLocalDateTime();
-    userService.saveRefreshToken(user.getId(), newRefreshTokenId, newRefreshSecret, refreshExpiry);
-
-    String accessToken = jwtUtil.generateToken(user);
+    // Generate new access token (keep same refresh token for simplicity)
+    String newAccessToken = jwtUtil.generateToken(user);
 
     return AuthenticationResponse.builder()
-        .token(accessToken)
-        .refreshToken(clientNewRefresh)
+        .token(newAccessToken)
+        .refreshToken(refreshToken) // Return same refresh token
         .user(userMapper.toDTO(user))
-        .message("Token refreshed")
+        .message("Token refreshed successfully")
         .build();
   }
 
   @Override
+  @Transactional
   public void logout(Long userId) {
     userService.revokeRefreshToken(userId);
   }

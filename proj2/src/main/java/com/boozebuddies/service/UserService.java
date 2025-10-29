@@ -10,7 +10,7 @@ import java.util.Optional;
 public interface UserService {
 
   // ==================== Registration Methods ====================
-
+  
   /**
    * Registers a new user in the system.
    *
@@ -28,10 +28,10 @@ public interface UserService {
   User registerUser(RegisterUserRequest request);
 
   // ==================== Authentication Methods ====================
-
+  
   /**
    * Authenticates a user with email and password.
-   *
+   * 
    * @deprecated Use AuthenticationService for proper JWT-based authentication
    * @param email The user's email.
    * @param password The user's password.
@@ -56,7 +56,7 @@ public interface UserService {
   void updateLastLogin(Long userId);
 
   // ==================== User Retrieval Methods ====================
-
+  
   /**
    * Retrieves a user by their unique ID.
    *
@@ -66,7 +66,8 @@ public interface UserService {
   Optional<User> getUserById(Long userId);
 
   /**
-   * Retrieves a user by their unique ID. Throws exception if not found.
+   * Retrieves a user by their unique ID.
+   * Throws exception if not found.
    *
    * @param userId The ID of the user.
    * @return The user entity.
@@ -82,7 +83,7 @@ public interface UserService {
   List<User> getAllUsers();
 
   // ==================== User Management Methods ====================
-
+  
   /**
    * Updates a user's information.
    *
@@ -101,7 +102,8 @@ public interface UserService {
   boolean deleteUser(Long userId);
 
   /**
-   * Deactivates a user account. Also revokes any active refresh tokens.
+   * Deactivates a user account.
+   * Also revokes any active refresh tokens.
    *
    * @param userId The ID of the user to deactivate.
    */
@@ -115,16 +117,15 @@ public interface UserService {
   void activateUser(Long userId);
 
   // ==================== Token Management Methods ====================
-
+  
   /**
    * Saves a refresh token for the user.
    *
    * @param userId The ID of the user.
-   * @param refreshToken The refresh token to save (raw token will be hashed by implementation).
+   * @param refreshToken The refresh token to save.
    * @param expiryDate The expiry date of the refresh token.
    */
-  void saveRefreshToken(
-      Long userId, String refreshTokenId, String refreshToken, LocalDateTime expiryDate);
+  void saveRefreshToken(Long userId, String refreshToken, LocalDateTime expiryDate);
 
   /**
    * Validates if a refresh token is still valid.
@@ -143,14 +144,6 @@ public interface UserService {
   Optional<User> findByRefreshToken(String refreshToken);
 
   /**
-   * Finds a user by refresh token id.
-   *
-   * @param refreshTokenId the token id portion
-   * @return optional user
-   */
-  Optional<User> findByRefreshTokenId(String refreshTokenId);
-
-  /**
    * Revokes a user's refresh token (logout).
    *
    * @param userId The ID of the user.
@@ -158,7 +151,7 @@ public interface UserService {
   void revokeRefreshToken(Long userId);
 
   // ==================== Email Verification Methods ====================
-
+  
   /**
    * Marks a user's email as verified.
    *
@@ -167,7 +160,7 @@ public interface UserService {
   void verifyEmail(Long userId);
 
   // ==================== Role Management Methods ====================
-
+  
   /**
    * Checks if a user has a specific role.
    *
@@ -194,9 +187,10 @@ public interface UserService {
   void removeRole(Long userId, Role role);
 
   // ==================== Password Management Methods ====================
-
+  
   /**
-   * Changes a user's password. Validates the old password before setting the new one.
+   * Changes a user's password.
+   * Validates the old password before setting the new one.
    *
    * @param userId The ID of the user.
    * @param oldPassword The user's current password.
@@ -206,7 +200,8 @@ public interface UserService {
   void changePassword(Long userId, String oldPassword, String newPassword);
 
   /**
-   * Resets a user's password (used with password reset tokens). Does not validate old password.
+   * Resets a user's password (used with password reset tokens).
+   * Does not validate old password.
    *
    * @param userId The ID of the user.
    * @param newPassword The new password to set.
@@ -215,9 +210,10 @@ public interface UserService {
   void resetPassword(Long userId, String newPassword);
 
   // ==================== Business Logic Methods ====================
-
+  
   /**
-   * Checks if a user can place orders. User must be active, email verified, and age verified.
+   * Checks if a user can place orders.
+   * User must be active, email verified, and age verified.
    *
    * @param user The user to check.
    * @return true if the user can place orders, false otherwise.

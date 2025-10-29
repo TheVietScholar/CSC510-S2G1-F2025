@@ -26,6 +26,7 @@ public class SecurityConfig {
 
   private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
+  // Constructor injection - Spring will automatically create JwtAuthenticationFilter
   public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
     this.jwtAuthenticationFilter = jwtAuthenticationFilter;
   }
@@ -104,11 +105,16 @@ public class SecurityConfig {
   public CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration configuration = new CorsConfiguration();
     
-    // Allow specific origins in production, e.g., ["https://yourdomain.com"]
-    configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "http://localhost:4200"));
+    // DEVELOPMENT: Allow localhost for frontend development
+    // Uncomment these if you're building a React/Angular/Vue frontend
+    // configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "http://localhost:4200"));
     
-    // Or allow all origins for development (NOT recommended for production)
-    // configuration.addAllowedOriginPattern("*");
+    // PRODUCTION: Use specific domain
+    // configuration.setAllowedOrigins(Arrays.asList("https://yourdomain.com", "https://www.yourdomain.com"));
+    
+    // FOR NOW (API testing only): Allow all origins
+    // This is fine if you're only testing with Postman/curl and have no frontend yet
+    configuration.addAllowedOriginPattern("*");
     
     configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
     configuration.setAllowedHeaders(Arrays.asList("*"));
@@ -119,13 +125,5 @@ public class SecurityConfig {
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
     source.registerCorsConfiguration("/**", configuration);
     return source;
-  }
-
-  /**
-   * Password encoder bean for encrypting passwords
-   */
-  @Bean
-  public PasswordEncoder passwordEncoder() {
-    return new BCryptPasswordEncoder();
   }
 }
