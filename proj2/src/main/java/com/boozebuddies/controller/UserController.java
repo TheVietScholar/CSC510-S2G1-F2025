@@ -1,8 +1,6 @@
 package com.boozebuddies.controller;
 
 import com.boozebuddies.dto.ApiResponse;
-import com.boozebuddies.dto.LoginRequest;
-import com.boozebuddies.dto.RegisterUserRequest;
 import com.boozebuddies.dto.UserDTO;
 import com.boozebuddies.entity.User;
 import com.boozebuddies.mapper.UserMapper;
@@ -11,7 +9,6 @@ import com.boozebuddies.service.ValidationService;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,45 +23,7 @@ public class UserController {
 
   // ==================== REGISTER ====================
 
-  @PostMapping("/register")
-  public ResponseEntity<?> registerUser(@RequestBody RegisterUserRequest request) {
-    try {
-      User user = userService.registerUser(request);
-      UserDTO userDTO = userMapper.toDTO(user);
-      return ResponseEntity.status(HttpStatus.CREATED)
-          .body(ApiResponse.success(userDTO, "User registered successfully"));
-    } catch (IllegalArgumentException e) {
-      return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
-    } catch (Exception e) {
-      return ResponseEntity.badRequest()
-          .body(ApiResponse.error("An error occurred during registration"));
-    }
-  }
-
-  // ==================== LOGIN ====================
-
-  @PostMapping("/login")
-  public ResponseEntity<?> login(@RequestBody LoginRequest request) {
-    try {
-      if (request.getEmail() == null || request.getPassword() == null) {
-        return ResponseEntity.badRequest()
-            .body(ApiResponse.error("Email and password are required"));
-      }
-
-      User user = userService.login(request.getEmail(), request.getPassword());
-
-      if (user != null) {
-        UserDTO userDTO = userMapper.toDTO(user);
-        return ResponseEntity.ok(ApiResponse.success(userDTO, "Login successful"));
-      } else {
-        return ResponseEntity.badRequest().body(ApiResponse.error("Invalid email or password"));
-      }
-    } catch (IllegalArgumentException e) {
-      return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
-    } catch (Exception e) {
-      return ResponseEntity.badRequest().body(ApiResponse.error("An error occurred during login"));
-    }
-  }
+  // Authentication is handled by AuthController at /api/auth. UserController is CRUD-only.
 
   // ==================== RETRIEVE ====================
 

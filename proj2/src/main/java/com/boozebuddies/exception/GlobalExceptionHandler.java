@@ -5,6 +5,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
@@ -23,8 +25,7 @@ public class GlobalExceptionHandler {
   }
 
   @ExceptionHandler(UserNotFoundException.class)
-  public ResponseEntity<Object> handleUserNotFound(
-      UserNotFoundException ex, WebRequest request) {
+  public ResponseEntity<Object> handleUserNotFound(UserNotFoundException ex, WebRequest request) {
     return buildErrorResponse(ex.getMessage(), HttpStatus.NOT_FOUND, request);
   }
 
@@ -35,8 +36,7 @@ public class GlobalExceptionHandler {
   }
 
   @ExceptionHandler(InvalidTokenException.class)
-  public ResponseEntity<Object> handleInvalidToken(
-      InvalidTokenException ex, WebRequest request) {
+  public ResponseEntity<Object> handleInvalidToken(InvalidTokenException ex, WebRequest request) {
     return buildErrorResponse(ex.getMessage(), HttpStatus.UNAUTHORIZED, request);
   }
 
@@ -44,6 +44,18 @@ public class GlobalExceptionHandler {
   public ResponseEntity<Object> handleIllegalArgument(
       IllegalArgumentException ex, WebRequest request) {
     return buildErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST, request);
+  }
+
+  @ExceptionHandler(HttpMessageNotReadableException.class)
+  public ResponseEntity<Object> handleHttpMessageNotReadable(
+      HttpMessageNotReadableException ex, WebRequest request) {
+    return buildErrorResponse("Invalid or missing request body", HttpStatus.BAD_REQUEST, request);
+  }
+
+  @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+  public ResponseEntity<Object> handleMediaTypeNotSupported(
+      HttpMediaTypeNotSupportedException ex, WebRequest request) {
+    return buildErrorResponse("Content type not supported", HttpStatus.BAD_REQUEST, request);
   }
 
   @ExceptionHandler(Exception.class)

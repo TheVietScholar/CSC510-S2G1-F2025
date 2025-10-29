@@ -3,17 +3,13 @@ package com.boozebuddies.mapper;
 import com.boozebuddies.dto.RegisterUserRequest;
 import com.boozebuddies.dto.UserDTO;
 import com.boozebuddies.entity.User;
-import com.boozebuddies.model.Role;
 import java.util.HashSet;
 import org.springframework.stereotype.Component;
 
 @Component
 public class UserMapper {
 
-  /**
-   * Converts User entity to UserDTO.
-   * Excludes sensitive fields like password and refresh token.
-   */
+  /** Converts User entity to UserDTO. Excludes sensitive fields like password and refresh token. */
   public UserDTO toDTO(User user) {
     if (user == null) return null;
 
@@ -33,10 +29,7 @@ public class UserMapper {
         .build();
   }
 
-  /**
-   * Converts UserDTO to User entity.
-   * Note: This does NOT set password or refresh token fields.
-   */
+  /** Converts UserDTO to User entity. Note: This does NOT set password or refresh token fields. */
   public User toEntity(UserDTO userDTO) {
     if (userDTO == null) return null;
 
@@ -56,10 +49,7 @@ public class UserMapper {
         .build();
   }
 
-  /**
-   * Converts RegisterUserRequest to User entity.
-   * Sets default values for new users.
-   */
+  /** Converts RegisterUserRequest to User entity. Sets default values for new users. */
   public User toEntity(RegisterUserRequest request) {
     if (request == null) return null;
 

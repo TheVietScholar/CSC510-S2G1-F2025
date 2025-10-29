@@ -66,9 +66,14 @@ public class User {
   @Column(name = "refresh_token_expiry")
   private LocalDateTime refreshTokenExpiryDate;
 
+  @Column(name = "refresh_token_hash", length = 512)
+  private String refreshTokenHash;
+
+  @Column(name = "refresh_token_id", length = 128)
+  private String refreshTokenId;
+
   // Address can be added later when you create the Address entity
-  @Transient
-  private Object address; // Placeholder - replace with @ManyToOne Address when ready
+  @Transient private Object address; // Placeholder - replace with @ManyToOne Address when ready
 
   @Builder.Default
   @Column(name = "created_at")

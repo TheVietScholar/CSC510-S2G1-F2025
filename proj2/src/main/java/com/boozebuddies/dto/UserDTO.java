@@ -7,15 +7,15 @@ import java.util.Set;
 import lombok.*;
 
 /**
- * Data Transfer Object for User entity.
- * Excludes sensitive information like password and refresh tokens.
+ * Data Transfer Object for User entity. Excludes sensitive information like password and refresh
+ * tokens.
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class UserDTO {
-  
+
   private Long id;
   private String name;
   private String email;
@@ -28,7 +28,7 @@ public class UserDTO {
   private LocalDateTime lastLoginAt; // NEW - last login timestamp
   private LocalDateTime createdAt;
   private LocalDateTime updatedAt;
-  
+
   // Note: passwordHash, refreshToken, and refreshTokenExpiryDate are intentionally excluded
   // for security reasons - never expose these in API responses
 }

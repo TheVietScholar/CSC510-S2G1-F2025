@@ -5,6 +5,7 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import com.boozebuddies.dto.AuthenticationResponse;
 import com.boozebuddies.dto.LoginRequest;
 import com.boozebuddies.dto.RegisterUserRequest;
 import com.boozebuddies.dto.UserDTO;
@@ -24,7 +25,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-@WebMvcTest(UserController.class)
+@WebMvcTest(controllers = {UserController.class, AuthController.class})
 @DisplayName("UserController Tests")
 class UserControllerTest {
 
@@ -33,6 +34,8 @@ class UserControllerTest {
   @Autowired private ObjectMapper objectMapper;
 
   @MockBean private UserService userService;
+
+  @MockBean private com.boozebuddies.service.AuthenticationService authenticationService;
 
   @MockBean private ValidationService validationService;
 
@@ -72,147 +75,154 @@ class UserControllerTest {
   // ==================== REGISTER TESTS ====================
 
   @Test
-  @DisplayName("POST /api/users/register should return 201 on successful registration")
+  @DisplayName("POST /api/auth/register should return 200 on successful registration")
   void testRegisterSuccess() throws Exception {
-    when(userService.registerUser(any())).thenReturn(testUser);
-    when(userMapper.toDTO(testUser)).thenReturn(testUserDTO);
+    AuthenticationResponse authResp =
+        AuthenticationResponse.builder()
+            .token("token-abc")
+            .user(testUserDTO)
+            .message("Registered and authenticated")
+            .build();
+
+    when(authenticationService.register(any())).thenReturn(authResp);
 
     mockMvc
         .perform(
-            post("/api/users/register")
+            post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(registerRequest)))
-        .andExpect(status().isCreated())
-        .andExpect(jsonPath("$.success").value(true))
-        .andExpect(jsonPath("$.message").value("User registered successfully"))
-        .andExpect(jsonPath("$.data.email").value("john@example.com"));
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.token").isNotEmpty())
+        .andExpect(jsonPath("$.user.email").value("john@example.com"));
 
-    verify(userService, times(1)).registerUser(any());
-    verify(userMapper, times(1)).toDTO(testUser);
+    verify(authenticationService, times(1)).register(any());
   }
 
   @Test
-  @DisplayName("POST /api/users/register should return 400 on invalid input")
+  @DisplayName("POST /api/auth/register should return 400 on invalid input")
   void testRegisterInvalidInput() throws Exception {
-    when(userService.registerUser(any()))
+    when(authenticationService.register(any()))
         .thenThrow(new IllegalArgumentException("Invalid email format"));
 
     mockMvc
         .perform(
-            post("/api/users/register")
+            post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(registerRequest)))
         .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.success").value(false))
         .andExpect(jsonPath("$.message").value("Invalid email format"));
 
-    verify(userService, times(1)).registerUser(any());
+    verify(authenticationService, times(1)).register(any());
   }
 
   @Test
-  @DisplayName("POST /api/users/register should handle unexpected exceptions")
+  @DisplayName("POST /api/auth/register should handle unexpected exceptions")
   void testRegisterUnexpectedException() throws Exception {
-    when(userService.registerUser(any())).thenThrow(new RuntimeException("Database error"));
+    when(authenticationService.register(any())).thenThrow(new RuntimeException("Database error"));
 
     mockMvc
         .perform(
-            post("/api/users/register")
+            post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(registerRequest)))
-        .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value("An error occurred during registration"));
+        .andExpect(status().isInternalServerError())
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("An unexpected error occurred")));
   }
 
   // ==================== LOGIN TESTS ====================
 
   @Test
-  @DisplayName("POST /api/users/login should return 200 on successful login")
+  @DisplayName("POST /api/auth/login should return 200 on successful login")
   void testLoginSuccess() throws Exception {
-    when(userService.login("john@example.com", "Password123")).thenReturn(testUser);
-    when(userMapper.toDTO(testUser)).thenReturn(testUserDTO);
+    AuthenticationResponse authResp =
+        AuthenticationResponse.builder()
+            .token("token-login")
+            .user(testUserDTO)
+            .message("Authenticated")
+            .build();
+
+    when(authenticationService.login(any())).thenReturn(authResp);
 
     mockMvc
         .perform(
-            post("/api/users/login")
+            post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(loginRequest)))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.success").value(true))
-        .andExpect(jsonPath("$.message").value("Login successful"))
-        .andExpect(jsonPath("$.data.email").value("john@example.com"));
+        .andExpect(jsonPath("$.token").isNotEmpty())
+        .andExpect(jsonPath("$.user.email").value("john@example.com"));
 
-    verify(userService, times(1)).login("john@example.com", "Password123");
-    verify(userMapper, times(1)).toDTO(testUser);
+    verify(authenticationService, times(1)).login(any());
   }
 
   @Test
-  @DisplayName("POST /api/users/login should return 400 on invalid credentials")
+  @DisplayName("POST /api/auth/login should return 401 on invalid credentials")
   void testLoginInvalidCredentials() throws Exception {
-    when(userService.login("john@example.com", "wrongpassword")).thenReturn(null);
+    when(authenticationService.login(any()))
+        .thenThrow(
+            new com.boozebuddies.exception.InvalidCredentialsException("Invalid credentials"));
 
     mockMvc
         .perform(
-            post("/api/users/login")
+            post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     objectMapper.writeValueAsString(
                         new LoginRequest("john@example.com", "wrongpassword"))))
-        .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value("Invalid email or password"));
+        .andExpect(status().isUnauthorized())
+        .andExpect(jsonPath("$.message").value("Invalid credentials"));
 
-    verify(userService, times(1)).login("john@example.com", "wrongpassword");
+    verify(authenticationService, times(1)).login(any());
   }
 
   @Test
-  @DisplayName("POST /api/users/login should return 400 when email is null")
+  @DisplayName("POST /api/auth/login should return 400 when email is null")
   void testLoginNullEmail() throws Exception {
     LoginRequest nullEmailRequest = new LoginRequest(null, "Password123");
 
     mockMvc
         .perform(
-            post("/api/users/login")
+            post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(nullEmailRequest)))
         .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.success").value(false))
         .andExpect(jsonPath("$.message").value("Email and password are required"));
 
-    verify(userService, never()).login(any(), any());
+    verify(authenticationService, never()).login(any());
   }
 
   @Test
-  @DisplayName("POST /api/users/login should return 400 when password is null")
+  @DisplayName("POST /api/auth/login should return 400 when password is null")
   void testLoginNullPassword() throws Exception {
     LoginRequest nullPasswordRequest = new LoginRequest("john@example.com", null);
 
     mockMvc
         .perform(
-            post("/api/users/login")
+            post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(nullPasswordRequest)))
         .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.success").value(false))
         .andExpect(jsonPath("$.message").value("Email and password are required"));
 
-    verify(userService, never()).login(any(), any());
+    verify(authenticationService, never()).login(any());
   }
 
   @Test
-  @DisplayName("POST /api/users/login should handle unexpected exceptions")
+  @DisplayName("POST /api/auth/login should handle unexpected exceptions")
   void testLoginUnexpectedException() throws Exception {
-    when(userService.login("john@example.com", "Password123"))
-        .thenThrow(new RuntimeException("Database error"));
+    when(authenticationService.login(any())).thenThrow(new RuntimeException("Database error"));
 
     mockMvc
         .perform(
-            post("/api/users/login")
+            post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(loginRequest)))
-        .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value("An error occurred during login"));
+        .andExpect(status().isInternalServerError())
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("An unexpected error occurred")));
   }
 
   // ==================== GET USER TESTS ====================
