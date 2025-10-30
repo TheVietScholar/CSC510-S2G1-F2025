@@ -9,37 +9,17 @@ import java.util.Optional;
 
 public interface UserService {
 
-  // ==================== Registration Methods ====================
-  
+
+
+  // ==================== User Registration Methods ====================
   /**
    * Registers a new user in the system.
-   *
-   * @param user The user to register.
-   * @return The registered user with generated ID.
-   */
-  User register(User user);
-
-  /**
-   * Registers a new user from registration request DTO.
-   *
    * @param request The registration request containing user details.
-   * @return The registered user with generated ID.
+   * @return The registered user entity.
    */
-  User registerUser(RegisterUserRequest request);
+   public User registerUser(RegisterUserRequest request);
 
-  // ==================== Authentication Methods ====================
-  
-  /**
-   * Authenticates a user with email and password.
-   * 
-   * @deprecated Use AuthenticationService for proper JWT-based authentication
-   * @param email The user's email.
-   * @param password The user's password.
-   * @return The authenticated user if credentials are correct, otherwise null.
-   */
-  @Deprecated
-  User login(String email, String password);
-
+  // ==================== User Lookup Methods ====================
   /**
    * Finds a user by their email address.
    *
@@ -47,13 +27,6 @@ public interface UserService {
    * @return An Optional containing the user if found, otherwise empty.
    */
   Optional<User> findByEmail(String email);
-
-  /**
-   * Updates the user's last login timestamp.
-   *
-   * @param userId The ID of the user.
-   */
-  void updateLastLogin(Long userId);
 
   // ==================== User Retrieval Methods ====================
   
@@ -116,6 +89,13 @@ public interface UserService {
    */
   void activateUser(Long userId);
 
+
+  /**
+   * Updates the user's last login timestamp.
+   * @param userId
+   */
+  public void updateLastLogin(Long userId);
+
   // ==================== Token Management Methods ====================
   
   /**
@@ -150,70 +130,12 @@ public interface UserService {
    */
   void revokeRefreshToken(Long userId);
 
-  // ==================== Email Verification Methods ====================
-  
-  /**
-   * Marks a user's email as verified.
-   *
-   * @param userId The ID of the user.
-   */
-  void verifyEmail(Long userId);
-
-  // ==================== Role Management Methods ====================
-  
-  /**
-   * Checks if a user has a specific role.
-   *
-   * @param user The user to check.
-   * @param role The role to check for.
-   * @return true if the user has the role, false otherwise.
-   */
-  boolean hasRole(User user, Role role);
-
-  /**
-   * Assigns a role to a user.
-   *
-   * @param userId The ID of the user.
-   * @param role The role to assign.
-   */
-  void assignRole(Long userId, Role role);
-
-  /**
-   * Removes a role from a user.
-   *
-   * @param userId The ID of the user.
-   * @param role The role to remove.
-   */
-  void removeRole(Long userId, Role role);
-
-  // ==================== Password Management Methods ====================
-  
-  /**
-   * Changes a user's password.
-   * Validates the old password before setting the new one.
-   *
-   * @param userId The ID of the user.
-   * @param oldPassword The user's current password.
-   * @param newPassword The new password to set.
-   * @throws IllegalArgumentException if old password is incorrect or new password is invalid.
-   */
-  void changePassword(Long userId, String oldPassword, String newPassword);
-
-  /**
-   * Resets a user's password (used with password reset tokens).
-   * Does not validate old password.
-   *
-   * @param userId The ID of the user.
-   * @param newPassword The new password to set.
-   * @throws IllegalArgumentException if new password is invalid.
-   */
-  void resetPassword(Long userId, String newPassword);
 
   // ==================== Business Logic Methods ====================
   
   /**
    * Checks if a user can place orders.
-   * User must be active, email verified, and age verified.
+   * User must be active and age verified.
    *
    * @param user The user to check.
    * @return true if the user can place orders, false otherwise.

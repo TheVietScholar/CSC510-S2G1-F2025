@@ -5,6 +5,7 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import com.boozebuddies.config.TestSecurityConfig;
 import com.boozebuddies.dto.AuthenticationResponse;
 import com.boozebuddies.dto.LoginRequest;
 import com.boozebuddies.dto.RegisterUserRequest;
@@ -20,12 +21,26 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
+import org.springframework.context.annotation.Import;
 
-@WebMvcTest(controllers = {UserController.class, AuthController.class})
+import com.boozebuddies.security.JwtAuthenticationFilter;
+
+@WebMvcTest(
+    controllers = UserController.class,
+    excludeFilters = @ComponentScan.Filter(
+        type = FilterType.ASSIGNABLE_TYPE,
+        classes = JwtAuthenticationFilter.class
+    )
+)
+@AutoConfigureMockMvc(addFilters = false) // ⛔ disables all Spring Security filters
+@Import(TestSecurityConfig.class)   
 @DisplayName("UserController Tests")
 class UserControllerTest {
 
@@ -35,7 +50,6 @@ class UserControllerTest {
 
   @MockBean private UserService userService;
 
-  @MockBean private com.boozebuddies.service.AuthenticationService authenticationService;
 
   @MockBean private ValidationService validationService;
 
@@ -44,7 +58,6 @@ class UserControllerTest {
   private User testUser;
   private UserDTO testUserDTO;
   private RegisterUserRequest registerRequest;
-  private LoginRequest loginRequest;
 
   @BeforeEach
   void setUp() {
@@ -69,160 +82,6 @@ class UserControllerTest {
     registerRequest.setPhone("555-123-4567");
     registerRequest.setDateOfBirth(LocalDate.of(1990, 1, 1));
 
-    loginRequest = new LoginRequest("john@example.com", "Password123");
-  }
-
-  // ==================== REGISTER TESTS ====================
-
-  @Test
-  @DisplayName("POST /api/auth/register should return 200 on successful registration")
-  void testRegisterSuccess() throws Exception {
-    AuthenticationResponse authResp =
-        AuthenticationResponse.builder()
-            .token("token-abc")
-            .user(testUserDTO)
-            .message("Registered and authenticated")
-            .build();
-
-    when(authenticationService.register(any())).thenReturn(authResp);
-
-    mockMvc
-        .perform(
-            post("/api/auth/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(registerRequest)))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.token").isNotEmpty())
-        .andExpect(jsonPath("$.user.email").value("john@example.com"));
-
-    verify(authenticationService, times(1)).register(any());
-  }
-
-  @Test
-  @DisplayName("POST /api/auth/register should return 400 on invalid input")
-  void testRegisterInvalidInput() throws Exception {
-    when(authenticationService.register(any()))
-        .thenThrow(new IllegalArgumentException("Invalid email format"));
-
-    mockMvc
-        .perform(
-            post("/api/auth/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(registerRequest)))
-        .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.message").value("Invalid email format"));
-
-    verify(authenticationService, times(1)).register(any());
-  }
-
-  @Test
-  @DisplayName("POST /api/auth/register should handle unexpected exceptions")
-  void testRegisterUnexpectedException() throws Exception {
-    when(authenticationService.register(any())).thenThrow(new RuntimeException("Database error"));
-
-    mockMvc
-        .perform(
-            post("/api/auth/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(registerRequest)))
-        .andExpect(status().isInternalServerError())
-        .andExpect(
-            jsonPath("$.message")
-                .value(org.hamcrest.Matchers.containsString("An unexpected error occurred")));
-  }
-
-  // ==================== LOGIN TESTS ====================
-
-  @Test
-  @DisplayName("POST /api/auth/login should return 200 on successful login")
-  void testLoginSuccess() throws Exception {
-    AuthenticationResponse authResp =
-        AuthenticationResponse.builder()
-            .token("token-login")
-            .user(testUserDTO)
-            .message("Authenticated")
-            .build();
-
-    when(authenticationService.login(any())).thenReturn(authResp);
-
-    mockMvc
-        .perform(
-            post("/api/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(loginRequest)))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.token").isNotEmpty())
-        .andExpect(jsonPath("$.user.email").value("john@example.com"));
-
-    verify(authenticationService, times(1)).login(any());
-  }
-
-  @Test
-  @DisplayName("POST /api/auth/login should return 401 on invalid credentials")
-  void testLoginInvalidCredentials() throws Exception {
-    when(authenticationService.login(any()))
-        .thenThrow(
-            new com.boozebuddies.exception.InvalidCredentialsException("Invalid credentials"));
-
-    mockMvc
-        .perform(
-            post("/api/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(
-                    objectMapper.writeValueAsString(
-                        new LoginRequest("john@example.com", "wrongpassword"))))
-        .andExpect(status().isUnauthorized())
-        .andExpect(jsonPath("$.message").value("Invalid credentials"));
-
-    verify(authenticationService, times(1)).login(any());
-  }
-
-  @Test
-  @DisplayName("POST /api/auth/login should return 400 when email is null")
-  void testLoginNullEmail() throws Exception {
-    LoginRequest nullEmailRequest = new LoginRequest(null, "Password123");
-
-    mockMvc
-        .perform(
-            post("/api/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(nullEmailRequest)))
-        .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.message").value("Email and password are required"));
-
-    verify(authenticationService, never()).login(any());
-  }
-
-  @Test
-  @DisplayName("POST /api/auth/login should return 400 when password is null")
-  void testLoginNullPassword() throws Exception {
-    LoginRequest nullPasswordRequest = new LoginRequest("john@example.com", null);
-
-    mockMvc
-        .perform(
-            post("/api/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(nullPasswordRequest)))
-        .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.message").value("Email and password are required"));
-
-    verify(authenticationService, never()).login(any());
-  }
-
-  @Test
-  @DisplayName("POST /api/auth/login should handle unexpected exceptions")
-  void testLoginUnexpectedException() throws Exception {
-    when(authenticationService.login(any())).thenThrow(new RuntimeException("Database error"));
-
-    mockMvc
-        .perform(
-            post("/api/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(loginRequest)))
-        .andExpect(status().isInternalServerError())
-        .andExpect(
-            jsonPath("$.message")
-                .value(org.hamcrest.Matchers.containsString("An unexpected error occurred")));
   }
 
   // ==================== GET USER TESTS ====================

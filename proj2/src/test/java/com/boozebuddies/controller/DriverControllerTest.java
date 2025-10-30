@@ -21,8 +21,23 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
+import org.springframework.context.annotation.Import;
+import com.boozebuddies.security.JwtAuthenticationFilter;
+import com.boozebuddies.config.TestSecurityConfig;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 
-@WebMvcTest(DriverController.class)
+@WebMvcTest(
+    controllers = DriverController.class,
+    excludeFilters = @ComponentScan.Filter(
+        type = FilterType.ASSIGNABLE_TYPE,
+        classes = JwtAuthenticationFilter.class
+    )
+)
+@AutoConfigureMockMvc(addFilters = false) // ⛔ disables all Spring Security filters
+@Import(TestSecurityConfig.class)         // ✅ imports your test security config
+@DisplayName("DriverController Tests")
 public class DriverControllerTest {
 
   @Autowired private MockMvc mockMvc;

@@ -36,51 +36,6 @@ public class UserServiceImpl implements UserService {
     this.passwordEncoder = passwordEncoder != null ? passwordEncoder : new BCryptPasswordEncoder();
   }
 
-  @Override
-  @Transactional
-  public User register(User user) {
-    if (user == null) {
-      throw new IllegalArgumentException("User cannot be null");
-    }
-
-    if (user.getName() == null || user.getName().isEmpty()) {
-      throw new IllegalArgumentException("Name is required");
-    }
-
-    if (user.getPhone() == null || user.getPhone().isEmpty()) {
-      throw new IllegalArgumentException("Phone is required");
-    }
-
-    if (user.getDateOfBirth() == null) {
-      throw new IllegalArgumentException("Date of birth is required");
-    }
-
-    if (!validationService.validateEmail(user.getEmail())) {
-      throw new IllegalArgumentException("Email is invalid or empty");
-    }
-
-    if (!validationService.validatePassword(user.getPasswordHash())) {
-      throw new IllegalArgumentException(
-          "Password must be at least 8 characters with letters and numbers");
-    }
-
-    if (userRepository.existsByEmailIgnoreCase(user.getEmail())) {
-      throw new UserAlreadyExistsException("Email already registered");
-    }
-
-    // Encrypt password before saving
-    user.setPasswordHash(passwordEncoder.encode(user.getPasswordHash()));
-    user.setAgeVerified(validationService.validateAge(user));
-    user.setActive(true);
-    user.setEmailVerified(false);
-
-    // Assign default USER role
-    Set<Role> roles = new HashSet<>();
-    roles.add(Role.USER);
-    user.setRoles(roles);
-
-    return userRepository.save(user);
-  }
 
   @Override
   @Transactional
@@ -133,20 +88,6 @@ public class UserServiceImpl implements UserService {
     user.setRoles(roles);
 
     return userRepository.save(user);
-  }
-
-  @Override
-  public User login(String email, String password) {
-    // This method is now deprecated - use AuthenticationService instead
-    Optional<User> userOpt = userRepository.findByEmailIgnoreCase(email);
-    if (userOpt.isPresent()) {
-      User user = userOpt.get();
-      if (passwordEncoder.matches(password, user.getPasswordHash())) {
-        updateLastLogin(user.getId());
-        return user;
-      }
-    }
-    return null;
   }
 
   @Override
@@ -262,39 +203,6 @@ public class UserServiceImpl implements UserService {
     userRepository.save(user);
   }
 
-  @Override
-  @Transactional
-  public void verifyEmail(Long userId) {
-    User user = findById(userId);
-    user.setEmailVerified(true);
-    userRepository.save(user);
-  }
-
-  @Override
-  public boolean hasRole(User user, Role role) {
-    return user.getRoles() != null && user.getRoles().contains(role);
-  }
-
-  @Override
-  @Transactional
-  public void assignRole(Long userId, Role role) {
-    User user = findById(userId);
-    if (user.getRoles() == null) {
-      user.setRoles(new HashSet<>());
-    }
-    user.getRoles().add(role);
-    userRepository.save(user);
-  }
-
-  @Override
-  @Transactional
-  public void removeRole(Long userId, Role role) {
-    User user = findById(userId);
-    if (user.getRoles() != null) {
-      user.getRoles().remove(role);
-      userRepository.save(user);
-    }
-  }
 
   @Override
   @Transactional
@@ -314,40 +222,10 @@ public class UserServiceImpl implements UserService {
     userRepository.save(user);
   }
 
-  @Override
-  @Transactional
-  public void changePassword(Long userId, String oldPassword, String newPassword) {
-    User user = findById(userId);
-
-    if (!passwordEncoder.matches(oldPassword, user.getPasswordHash())) {
-      throw new IllegalArgumentException("Current password is incorrect");
-    }
-
-    if (!validationService.validatePassword(newPassword)) {
-      throw new IllegalArgumentException(
-          "Password must be at least 8 characters with letters and numbers");
-    }
-
-    user.setPasswordHash(passwordEncoder.encode(newPassword));
-    userRepository.save(user);
-  }
-
-  @Override
-  @Transactional
-  public void resetPassword(Long userId, String newPassword) {
-    User user = findById(userId);
-
-    if (!validationService.validatePassword(newPassword)) {
-      throw new IllegalArgumentException(
-          "Password must be at least 8 characters with letters and numbers");
-    }
-
-    user.setPasswordHash(passwordEncoder.encode(newPassword));
-    userRepository.save(user);
-  }
+  
 
   @Override
   public boolean canPlaceOrders(User user) {
-    return user.isActive() && user.isEmailVerified() && user.isAgeVerified();
+    return user.isActive() && user.isAgeVerified();
   }
 }

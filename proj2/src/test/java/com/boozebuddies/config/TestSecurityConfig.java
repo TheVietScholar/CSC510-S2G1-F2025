@@ -6,19 +6,20 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 
 /**
- * Test security configuration to disable security and CSRF for controller tests. Placed under
- * src/test so it's only picked up during tests.
+ * Test security configuration to disable all authentication and CSRF for tests.
+ * Uses modern Spring Security 6+ syntax.
  */
 @TestConfiguration
 public class TestSecurityConfig {
 
   @Bean
-  public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-    http.csrf()
-        .disable()
-        .authorizeHttpRequests(authorize -> authorize.anyRequest().permitAll())
-        .httpBasic()
-        .disable();
+  public SecurityFilterChain testSecurityFilterChain(HttpSecurity http) throws Exception {
+    http
+        .csrf(csrf -> csrf.disable())
+        .httpBasic(httpBasic -> httpBasic.disable())
+        .formLogin(form -> form.disable())
+        .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
+
     return http.build();
   }
 }

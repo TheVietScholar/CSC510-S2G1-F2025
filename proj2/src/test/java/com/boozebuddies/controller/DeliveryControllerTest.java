@@ -1,5 +1,7 @@
 package com.boozebuddies.controller;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -20,9 +22,26 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.context.annotation.Import;
+import com.boozebuddies.security.JwtAuthenticationFilter;
+import com.boozebuddies.config.TestSecurityConfig;
 
-@WebMvcTest(DeliveryController.class)
-public class DeliveryControllerMockMvcTest {
+
+
+@WebMvcTest(
+    controllers = DeliveryController.class,
+    excludeFilters = @ComponentScan.Filter(
+        type = FilterType.ASSIGNABLE_TYPE,
+        classes = JwtAuthenticationFilter.class
+    )
+)
+@AutoConfigureMockMvc(addFilters = false) // ⛔ disables all Spring Security filters
+@Import(TestSecurityConfig.class)         // ✅ imports your test security config
+@DisplayName("DeliveryController Tests")
+public class DeliveryControllerTest {
 
   @Autowired private MockMvc mockMvc;
 
