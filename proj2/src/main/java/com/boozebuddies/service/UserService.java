@@ -2,22 +2,20 @@ package com.boozebuddies.service;
 
 import com.boozebuddies.dto.RegisterUserRequest;
 import com.boozebuddies.entity.User;
-import com.boozebuddies.model.Role;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 public interface UserService {
 
-
-
   // ==================== User Registration Methods ====================
   /**
    * Registers a new user in the system.
+   *
    * @param request The registration request containing user details.
    * @return The registered user entity.
    */
-   public User registerUser(RegisterUserRequest request);
+  public User registerUser(RegisterUserRequest request);
 
   // ==================== User Lookup Methods ====================
   /**
@@ -29,7 +27,7 @@ public interface UserService {
   Optional<User> findByEmail(String email);
 
   // ==================== User Retrieval Methods ====================
-  
+
   /**
    * Retrieves a user by their unique ID.
    *
@@ -39,8 +37,7 @@ public interface UserService {
   Optional<User> getUserById(Long userId);
 
   /**
-   * Retrieves a user by their unique ID.
-   * Throws exception if not found.
+   * Retrieves a user by their unique ID. Throws exception if not found.
    *
    * @param userId The ID of the user.
    * @return The user entity.
@@ -56,7 +53,7 @@ public interface UserService {
   List<User> getAllUsers();
 
   // ==================== User Management Methods ====================
-  
+
   /**
    * Updates a user's information.
    *
@@ -75,8 +72,7 @@ public interface UserService {
   boolean deleteUser(Long userId);
 
   /**
-   * Deactivates a user account.
-   * Also revokes any active refresh tokens.
+   * Deactivates a user account. Also revokes any active refresh tokens.
    *
    * @param userId The ID of the user to deactivate.
    */
@@ -89,15 +85,15 @@ public interface UserService {
    */
   void activateUser(Long userId);
 
-
   /**
    * Updates the user's last login timestamp.
+   *
    * @param userId
    */
   public void updateLastLogin(Long userId);
 
   // ==================== Token Management Methods ====================
-  
+
   /**
    * Saves a refresh token for the user.
    *
@@ -130,12 +126,10 @@ public interface UserService {
    */
   void revokeRefreshToken(Long userId);
 
-
   // ==================== Business Logic Methods ====================
-  
+
   /**
-   * Checks if a user can place orders.
-   * User must be active and age verified.
+   * Checks if a user can place orders. User must be active and age verified.
    *
    * @param user The user to check.
    * @return true if the user can place orders, false otherwise.

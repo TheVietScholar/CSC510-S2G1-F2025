@@ -21,8 +21,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 /**
- * Filter that validates JWT from the Authorization header and sets the SecurityContext.
- * Runs once per request before Spring Security checks authorization.
+ * Filter that validates JWT from the Authorization header and sets the SecurityContext. Runs once
+ * per request before Spring Security checks authorization.
  */
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -62,9 +62,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     filterChain.doFilter(request, response);
   }
 
-  /**
-   * Extract JWT token from Authorization header
-   */
+  /** Extract JWT token from Authorization header */
   private String extractJwtFromRequest(HttpServletRequest request) {
     String bearerToken = request.getHeader(AUTHORIZATION_HEADER);
     if (bearerToken != null && bearerToken.startsWith(BEARER_PREFIX)) {
@@ -73,9 +71,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     return null;
   }
 
-  /**
-   * Authenticate the JWT token and set SecurityContext
-   */
+  /** Authenticate the JWT token and set SecurityContext */
   private void authenticateToken(String token, HttpServletRequest request) {
     String username = jwtUtil.extractUsername(token);
 
@@ -117,9 +113,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     log.debug("User authenticated successfully: {}", username);
   }
 
-  /**
-   * Build Spring Security authorities from user roles
-   */
+  /** Build Spring Security authorities from user roles */
   private Set<SimpleGrantedAuthority> buildAuthorities(User user) {
     if (user.getRoles() == null || user.getRoles().isEmpty()) {
       return Collections.emptySet();
@@ -130,9 +124,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         .collect(Collectors.toSet());
   }
 
-  /**
-   * Skip JWT filter for public endpoints (optional optimization)
-   */
+  /** Skip JWT filter for public endpoints (optional optimization) */
   @Override
   protected boolean shouldNotFilter(HttpServletRequest request) {
     String path = request.getRequestURI();

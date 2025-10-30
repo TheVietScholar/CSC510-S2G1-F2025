@@ -36,7 +36,6 @@ public class UserServiceImpl implements UserService {
     this.passwordEncoder = passwordEncoder != null ? passwordEncoder : new BCryptPasswordEncoder();
   }
 
-
   @Override
   @Transactional
   public User registerUser(RegisterUserRequest request) {
@@ -203,7 +202,6 @@ public class UserServiceImpl implements UserService {
     userRepository.save(user);
   }
 
-
   @Override
   @Transactional
   public void deactivateUser(Long userId) {
@@ -221,8 +219,6 @@ public class UserServiceImpl implements UserService {
     user.setActive(true);
     userRepository.save(user);
   }
-
-  
 
   @Override
   public boolean canPlaceOrders(User user) {

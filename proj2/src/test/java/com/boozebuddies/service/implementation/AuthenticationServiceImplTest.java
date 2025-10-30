@@ -22,11 +22,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("AuthenticationService Tests")
@@ -44,17 +42,17 @@ class AuthenticationServiceImplTest {
   private RegisterUserRequest registerRequest;
   private AuthenticationRequest loginRequest;
 
-  
-    @BeforeEach
-    void setUp() {
+  @BeforeEach
+  void setUp() {
     // Manually construct the service with mocked dependencies
-    authenticationService = new AuthenticationServiceImpl(
-        userService,
-        passwordEncoder,
-        jwtUtil,
-        userMapper,
-        604800000L  // refreshExpirationMs value
-    );
+    authenticationService =
+        new AuthenticationServiceImpl(
+            userService,
+            passwordEncoder,
+            jwtUtil,
+            userMapper,
+            604800000L // refreshExpirationMs value
+            );
 
     testUser =
         User.builder()
@@ -83,7 +81,7 @@ class AuthenticationServiceImplTest {
     loginRequest = new AuthenticationRequest();
     loginRequest.setEmail("john@example.com");
     loginRequest.setPassword("Password123");
-    }
+  }
 
   // ==================== REGISTER TESTS ====================
 
@@ -93,7 +91,9 @@ class AuthenticationServiceImplTest {
     when(userService.registerUser(registerRequest)).thenReturn(testUser);
     when(jwtUtil.generateToken(testUser)).thenReturn("access-token", "refresh-token");
     when(userMapper.toDTO(testUser)).thenReturn(testUserDTO);
-    doNothing().when(userService).saveRefreshToken(anyLong(), anyString(), any(LocalDateTime.class));
+    doNothing()
+        .when(userService)
+        .saveRefreshToken(anyLong(), anyString(), any(LocalDateTime.class));
 
     AuthenticationResponse response = authenticationService.register(registerRequest);
 
@@ -105,7 +105,8 @@ class AuthenticationServiceImplTest {
 
     verify(userService, times(1)).registerUser(registerRequest);
     verify(jwtUtil, times(2)).generateToken(testUser);
-    verify(userService, times(1)).saveRefreshToken(eq(1L), eq("refresh-token"), any(LocalDateTime.class));
+    verify(userService, times(1))
+        .saveRefreshToken(eq(1L), eq("refresh-token"), any(LocalDateTime.class));
     verify(userMapper, times(1)).toDTO(testUser);
   }
 
@@ -115,15 +116,17 @@ class AuthenticationServiceImplTest {
     when(userService.registerUser(registerRequest)).thenReturn(testUser);
     when(jwtUtil.generateToken(testUser)).thenReturn("access-token", "refresh-token");
     when(userMapper.toDTO(testUser)).thenReturn(testUserDTO);
-    doNothing().when(userService).saveRefreshToken(anyLong(), anyString(), any(LocalDateTime.class));
+    doNothing()
+        .when(userService)
+        .saveRefreshToken(anyLong(), anyString(), any(LocalDateTime.class));
 
     authenticationService.register(registerRequest);
 
-    verify(userService).saveRefreshToken(
-        eq(1L),
-        eq("refresh-token"),
-        argThat(expiry -> expiry != null && expiry.isAfter(LocalDateTime.now()))
-    );
+    verify(userService)
+        .saveRefreshToken(
+            eq(1L),
+            eq("refresh-token"),
+            argThat(expiry -> expiry != null && expiry.isAfter(LocalDateTime.now())));
   }
 
   // ==================== LOGIN TESTS ====================
@@ -136,7 +139,9 @@ class AuthenticationServiceImplTest {
     when(jwtUtil.generateToken(testUser)).thenReturn("access-token", "refresh-token");
     when(userMapper.toDTO(testUser)).thenReturn(testUserDTO);
     doNothing().when(userService).updateLastLogin(1L);
-    doNothing().when(userService).saveRefreshToken(anyLong(), anyString(), any(LocalDateTime.class));
+    doNothing()
+        .when(userService)
+        .saveRefreshToken(anyLong(), anyString(), any(LocalDateTime.class));
 
     AuthenticationResponse response = authenticationService.login(loginRequest);
 
@@ -156,10 +161,8 @@ class AuthenticationServiceImplTest {
   @Test
   @DisplayName("login should throw exception when request is null")
   void login_NullRequest_ThrowsException() {
-    InvalidCredentialsException exception = assertThrows(
-        InvalidCredentialsException.class,
-        () -> authenticationService.login(null)
-    );
+    InvalidCredentialsException exception =
+        assertThrows(InvalidCredentialsException.class, () -> authenticationService.login(null));
 
     assertEquals("Email and password are required", exception.getMessage());
     verify(userService, never()).findByEmail(any());
@@ -170,10 +173,9 @@ class AuthenticationServiceImplTest {
   void login_NullEmail_ThrowsException() {
     loginRequest.setEmail(null);
 
-    InvalidCredentialsException exception = assertThrows(
-        InvalidCredentialsException.class,
-        () -> authenticationService.login(loginRequest)
-    );
+    InvalidCredentialsException exception =
+        assertThrows(
+            InvalidCredentialsException.class, () -> authenticationService.login(loginRequest));
 
     assertEquals("Email and password are required", exception.getMessage());
     verify(userService, never()).findByEmail(any());
@@ -184,10 +186,9 @@ class AuthenticationServiceImplTest {
   void login_NullPassword_ThrowsException() {
     loginRequest.setPassword(null);
 
-    InvalidCredentialsException exception = assertThrows(
-        InvalidCredentialsException.class,
-        () -> authenticationService.login(loginRequest)
-    );
+    InvalidCredentialsException exception =
+        assertThrows(
+            InvalidCredentialsException.class, () -> authenticationService.login(loginRequest));
 
     assertEquals("Email and password are required", exception.getMessage());
     verify(userService, never()).findByEmail(any());
@@ -198,10 +199,9 @@ class AuthenticationServiceImplTest {
   void login_UserNotFound_ThrowsException() {
     when(userService.findByEmail("john@example.com")).thenReturn(Optional.empty());
 
-    InvalidCredentialsException exception = assertThrows(
-        InvalidCredentialsException.class,
-        () -> authenticationService.login(loginRequest)
-    );
+    InvalidCredentialsException exception =
+        assertThrows(
+            InvalidCredentialsException.class, () -> authenticationService.login(loginRequest));
 
     assertEquals("Invalid email or password", exception.getMessage());
     verify(userService, times(1)).findByEmail("john@example.com");
@@ -216,10 +216,9 @@ class AuthenticationServiceImplTest {
 
     loginRequest.setPassword("WrongPassword");
 
-    InvalidCredentialsException exception = assertThrows(
-        InvalidCredentialsException.class,
-        () -> authenticationService.login(loginRequest)
-    );
+    InvalidCredentialsException exception =
+        assertThrows(
+            InvalidCredentialsException.class, () -> authenticationService.login(loginRequest));
 
     assertEquals("Invalid email or password", exception.getMessage());
     verify(passwordEncoder, times(1)).matches("WrongPassword", testUser.getPasswordHash());
@@ -233,10 +232,9 @@ class AuthenticationServiceImplTest {
     when(userService.findByEmail("john@example.com")).thenReturn(Optional.of(testUser));
     when(passwordEncoder.matches("Password123", testUser.getPasswordHash())).thenReturn(true);
 
-    InvalidCredentialsException exception = assertThrows(
-        InvalidCredentialsException.class,
-        () -> authenticationService.login(loginRequest)
-    );
+    InvalidCredentialsException exception =
+        assertThrows(
+            InvalidCredentialsException.class, () -> authenticationService.login(loginRequest));
 
     assertEquals("Account is deactivated. Please contact support.", exception.getMessage());
     verify(userService, never()).updateLastLogin(any());
@@ -251,7 +249,9 @@ class AuthenticationServiceImplTest {
     when(jwtUtil.generateToken(testUser)).thenReturn("access-token", "refresh-token");
     when(userMapper.toDTO(testUser)).thenReturn(testUserDTO);
     doNothing().when(userService).updateLastLogin(1L);
-    doNothing().when(userService).saveRefreshToken(anyLong(), anyString(), any(LocalDateTime.class));
+    doNothing()
+        .when(userService)
+        .saveRefreshToken(anyLong(), anyString(), any(LocalDateTime.class));
 
     authenticationService.login(loginRequest);
 
@@ -289,10 +289,8 @@ class AuthenticationServiceImplTest {
   @Test
   @DisplayName("refreshToken should throw exception when request is null")
   void refreshToken_NullRequest_ThrowsException() {
-    InvalidTokenException exception = assertThrows(
-        InvalidTokenException.class,
-        () -> authenticationService.refreshToken(null)
-    );
+    InvalidTokenException exception =
+        assertThrows(InvalidTokenException.class, () -> authenticationService.refreshToken(null));
 
     assertEquals("Refresh token is required", exception.getMessage());
     verify(userService, never()).isRefreshTokenValid(any());
@@ -304,10 +302,9 @@ class AuthenticationServiceImplTest {
     RefreshTokenRequest request = new RefreshTokenRequest();
     request.setRefreshToken(null);
 
-    InvalidTokenException exception = assertThrows(
-        InvalidTokenException.class,
-        () -> authenticationService.refreshToken(request)
-    );
+    InvalidTokenException exception =
+        assertThrows(
+            InvalidTokenException.class, () -> authenticationService.refreshToken(request));
 
     assertEquals("Refresh token is required", exception.getMessage());
     verify(userService, never()).isRefreshTokenValid(any());
@@ -321,10 +318,9 @@ class AuthenticationServiceImplTest {
 
     when(userService.isRefreshTokenValid("invalid-token")).thenReturn(false);
 
-    InvalidTokenException exception = assertThrows(
-        InvalidTokenException.class,
-        () -> authenticationService.refreshToken(request)
-    );
+    InvalidTokenException exception =
+        assertThrows(
+            InvalidTokenException.class, () -> authenticationService.refreshToken(request));
 
     assertEquals("Invalid or expired refresh token", exception.getMessage());
     verify(userService, times(1)).isRefreshTokenValid("invalid-token");
@@ -340,10 +336,9 @@ class AuthenticationServiceImplTest {
     when(userService.isRefreshTokenValid("valid-token")).thenReturn(true);
     when(userService.findByRefreshToken("valid-token")).thenReturn(Optional.empty());
 
-    InvalidTokenException exception = assertThrows(
-        InvalidTokenException.class,
-        () -> authenticationService.refreshToken(request)
-    );
+    InvalidTokenException exception =
+        assertThrows(
+            InvalidTokenException.class, () -> authenticationService.refreshToken(request));
 
     assertEquals("Refresh token not found", exception.getMessage());
     verify(userService, times(1)).findByRefreshToken("valid-token");
@@ -359,10 +354,9 @@ class AuthenticationServiceImplTest {
     when(userService.findByRefreshToken("valid-token")).thenReturn(Optional.of(testUser));
     when(jwtUtil.extractUsername("valid-token")).thenReturn("different@example.com");
 
-    InvalidTokenException exception = assertThrows(
-        InvalidTokenException.class,
-        () -> authenticationService.refreshToken(request)
-    );
+    InvalidTokenException exception =
+        assertThrows(
+            InvalidTokenException.class, () -> authenticationService.refreshToken(request));
 
     assertEquals("Token does not match user", exception.getMessage());
     verify(jwtUtil, times(1)).extractUsername("valid-token");
@@ -380,10 +374,9 @@ class AuthenticationServiceImplTest {
     when(userService.findByRefreshToken("valid-token")).thenReturn(Optional.of(testUser));
     when(jwtUtil.extractUsername("valid-token")).thenReturn("john@example.com");
 
-    InvalidCredentialsException exception = assertThrows(
-        InvalidCredentialsException.class,
-        () -> authenticationService.refreshToken(request)
-    );
+    InvalidCredentialsException exception =
+        assertThrows(
+            InvalidCredentialsException.class, () -> authenticationService.refreshToken(request));
 
     assertEquals("Account is deactivated", exception.getMessage());
     verify(jwtUtil, never()).generateToken(any());
@@ -405,7 +398,8 @@ class AuthenticationServiceImplTest {
   @DisplayName("logout should handle null userId gracefully")
   void logout_NullUserId() {
     doThrow(new IllegalArgumentException("User ID cannot be null"))
-        .when(userService).revokeRefreshToken(null);
+        .when(userService)
+        .revokeRefreshToken(null);
 
     assertThrows(IllegalArgumentException.class, () -> authenticationService.logout(null));
   }

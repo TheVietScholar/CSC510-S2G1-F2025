@@ -25,7 +25,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
   /** Find user by refresh token. Used for JWT token refresh flow. */
   Optional<User> findByRefreshToken(String refreshToken);
 
-
   // ==================== Role-based Queries ====================
 
   /** Find users by specific role. Updated to work with Role enum. */

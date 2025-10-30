@@ -4,10 +4,12 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import com.boozebuddies.config.TestSecurityConfig;
 import com.boozebuddies.dto.DriverDTO;
 import com.boozebuddies.entity.Driver;
 import com.boozebuddies.mapper.DriverMapper;
 import com.boozebuddies.model.CertificationStatus;
+import com.boozebuddies.security.JwtAuthenticationFilter;
 import com.boozebuddies.service.DriverService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Arrays;
@@ -17,26 +19,23 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
-import com.boozebuddies.security.JwtAuthenticationFilter;
-import com.boozebuddies.config.TestSecurityConfig;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(
     controllers = DriverController.class,
-    excludeFilters = @ComponentScan.Filter(
-        type = FilterType.ASSIGNABLE_TYPE,
-        classes = JwtAuthenticationFilter.class
-    )
-)
+    excludeFilters =
+        @ComponentScan.Filter(
+            type = FilterType.ASSIGNABLE_TYPE,
+            classes = JwtAuthenticationFilter.class))
 @AutoConfigureMockMvc(addFilters = false) // ⛔ disables all Spring Security filters
-@Import(TestSecurityConfig.class)         // ✅ imports your test security config
+@Import(TestSecurityConfig.class) // ✅ imports your test security config
 @DisplayName("DriverController Tests")
 public class DriverControllerTest {
 

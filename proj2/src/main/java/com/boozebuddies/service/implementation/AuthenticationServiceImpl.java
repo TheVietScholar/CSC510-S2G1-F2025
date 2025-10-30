@@ -52,13 +52,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     // Generate access token (short-lived)
     String accessToken = jwtUtil.generateToken(user);
-    
+
     // Generate refresh token (long-lived)
     String refreshToken = jwtUtil.generateToken(user);
-    LocalDateTime refreshExpiry = Instant.now()
-        .plusMillis(refreshExpirationMs)
-        .atZone(ZoneId.systemDefault())
-        .toLocalDateTime();
+    LocalDateTime refreshExpiry =
+        Instant.now()
+            .plusMillis(refreshExpirationMs)
+            .atZone(ZoneId.systemDefault())
+            .toLocalDateTime();
 
     // Save refresh token in database
     userService.saveRefreshToken(user.getId(), refreshToken, refreshExpiry);
@@ -80,8 +81,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     // Find user by email
-    User user = userService.findByEmail(request.getEmail())
-        .orElseThrow(() -> new InvalidCredentialsException("Invalid email or password"));
+    User user =
+        userService
+            .findByEmail(request.getEmail())
+            .orElseThrow(() -> new InvalidCredentialsException("Invalid email or password"));
 
     // Verify password
     if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
@@ -99,10 +102,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     // Generate tokens
     String accessToken = jwtUtil.generateToken(user);
     String refreshToken = jwtUtil.generateToken(user);
-    LocalDateTime refreshExpiry = Instant.now()
-        .plusMillis(refreshExpirationMs)
-        .atZone(ZoneId.systemDefault())
-        .toLocalDateTime();
+    LocalDateTime refreshExpiry =
+        Instant.now()
+            .plusMillis(refreshExpirationMs)
+            .atZone(ZoneId.systemDefault())
+            .toLocalDateTime();
 
     // Save refresh token
     userService.saveRefreshToken(user.getId(), refreshToken, refreshExpiry);
@@ -131,8 +135,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     // Find user by refresh token
-    User user = userService.findByRefreshToken(refreshToken)
-        .orElseThrow(() -> new InvalidTokenException("Refresh token not found"));
+    User user =
+        userService
+            .findByRefreshToken(refreshToken)
+            .orElseThrow(() -> new InvalidTokenException("Refresh token not found"));
 
     // Verify token matches user
     String email = jwtUtil.extractUsername(refreshToken);

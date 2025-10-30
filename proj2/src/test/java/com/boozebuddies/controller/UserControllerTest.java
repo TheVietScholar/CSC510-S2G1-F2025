@@ -6,12 +6,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.boozebuddies.config.TestSecurityConfig;
-import com.boozebuddies.dto.AuthenticationResponse;
-import com.boozebuddies.dto.LoginRequest;
 import com.boozebuddies.dto.RegisterUserRequest;
 import com.boozebuddies.dto.UserDTO;
 import com.boozebuddies.entity.User;
 import com.boozebuddies.mapper.UserMapper;
+import com.boozebuddies.security.JwtAuthenticationFilter;
 import com.boozebuddies.service.UserService;
 import com.boozebuddies.service.ValidationService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -24,23 +23,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
-
-import com.boozebuddies.security.JwtAuthenticationFilter;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(
     controllers = UserController.class,
-    excludeFilters = @ComponentScan.Filter(
-        type = FilterType.ASSIGNABLE_TYPE,
-        classes = JwtAuthenticationFilter.class
-    )
-)
+    excludeFilters =
+        @ComponentScan.Filter(
+            type = FilterType.ASSIGNABLE_TYPE,
+            classes = JwtAuthenticationFilter.class))
 @AutoConfigureMockMvc(addFilters = false) // ⛔ disables all Spring Security filters
-@Import(TestSecurityConfig.class)   
+@Import(TestSecurityConfig.class)
 @DisplayName("UserController Tests")
 class UserControllerTest {
 
@@ -49,7 +45,6 @@ class UserControllerTest {
   @Autowired private ObjectMapper objectMapper;
 
   @MockBean private UserService userService;
-
 
   @MockBean private ValidationService validationService;
 
@@ -81,7 +76,6 @@ class UserControllerTest {
     registerRequest.setEmail("john@example.com");
     registerRequest.setPhone("555-123-4567");
     registerRequest.setDateOfBirth(LocalDate.of(1990, 1, 1));
-
   }
 
   // ==================== GET USER TESTS ====================

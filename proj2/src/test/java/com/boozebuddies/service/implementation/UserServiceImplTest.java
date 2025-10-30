@@ -8,6 +8,7 @@ import com.boozebuddies.dto.RegisterUserRequest;
 import com.boozebuddies.entity.User;
 import com.boozebuddies.exception.UserAlreadyExistsException;
 import com.boozebuddies.exception.UserNotFoundException;
+import com.boozebuddies.model.Role;
 import com.boozebuddies.repository.UserRepository;
 import com.boozebuddies.service.ValidationService;
 import java.time.LocalDate;
@@ -23,7 +24,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import com.boozebuddies.model.Role;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UserService Tests")
@@ -51,8 +51,7 @@ class UserServiceImplTest {
             .build();
   }
 
-
-// ==================== REGISTER USER ====================
+  // ==================== REGISTER USER ====================
 
   @Test
   @DisplayName("registerUser should successfully register a valid user")
@@ -69,11 +68,13 @@ class UserServiceImplTest {
     when(userRepository.existsByEmailIgnoreCase("john@example.com")).thenReturn(false);
     when(validationService.validateAge(any(User.class))).thenReturn(true);
     when(passwordEncoder.encode("Password123")).thenReturn("encoded-password");
-    when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
-      User user = invocation.getArgument(0);
-      user.setId(1L);
-      return user;
-    });
+    when(userRepository.save(any(User.class)))
+        .thenAnswer(
+            invocation -> {
+              User user = invocation.getArgument(0);
+              user.setId(1L);
+              return user;
+            });
 
     User result = userService.registerUser(request);
 
@@ -106,11 +107,9 @@ class UserServiceImplTest {
     request.setPhone("555-1234");
     request.setDateOfBirth(LocalDate.of(1990, 1, 1));
 
-    IllegalArgumentException exception = assertThrows(
-        IllegalArgumentException.class,
-        () -> userService.registerUser(request)
-    );
-    
+    IllegalArgumentException exception =
+        assertThrows(IllegalArgumentException.class, () -> userService.registerUser(request));
+
     assertEquals("Name is required", exception.getMessage());
     verify(userRepository, never()).save(any());
   }
@@ -125,11 +124,9 @@ class UserServiceImplTest {
     request.setPhone("555-1234");
     request.setDateOfBirth(LocalDate.of(1990, 1, 1));
 
-    IllegalArgumentException exception = assertThrows(
-        IllegalArgumentException.class,
-        () -> userService.registerUser(request)
-    );
-    
+    IllegalArgumentException exception =
+        assertThrows(IllegalArgumentException.class, () -> userService.registerUser(request));
+
     assertEquals("Name is required", exception.getMessage());
     verify(userRepository, never()).save(any());
   }
@@ -144,11 +141,9 @@ class UserServiceImplTest {
     request.setPhone(null);
     request.setDateOfBirth(LocalDate.of(1990, 1, 1));
 
-    IllegalArgumentException exception = assertThrows(
-        IllegalArgumentException.class,
-        () -> userService.registerUser(request)
-    );
-    
+    IllegalArgumentException exception =
+        assertThrows(IllegalArgumentException.class, () -> userService.registerUser(request));
+
     assertEquals("Phone is required", exception.getMessage());
     verify(userRepository, never()).save(any());
   }
@@ -163,11 +158,9 @@ class UserServiceImplTest {
     request.setPhone("");
     request.setDateOfBirth(LocalDate.of(1990, 1, 1));
 
-    IllegalArgumentException exception = assertThrows(
-        IllegalArgumentException.class,
-        () -> userService.registerUser(request)
-    );
-    
+    IllegalArgumentException exception =
+        assertThrows(IllegalArgumentException.class, () -> userService.registerUser(request));
+
     assertEquals("Phone is required", exception.getMessage());
     verify(userRepository, never()).save(any());
   }
@@ -182,11 +175,9 @@ class UserServiceImplTest {
     request.setPhone("555-1234");
     request.setDateOfBirth(null);
 
-    IllegalArgumentException exception = assertThrows(
-        IllegalArgumentException.class,
-        () -> userService.registerUser(request)
-    );
-    
+    IllegalArgumentException exception =
+        assertThrows(IllegalArgumentException.class, () -> userService.registerUser(request));
+
     assertEquals("Date of birth is required", exception.getMessage());
     verify(userRepository, never()).save(any());
   }
@@ -203,11 +194,9 @@ class UserServiceImplTest {
 
     when(validationService.validateEmail("invalid-email")).thenReturn(false);
 
-    IllegalArgumentException exception = assertThrows(
-        IllegalArgumentException.class,
-        () -> userService.registerUser(request)
-    );
-    
+    IllegalArgumentException exception =
+        assertThrows(IllegalArgumentException.class, () -> userService.registerUser(request));
+
     assertEquals("Email is invalid or empty", exception.getMessage());
     verify(userRepository, never()).save(any());
   }
@@ -225,13 +214,11 @@ class UserServiceImplTest {
     when(validationService.validateEmail("john@example.com")).thenReturn(true);
     when(validationService.validatePassword("weak")).thenReturn(false);
 
-    IllegalArgumentException exception = assertThrows(
-        IllegalArgumentException.class,
-        () -> userService.registerUser(request)
-    );
-    
-    assertEquals("Password must be at least 8 characters with letters and numbers", 
-        exception.getMessage());
+    IllegalArgumentException exception =
+        assertThrows(IllegalArgumentException.class, () -> userService.registerUser(request));
+
+    assertEquals(
+        "Password must be at least 8 characters with letters and numbers", exception.getMessage());
     verify(userRepository, never()).save(any());
   }
 
@@ -368,28 +355,28 @@ class UserServiceImplTest {
   }
 
   // ==================== GET USER BY ID ====================
-    @Test
-    @DisplayName("getUserById should return user when exists")
-    void getUserById_UserExists_ReturnsUser() {
-      when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+  @Test
+  @DisplayName("getUserById should return user when exists")
+  void getUserById_UserExists_ReturnsUser() {
+    when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
 
-      Optional<User> result = userService.getUserById(1L);
+    Optional<User> result = userService.getUserById(1L);
 
-      assertTrue(result.isPresent());
-      assertEquals("john@example.com", result.get().getEmail());
-      verify(userRepository, times(1)).findById(1L);
-    }
+    assertTrue(result.isPresent());
+    assertEquals("john@example.com", result.get().getEmail());
+    verify(userRepository, times(1)).findById(1L);
+  }
 
-    @Test
-    @DisplayName("getUserById should return empty when user not found")
-    void getUserById_UserNotFound_ReturnsEmpty() {
-      when(userRepository.findById(999L)).thenReturn(Optional.empty());
+  @Test
+  @DisplayName("getUserById should return empty when user not found")
+  void getUserById_UserNotFound_ReturnsEmpty() {
+    when(userRepository.findById(999L)).thenReturn(Optional.empty());
 
-      Optional<User> result = userService.getUserById(999L);
+    Optional<User> result = userService.getUserById(999L);
 
-      assertFalse(result.isPresent());
-      verify(userRepository, times(1)).findById(999L);
-    }
+    assertFalse(result.isPresent());
+    verify(userRepository, times(1)).findById(999L);
+  }
 
   // ==================== FIND BY ID (throws exception) ====================
 
@@ -432,8 +419,7 @@ class UserServiceImplTest {
   @Test
   @DisplayName("findByEmail should return empty when user not found")
   void findByEmail_UserNotFound_ReturnsEmpty() {
-    when(userRepository.findByEmailIgnoreCase("unknown@example.com"))
-        .thenReturn(Optional.empty());
+    when(userRepository.findByEmailIgnoreCase("unknown@example.com")).thenReturn(Optional.empty());
 
     Optional<User> result = userService.findByEmail("unknown@example.com");
 
