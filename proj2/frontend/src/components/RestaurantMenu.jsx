@@ -53,7 +53,13 @@ const RestaurantMenu = ({ restaurant, cart, onAddToCart, onRemoveFromCart, onBac
         <div className="space-y-4">
           {menuItems.map(item => (
             <div key={item.id} className="bg-gray-900 border border-gray-700 rounded-lg p-6">
-              <div className="flex justify-between items-start">
+              <div className="flex items-start gap-4">
+                <img
+                  src={item.imageUrl}
+                  alt={item.name}
+                  className="w-1 h-1 rounded object-cover border border-gray-700"
+                  onError={(e) => { e.currentTarget.style.display = 'none' }}
+                />
                 <div className="flex-1">
                   <div className="flex items-start justify-between">
                     <div>

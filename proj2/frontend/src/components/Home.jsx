@@ -48,13 +48,23 @@ const Home = ({ onSelectRestaurant }) => {
               onClick={() => onSelectRestaurant(restaurant)}
               className="bg-gray-900 border border-gray-700 rounded-lg p-6 cursor-pointer hover:border-red-600 transition duration-200 transform hover:scale-105"
             >
-              <div className="flex justify-between items-start mb-3">
-                <h3 className="text-xl font-semibold text-white">{restaurant.name}</h3>
-                <span className="bg-red-600 text-white px-2 py-1 rounded text-sm font-semibold">
-                  {restaurant.rating ?? 0} ★
-                </span>
+              <div className="flex items-start gap-4 mb-3">
+                <img
+                  src={restaurant.imageUrl}
+                  alt={restaurant.name}
+                  className="w-1 h-1 rounded object-cover border border-gray-700"
+                  onError={(e) => { e.currentTarget.style.display = 'none' }}
+                />
+                <div className="flex-1">
+                  <div className="flex justify-between items-start">
+                    <h3 className="text-xl font-semibold text-white">{restaurant.name}</h3>
+                    <span className="bg-red-600 text-white px-2 py-1 rounded text-sm font-semibold">
+                      {restaurant.rating ?? 0} ★
+                    </span>
+                  </div>
+                  <p className="text-gray-400 mb-2">{restaurant.cuisineType}</p>
+                </div>
               </div>
-              <p className="text-gray-400 mb-2">{restaurant.cuisineType}</p>
               <div className="flex justify-between items-center text-sm text-gray-500">
                 <span>📍 {restaurant.address}</span>
                 <button className="text-red-500 hover:text-red-400 font-semibold">
