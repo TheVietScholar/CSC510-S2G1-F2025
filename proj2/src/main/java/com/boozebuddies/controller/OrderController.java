@@ -73,40 +73,23 @@ public class OrderController {
    * drivers can view assigned orders, and admins can view all orders.
    */
   @GetMapping("/{orderId}")
-  @IsAuthenticated
+  @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN') or @permissionService.ownsOrder(authentication, #orderId) or @permissionService.merchantCanAccessOrder(authentication, #orderId) or @permissionService.driverCanAccessOrder(authentication, #orderId)")
   public ResponseEntity<ApiResponse<OrderDTO>> getOrderById(
-      @PathVariable Long orderId,
-      Authentication authentication) {
+    @PathVariable Long orderId,
+    Authentication authentication) {
     try {
       if (orderId == null || orderId <= 0) {
         return ResponseEntity.badRequest()
             .body(ApiResponse.error("Invalid order ID"));
       }
 
-      User user = permissionService.getAuthenticatedUser(authentication);
-      Optional<Order> orderOpt = orderService.getOrderById(orderId);
+    Optional<Order> orderOpt = orderService.getOrderById(orderId);
       
       if (orderOpt.isEmpty()) {
         return ResponseEntity.notFound().build();
       }
       
       Order order = orderOpt.get();
-      
-      // Check if user has permission to view this order
-      boolean canAccess = user.hasRole(Role.ADMIN) || // Admins can see all
-          (order.getUser() != null && order.getUser().getId().equals(user.getId())) || // Owner
-          (user.hasRole(Role.MERCHANT_ADMIN) && 
-              order.getMerchant() != null && 
-              user.ownsMerchant(order.getMerchant().getId())) || // Merchant admin
-          (user.hasRole(Role.DRIVER) && 
-              order.getDriver() != null && 
-              user.getDriver() != null &&
-              order.getDriver().getId().equals(user.getDriver().getId())); // Assigned driver
-      
-      if (!canAccess) {
-        throw new AccessDeniedException("You don't have permission to view this order");
-      }
-      
       OrderDTO orderDTO = orderMapper.toDTO(order);
       return ResponseEntity.ok(ApiResponse.success(orderDTO, "Order retrieved successfully"));
     } catch (AccessDeniedException e) {
@@ -286,8 +269,8 @@ public class OrderController {
             .body(ApiResponse.error("Invalid order ID"));
       }
 
-      User user = permissionService.getAuthenticatedUser(authentication);
-      Optional<Order> orderOpt = orderService.getOrderById(orderId);
+    User user = permissionService.getAuthenticatedUser(authentication);
+    Optional<Order> orderOpt = orderService.getOrderById(orderId);
       
       if (orderOpt.isEmpty()) {
         return ResponseEntity.notFound().build();
@@ -317,7 +300,7 @@ public class OrderController {
    * Admin can update any order, merchant admin can update orders for their merchant.
    */
   @PutMapping("/{orderId}/status")
-  @IsAdminOrMerchantAdmin
+  @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN') or @permissionService.merchantCanAccessOrder(authentication, #orderId)")
   public ResponseEntity<ApiResponse<OrderDTO>> updateOrderStatus(
       @PathVariable Long orderId,
       @RequestParam String status,
@@ -328,22 +311,13 @@ public class OrderController {
             .body(ApiResponse.error("Invalid order ID"));
       }
 
-      User user = permissionService.getAuthenticatedUser(authentication);
-      Optional<Order> orderOpt = orderService.getOrderById(orderId);
+  Optional<Order> orderOpt = orderService.getOrderById(orderId);
       
       if (orderOpt.isEmpty()) {
         return ResponseEntity.notFound().build();
       }
       
-      Order order = orderOpt.get();
-      
-      // MERCHANT_ADMIN can only update orders for their own merchant
-      if (user.hasRole(Role.MERCHANT_ADMIN)) {
-        if (order.getMerchant() == null || !user.ownsMerchant(order.getMerchant().getId())) {
-          throw new AccessDeniedException("You can only update orders for your own merchant");
-        }
-      }
-      
+  // Authorization for admin/merchant admin is handled by PreAuthorize above
       Order updatedOrder = orderService.updateOrderStatus(orderId, status);
       OrderDTO orderDTO = orderMapper.toDTO(updatedOrder);
       return ResponseEntity.ok(ApiResponse.success(orderDTO, "Order status updated successfully"));

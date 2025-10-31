@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -78,7 +79,7 @@ public class DeliveryController {
    * Get delivery by ID (ADMIN only for now - could be extended to allow drivers to view their own)
    */
   @GetMapping("/{deliveryId}")
-  @IsAdmin
+  @PreAuthorize("hasRole('ADMIN') or @permissionService.driverCanAccessDelivery(authentication, #deliveryId)")
   public ResponseEntity<ApiResponse<DeliveryDTO>> getDeliveryById(@PathVariable Long deliveryId) {
     try {
       Delivery delivery = deliveryService.getDeliveryById(deliveryId);
@@ -125,7 +126,7 @@ public class DeliveryController {
    * Update delivery status (DRIVER only - for their own deliveries)
    */
   @PutMapping("/{deliveryId}/status")
-  @IsDriver
+  @PreAuthorize("hasRole('ADMIN') or @permissionService.driverCanAccessDelivery(authentication, #deliveryId)")
   public ResponseEntity<ApiResponse<DeliveryDTO>> updateDeliveryStatus(
       @PathVariable Long deliveryId,
       @RequestParam DeliveryStatus status,
@@ -164,7 +165,7 @@ public class DeliveryController {
    * Mark delivery as picked up (DRIVER only)
    */
   @PostMapping("/{deliveryId}/pickup")
-  @IsDriver
+  @PreAuthorize("hasRole('ADMIN') or @permissionService.driverCanAccessDelivery(authentication, #deliveryId)")
   public ResponseEntity<ApiResponse<DeliveryDTO>> markAsPickedUp(
       @PathVariable Long deliveryId, Authentication authentication) {
     try {
@@ -202,7 +203,7 @@ public class DeliveryController {
    * Mark delivery as delivered (DRIVER only)
    */
   @PostMapping("/{deliveryId}/deliver")
-  @IsDriver
+  @PreAuthorize("hasRole('ADMIN') or @permissionService.driverCanAccessDelivery(authentication, #deliveryId)")
   public ResponseEntity<ApiResponse<DeliveryDTO>> markAsDelivered(
       @PathVariable Long deliveryId, Authentication authentication) {
     try {
@@ -240,7 +241,7 @@ public class DeliveryController {
    * Verify customer age (DRIVER only - critical for alcohol delivery)
    */
   @PostMapping("/{deliveryId}/verify-age")
-  @IsDriver
+  @PreAuthorize("hasRole('ADMIN') or @permissionService.driverCanAccessDelivery(authentication, #deliveryId)")
   public ResponseEntity<ApiResponse<String>> verifyCustomerAge(
       @PathVariable Long deliveryId,
       @RequestParam boolean ageVerified,
@@ -283,7 +284,7 @@ public class DeliveryController {
    * Cancel a delivery with reason (DRIVER only)
    */
   @PostMapping("/{deliveryId}/cancel")
-  @IsDriver
+  @PreAuthorize("hasRole('ADMIN') or @permissionService.driverCanAccessDelivery(authentication, #deliveryId)")
   public ResponseEntity<ApiResponse<DeliveryDTO>> cancelDelivery(
       @PathVariable Long deliveryId,
       @RequestParam String reason,

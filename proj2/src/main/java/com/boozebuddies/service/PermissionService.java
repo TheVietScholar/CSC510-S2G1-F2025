@@ -80,4 +80,13 @@ public interface PermissionService {
    * @return true if the driver can access the delivery
    */
   boolean driverCanAccessDelivery(Authentication authentication, Long deliveryId);
+
+  /**
+   * Check if driver can access an order (order is assigned to them).
+   * 
+   * @param authentication The authentication object
+   * @param orderId The order ID
+   * @return true if the driver can access the order
+   */
+  boolean driverCanAccessOrder(Authentication authentication, Long orderId);
 }
