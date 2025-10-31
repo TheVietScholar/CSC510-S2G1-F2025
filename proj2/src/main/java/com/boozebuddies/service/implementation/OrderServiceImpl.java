@@ -64,6 +64,14 @@ public class OrderServiceImpl implements OrderService {
     return orderRepository.findByCustomerId(userId);
   }
 
+  public List<Order> getOrdersByMerchant(Long merchantId) {
+    return orderRepository.findByMerchantId(merchantId);
+  }
+
+  public List<Order> getOrdersByDriver(Long driverId) {
+    return orderRepository.findByDriverId(driverId);
+  }
+
   public List<Order> getAllOrders() {
     return orderRepository.findAll();
   }

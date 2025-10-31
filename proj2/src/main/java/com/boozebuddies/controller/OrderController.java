@@ -3,10 +3,9 @@ package com.boozebuddies.controller;
 import com.boozebuddies.dto.ApiResponse;
 import com.boozebuddies.dto.CreateOrderRequest;
 import com.boozebuddies.dto.OrderDTO;
-import com.boozebuddies.entity.Merchant;
 import com.boozebuddies.entity.Order;
-import com.boozebuddies.entity.OrderItem;
 import com.boozebuddies.entity.User;
+import com.boozebuddies.mapper.OrderMapper;
 import com.boozebuddies.model.Role;
 import com.boozebuddies.security.annotation.RoleAnnotations.*;
 import com.boozebuddies.service.OrderService;
@@ -27,6 +26,7 @@ public class OrderController {
 
   @Autowired private OrderService orderService;
   @Autowired private PermissionService permissionService;
+  @Autowired private OrderMapper orderMapper;
 
   // ==================== CREATE ORDER (USER ONLY) ====================
   
@@ -51,10 +51,10 @@ public class OrderController {
       // Set the user ID from authenticated user if not provided
       createOrderRequest.setUserId(user.getId());
       
-      // Convert CreateOrderRequest to Order entity
-      Order order = convertToEntity(createOrderRequest);
+      // Convert CreateOrderRequest to Order entity using mapper
+      Order order = orderMapper.toEntity(createOrderRequest);
       Order createdOrder = orderService.createOrder(order);
-      OrderDTO orderDTO = convertToDTO(createdOrder);
+      OrderDTO orderDTO = orderMapper.toDTO(createdOrder);
       return ResponseEntity.ok(ApiResponse.success(orderDTO, "Order created successfully"));
     } catch (AccessDeniedException e) {
       return ResponseEntity.status(HttpStatus.FORBIDDEN)
@@ -107,7 +107,7 @@ public class OrderController {
         throw new AccessDeniedException("You don't have permission to view this order");
       }
       
-      OrderDTO orderDTO = convertToDTO(order);
+      OrderDTO orderDTO = orderMapper.toDTO(order);
       return ResponseEntity.ok(ApiResponse.success(orderDTO, "Order retrieved successfully"));
     } catch (AccessDeniedException e) {
       return ResponseEntity.status(HttpStatus.FORBIDDEN)
@@ -130,7 +130,7 @@ public class OrderController {
       User user = permissionService.getAuthenticatedUser(authentication);
       List<Order> orders = orderService.getOrdersByUser(user.getId());
       List<OrderDTO> orderDTOs =
-          orders.stream().map(this::convertToDTO).collect(Collectors.toList());
+          orders.stream().map(orderMapper::toDTO).collect(Collectors.toList());
       return ResponseEntity.ok(
           ApiResponse.success(orderDTOs, "Your orders retrieved successfully"));
     } catch (Exception e) {
@@ -155,7 +155,7 @@ public class OrderController {
       
       List<Order> orders = orderService.getOrdersByUser(userId);
       List<OrderDTO> orderDTOs =
-          orders.stream().map(this::convertToDTO).collect(Collectors.toList());
+          orders.stream().map(orderMapper::toDTO).collect(Collectors.toList());
       return ResponseEntity.ok(
           ApiResponse.success(orderDTOs, "User orders retrieved successfully"));
     } catch (Exception e) {
@@ -173,7 +173,7 @@ public class OrderController {
     try {
       List<Order> orders = orderService.getAllOrders();
       List<OrderDTO> orderDTOs =
-          orders.stream().map(this::convertToDTO).collect(Collectors.toList());
+          orders.stream().map(orderMapper::toDTO).collect(Collectors.toList());
       return ResponseEntity.ok(ApiResponse.success(orderDTOs, "All orders retrieved successfully"));
     } catch (Exception e) {
       return ResponseEntity.badRequest()
@@ -198,7 +198,7 @@ public class OrderController {
 
       List<Order> orders = orderService.getOrdersByMerchant(user.getMerchantId());
       List<OrderDTO> orderDTOs =
-          orders.stream().map(this::convertToDTO).collect(Collectors.toList());
+          orders.stream().map(orderMapper::toDTO).collect(Collectors.toList());
       return ResponseEntity.ok(
           ApiResponse.success(orderDTOs, "Your merchant orders retrieved successfully"));
     } catch (Exception e) {
@@ -231,7 +231,7 @@ public class OrderController {
 
       List<Order> orders = orderService.getOrdersByMerchant(merchantId);
       List<OrderDTO> orderDTOs =
-          orders.stream().map(this::convertToDTO).collect(Collectors.toList());
+          orders.stream().map(orderMapper::toDTO).collect(Collectors.toList());
       return ResponseEntity.ok(
           ApiResponse.success(orderDTOs, "Merchant orders retrieved successfully"));
     } catch (AccessDeniedException e) {
@@ -260,7 +260,7 @@ public class OrderController {
 
       List<Order> orders = orderService.getOrdersByDriver(user.getDriver().getId());
       List<OrderDTO> orderDTOs =
-          orders.stream().map(this::convertToDTO).collect(Collectors.toList());
+          orders.stream().map(orderMapper::toDTO).collect(Collectors.toList());
       return ResponseEntity.ok(
           ApiResponse.success(orderDTOs, "Your assigned orders retrieved successfully"));
     } catch (Exception e) {
@@ -301,7 +301,7 @@ public class OrderController {
       }
       
       Order cancelledOrder = orderService.cancelOrder(orderId);
-      OrderDTO orderDTO = convertToDTO(cancelledOrder);
+      OrderDTO orderDTO = orderMapper.toDTO(cancelledOrder);
       return ResponseEntity.ok(ApiResponse.success(orderDTO, "Order cancelled successfully"));
     } catch (AccessDeniedException e) {
       return ResponseEntity.status(HttpStatus.FORBIDDEN)
@@ -345,7 +345,7 @@ public class OrderController {
       }
       
       Order updatedOrder = orderService.updateOrderStatus(orderId, status);
-      OrderDTO orderDTO = convertToDTO(updatedOrder);
+      OrderDTO orderDTO = orderMapper.toDTO(updatedOrder);
       return ResponseEntity.ok(ApiResponse.success(orderDTO, "Order status updated successfully"));
     } catch (AccessDeniedException e) {
       return ResponseEntity.status(HttpStatus.FORBIDDEN)
@@ -354,62 +354,5 @@ public class OrderController {
       return ResponseEntity.badRequest()
           .body(ApiResponse.error("Failed to update order status: " + e.getMessage()));
     }
-  }
-
-  // ==================== HELPER METHODS ====================
-
-  /** Convert CreateOrderRequest to Order entity */
-  private Order convertToEntity(CreateOrderRequest createOrderRequest) {
-    Order order = new Order();
-
-    // Set user (you would fetch from repository in real implementation)
-    User user = new User();
-    user.setId(createOrderRequest.getUserId());
-    order.setUser(user);
-
-    // Set merchant (you would fetch from repository in real implementation)
-    Merchant merchant = new Merchant();
-    merchant.setId(createOrderRequest.getMerchantId());
-    order.setMerchant(merchant);
-
-    order.setDeliveryAddress(createOrderRequest.getDeliveryAddress());
-    order.setSpecialInstructions(createOrderRequest.getSpecialInstructions());
-
-    // Convert order items
-    if (createOrderRequest.getItems() != null) {
-      List<OrderItem> orderItems =
-          createOrderRequest.getItems().stream()
-              .map(
-                  itemRequest -> {
-                    OrderItem orderItem = new OrderItem();
-                    orderItem.setOrder(order);
-                    // Set product (you would fetch from repository)
-                    // orderItem.setProduct(productRepository.findById(itemRequest.getProductId()).orElseThrow());
-                    orderItem.setQuantity(itemRequest.getQuantity());
-                    orderItem.setUnitPrice(itemRequest.getUnitPrice());
-                    return orderItem;
-                  })
-              .collect(Collectors.toList());
-      order.setItems(orderItems);
-    }
-
-    return order;
-  }
-
-  /** Convert Order entity to OrderDTO */
-  private OrderDTO convertToDTO(Order order) {
-    return OrderDTO.builder()
-        .id(order.getId())
-        .userId(order.getUser() != null ? order.getUser().getId() : null)
-        .merchantId(order.getMerchant() != null ? order.getMerchant().getId() : null)
-        .driverId(order.getDriver() != null ? order.getDriver().getId() : null)
-        .totalAmount(order.getTotalAmount())
-        .status(order.getStatus().name())
-        .deliveryAddress(order.getDeliveryAddress())
-        .createdAt(order.getCreatedAt())
-        .updatedAt(order.getUpdatedAt())
-        .estimatedDeliveryTime(order.getEstimatedDeliveryTime())
-        // Note: You might want to convert order items to OrderItemDTOs as well
-        .build();
   }
 }
