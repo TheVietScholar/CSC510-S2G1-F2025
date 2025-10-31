@@ -11,6 +11,7 @@ import java.util.NoSuchElementException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import com.boozebuddies.security.annotation.RoleAnnotations.*;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -59,8 +60,9 @@ public class CategoryController {
   // ==================== CREATE ====================
 
   @PostMapping
+  @IsAdmin
   public ResponseEntity<ApiResponse<CategoryDTO>> createCategory(
-      @Valid @RequestBody CategoryDTO dto) {
+    @Valid @RequestBody CategoryDTO dto) {
     try {
       Category category = categoryMapper.toEntity(dto);
       Category saved = categoryService.createCategory(category);

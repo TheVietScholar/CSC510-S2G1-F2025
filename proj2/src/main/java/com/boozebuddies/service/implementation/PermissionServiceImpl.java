@@ -1,6 +1,5 @@
 package com.boozebuddies.service.implementation;
 
-import com.boozebuddies.entity.Order;
 import com.boozebuddies.entity.User;
 import com.boozebuddies.model.Role;
 import lombok.RequiredArgsConstructor;
@@ -8,6 +7,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import com.boozebuddies.service.PermissionService;
 import com.boozebuddies.service.OrderService;
+import com.boozebuddies.service.DeliveryService;
 import com.boozebuddies.service.UserService;
 
 /**
@@ -19,6 +19,7 @@ public class PermissionServiceImpl implements PermissionService {
 
   private final UserService userService;
   private final OrderService orderService;
+  private final DeliveryService deliveryService;
 
   @Override
   public boolean isSelf(Authentication authentication, Long userId) {
@@ -116,14 +117,46 @@ public class PermissionServiceImpl implements PermissionService {
 
   @Override
   public boolean driverCanAccessDelivery(Authentication authentication, Long deliveryId) {
-    // TODO: Implement when you have DeliveryService
-    // This would check if the delivery is assigned to the authenticated driver
-    // Example:
-    // String email = authentication.getName();
-    // User user = userService.findByEmail(email).orElse(null);
-    // Delivery delivery = deliveryService.getDeliveryById(deliveryId).orElse(null);
-    // return user != null && user.getDriver() != null && delivery != null 
-    //     && delivery.getDriver().getId().equals(user.getDriver().getId());
-    return false;
+    if (authentication == null || deliveryId == null) {
+      return false;
+    }
+
+    String email = authentication.getName();
+    User user = userService.findByEmail(email).orElse(null);
+    if (user == null || !user.hasRole(Role.DRIVER) || user.getDriver() == null) {
+      return false;
+    }
+
+    try {
+      // DeliveryService returns null if not found (consistent with other services)
+      var delivery = deliveryService.getDeliveryById(deliveryId);
+      if (delivery == null || delivery.getDriver() == null) {
+        return false;
+      }
+      return delivery.getDriver().getId().equals(user.getDriver().getId());
+    } catch (Exception e) {
+      return false;
+    }
+  }
+
+  @Override
+  public boolean driverCanAccessOrder(Authentication authentication, Long orderId) {
+    if (authentication == null || orderId == null) {
+      return false;
+    }
+
+    String email = authentication.getName();
+    User user = userService.findByEmail(email).orElse(null);
+    if (user == null || !user.hasRole(Role.DRIVER) || user.getDriver() == null) {
+      return false;
+    }
+
+    try {
+      return orderService.getOrderById(orderId)
+          .map(order -> order.getDriver() != null && order.getDriver().getId().equals(user.getDriver().getId()))
+          .orElse(false);
+    } catch (Exception e) {
+      return false;
+    }
   }
 }

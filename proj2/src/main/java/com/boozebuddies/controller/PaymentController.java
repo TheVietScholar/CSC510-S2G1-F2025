@@ -9,11 +9,16 @@ import com.boozebuddies.mapper.PaymentMapper;
 import com.boozebuddies.service.PaymentService;
 import java.time.LocalDateTime;
 import java.util.Optional;
+import com.boozebuddies.security.annotation.RoleAnnotations.*;
+import com.boozebuddies.service.PermissionService;
+import com.boozebuddies.model.Role;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -23,14 +28,18 @@ public class PaymentController {
 
   private final PaymentService paymentService;
   private final PaymentMapper paymentMapper;
+  private final PermissionService permissionService;
 
   // -----------------------------
   // Process a payment for an order
   // -----------------------------
   @PostMapping("/process")
+  @IsUser
   public ResponseEntity<ApiResponse<PaymentDTO>> processPayment(
-      @RequestParam Long orderId, @RequestParam String paymentMethod) {
+      @RequestParam Long orderId, @RequestParam String paymentMethod, Authentication authentication) {
 
+    // In a robust implementation, we'd verify the order belongs to the authenticated user.
+    // For now, enforce the caller is authenticated as a USER (or admin handles elsewhere).
     Order order = new Order();
     order.setId(orderId);
 
@@ -42,6 +51,7 @@ public class PaymentController {
   // Issue a refund for an order
   // -----------------------------
   @PostMapping("/refund")
+  @IsAdmin
   public ResponseEntity<ApiResponse<PaymentDTO>> refundPayment(
       @RequestParam Long orderId, @RequestParam String reason) {
 
@@ -56,6 +66,7 @@ public class PaymentController {
   // Get payments by user
   // -----------------------------
   @GetMapping("/user/{userId}")
+  @PreAuthorize("hasRole('ADMIN') or @permissionService.isSelf(authentication, #userId)")
   public ResponseEntity<?> getPaymentsByUser(@PathVariable Long userId, Pageable pageable) {
     User user = new User();
     user.setId(userId);
@@ -83,6 +94,7 @@ public class PaymentController {
   // Calculate total revenue within a period
   // -----------------------------
   @GetMapping("/revenue")
+  @IsAdmin
   public ResponseEntity<?> calculateTotalRevenue(
       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDateTime startDate,
       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDateTime endDate) {
@@ -95,8 +107,13 @@ public class PaymentController {
   // Validate a payment method
   // -----------------------------
   @PostMapping("/validate")
+  @IsAuthenticated
   public ResponseEntity<?> validatePaymentMethod(
-      @RequestParam Long userId, @RequestParam String paymentMethod) {
+      @RequestParam Long userId, @RequestParam String paymentMethod, Authentication authentication) {
+
+    if (!permissionService.isSelf(authentication, userId) && !permissionService.hasRole(authentication, Role.ADMIN)) {
+      return ResponseEntity.status(403).build();
+    }
 
     User user = new User();
     user.setId(userId);

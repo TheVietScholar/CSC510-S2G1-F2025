@@ -5,6 +5,11 @@ import com.boozebuddies.dto.ProductDTO;
 import com.boozebuddies.entity.Product;
 import com.boozebuddies.mapper.ProductMapper;
 import com.boozebuddies.service.ProductService;
+import com.boozebuddies.service.PermissionService;
+import com.boozebuddies.entity.User;
+import com.boozebuddies.model.Role;
+import com.boozebuddies.security.annotation.RoleAnnotations.*;
+import org.springframework.security.core.Authentication;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +24,7 @@ public class ProductController {
 
   private final ProductService productService;
   private final ProductMapper productMapper;
+  private final PermissionService permissionService;
 
   // -----------------------------
   // Get all products
@@ -62,8 +68,20 @@ public class ProductController {
   // Add a new product
   // -----------------------------
   @PostMapping
-  public ResponseEntity<ProductDTO> addProduct(@RequestBody CreateProductRequest request) {
+  @IsAdminOrMerchantAdmin
+  public ResponseEntity<ProductDTO> addProduct(
+      @RequestBody CreateProductRequest request, Authentication authentication) {
     Product product = productMapper.toEntity(request);
+
+    User user = permissionService.getAuthenticatedUser(authentication);
+    // If merchant admin, ensure product merchant matches their merchant
+    if (user != null && user.hasRole(Role.MERCHANT_ADMIN)) {
+      if (product.getMerchant() == null || product.getMerchant().getId() == null
+          || !product.getMerchant().getId().equals(user.getMerchantId())) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+      }
+    }
+
     Product savedProduct = productService.addProduct(product);
     return ResponseEntity.status(HttpStatus.CREATED).body(productMapper.toDTO(savedProduct));
   }
@@ -72,8 +90,21 @@ public class ProductController {
   // Update an existing product
   // -----------------------------
   @PutMapping("/{id}")
+  @IsAdminOrMerchantAdmin
   public ResponseEntity<ProductDTO> updateProduct(
-      @PathVariable Long id, @RequestBody ProductDTO productDTO) {
+      @PathVariable Long id, @RequestBody ProductDTO productDTO, Authentication authentication) {
+    Product existing = productService.getProductById(id);
+    if (existing == null) {
+      return ResponseEntity.notFound().build();
+    }
+
+    User user = permissionService.getAuthenticatedUser(authentication);
+    if (user != null && user.hasRole(Role.MERCHANT_ADMIN)) {
+      if (existing.getMerchant() == null || !existing.getMerchant().getId().equals(user.getMerchantId())) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+      }
+    }
+
     Product product = productMapper.toEntity(productDTO);
     Product updatedProduct = productService.updateProduct(id, product);
 
@@ -88,7 +119,20 @@ public class ProductController {
   // Delete a product
   // -----------------------------
   @DeleteMapping("/{id}")
-  public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
+  @IsAdminOrMerchantAdmin
+  public ResponseEntity<Void> deleteProduct(@PathVariable Long id, Authentication authentication) {
+    Product existing = productService.getProductById(id);
+    if (existing == null) {
+      return ResponseEntity.notFound().build();
+    }
+
+    User user = permissionService.getAuthenticatedUser(authentication);
+    if (user != null && user.hasRole(Role.MERCHANT_ADMIN)) {
+      if (existing.getMerchant() == null || !existing.getMerchant().getId().equals(user.getMerchantId())) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+      }
+    }
+
     productService.deleteProduct(id);
     return ResponseEntity.noContent().build();
   }

@@ -6,7 +6,6 @@ import com.boozebuddies.entity.Merchant;
 import com.boozebuddies.entity.Order;
 import com.boozebuddies.entity.User;
 import com.boozebuddies.mapper.MerchantMapper;
-import com.boozebuddies.model.Role;
 import com.boozebuddies.security.annotation.RoleAnnotations.*;
 import com.boozebuddies.service.MerchantService;
 import com.boozebuddies.service.PermissionService;
@@ -136,22 +135,15 @@ public class MerchantController {
   // ==================== ORDERS BY MERCHANT ====================
 
   @GetMapping("/{id}/orders")
-  @IsAdminOrMerchantAdmin
+  @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN') or @permissionService.ownsMerchant(authentication, #id)")
   public ResponseEntity<?> getOrdersByMerchant(
-      @PathVariable Long id,
-      @RequestParam(defaultValue = "0") int page,
-      @RequestParam(defaultValue = "10") int size,
-      Authentication authentication) {
+    @PathVariable Long id,
+    @RequestParam(defaultValue = "0") int page,
+    @RequestParam(defaultValue = "10") int size,
+    Authentication authentication) {
     try {
       if (id == null || id <= 0) {
         return ResponseEntity.badRequest().body(ApiResponse.error("Invalid merchant ID"));
-      }
-
-      User user = permissionService.getAuthenticatedUser(authentication);
-
-      // MERCHANT_ADMIN can only view orders for their own merchant
-      if (user.hasRole(Role.MERCHANT_ADMIN) && !user.ownsMerchant(id)) {
-        throw new AccessDeniedException("You can only view orders for your own merchant");
       }
 
       Pageable pageable = PageRequest.of(page, size);
