@@ -58,6 +58,10 @@ public class Product {
   @Builder.Default
   private List<Rating> ratings = new ArrayList<>();
 
+  @Column(name = "volume_ml")
+  private Integer volume; // in milliliters
+
+
   public boolean isAvailable() {
     return available;
   }

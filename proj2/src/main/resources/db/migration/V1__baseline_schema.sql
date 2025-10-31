@@ -63,24 +63,27 @@ CREATE TABLE categories (
 
 -- ============= PRODUCTS =================
 CREATE TABLE products (
-  id             BIGINT PRIMARY KEY AUTO_INCREMENT,
-  name           VARCHAR(200) NOT NULL,
-  description    TEXT         NULL,
-  price          DECIMAL(10,2) NOT NULL,
-  category_id    BIGINT       NULL,
-  merchant_id    BIGINT       NOT NULL,
-  is_alcohol     BOOLEAN      NOT NULL DEFAULT FALSE,
-  alcohol_content DOUBLE      NULL,
-  stock_quantity INT          NULL DEFAULT 0,
-  available      BOOLEAN      NOT NULL DEFAULT TRUE,
-  image_url      VARCHAR(512) NULL,
-  version        BIGINT       NULL,
-  CONSTRAINT fk_products_category FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL,
-  CONSTRAINT fk_products_merchant FOREIGN KEY (merchant_id) REFERENCES merchants(id) ON DELETE CASCADE
+  id              BIGINT PRIMARY KEY AUTO_INCREMENT,
+  name            VARCHAR(200) NOT NULL,
+  description     TEXT         NULL,
+  price           DECIMAL(10,2) NOT NULL,
+  category_id     BIGINT       NULL,
+  merchant_id     BIGINT       NOT NULL,
+  is_alcohol      BOOLEAN      NOT NULL DEFAULT FALSE,
+  alcohol_content DOUBLE       NULL,
+  volume          INT          NULL, -- new field replacing stock_quantity
+  available       BOOLEAN      NOT NULL DEFAULT TRUE,
+  image_url       VARCHAR(512) NULL,
+  version         BIGINT       NULL,
+  CONSTRAINT fk_products_category 
+      FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL,
+  CONSTRAINT fk_products_merchant 
+      FOREIGN KEY (merchant_id) REFERENCES merchants(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE INDEX idx_products_available ON products(available);
 CREATE INDEX idx_products_merchant ON products(merchant_id);
+
 
 -- ============= DRIVERS ==================
 CREATE TABLE drivers (
