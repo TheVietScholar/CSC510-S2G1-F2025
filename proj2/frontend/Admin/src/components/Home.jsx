@@ -1,0 +1,75 @@
+import React, { useState } from 'react'
+import { Search } from 'lucide-react'
+
+const Home = ({ onSelectRestaurant }) => {
+  const [searchTerm, setSearchTerm] = useState('')
+
+  // Mock data for restaurants
+  const restaurants = [
+    { id: 1, name: 'Red Dragon Brewery', type: 'Brewery', distance: '0.5 miles', rating: 4.5 },
+    { id: 2, name: 'Black Label Bar', type: 'Cocktail Bar', distance: '0.8 miles', rating: 4.2 },
+    { id: 3, name: 'Crimson Tap House', type: 'Beer Bar', distance: '1.2 miles', rating: 4.7 },
+    { id: 4, name: 'Scarlet Wine Bar', type: 'Wine Bar', distance: '1.5 miles', rating: 4.4 },
+    { id: 5, name: 'Burgundy Pub', type: 'Sports Bar', distance: '0.3 miles', rating: 4.1 },
+    { id: 6, name: 'Ruby Lounge', type: 'Lounge', distance: '2.0 miles', rating: 4.8 },
+  ]
+
+  const filteredRestaurants = restaurants.filter(restaurant =>
+    restaurant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    restaurant.type.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
+  return (
+    <div className="min-h-screen bg-black text-white p-4">
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-3xl font-bold mb-2">Find Bars & Restaurants</h1>
+        <p className="text-gray-400 mb-8">Discover the best alcohol delivery near you</p>
+        
+        {/* Search Bar */}
+        <div className="relative mb-8">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <input
+            type="text"
+            placeholder="Search restaurants or bars..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-red-600"
+          />
+        </div>
+
+        {/* Restaurants Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredRestaurants.map(restaurant => (
+            <div
+              key={restaurant.id}
+              onClick={() => onSelectRestaurant(restaurant)}
+              className="bg-gray-900 border border-gray-700 rounded-lg p-6 cursor-pointer hover:border-red-600 transition duration-200 transform hover:scale-105"
+            >
+              <div className="flex justify-between items-start mb-3">
+                <h3 className="text-xl font-semibold text-white">{restaurant.name}</h3>
+                <span className="bg-red-600 text-white px-2 py-1 rounded text-sm font-semibold">
+                  {restaurant.rating} ★
+                </span>
+              </div>
+              <p className="text-gray-400 mb-2">{restaurant.type}</p>
+              <div className="flex justify-between items-center text-sm text-gray-500">
+                <span>📍 {restaurant.distance}</span>
+                <button className="text-red-500 hover:text-red-400 font-semibold">
+                  View Menu →
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {filteredRestaurants.length === 0 && (
+          <div className="text-center py-12">
+            <p className="text-gray-400 text-lg">No restaurants found matching "{searchTerm}"</p>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+export default Home
