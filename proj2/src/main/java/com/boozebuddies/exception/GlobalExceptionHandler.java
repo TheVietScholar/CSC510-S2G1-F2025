@@ -6,6 +6,7 @@ import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -39,6 +40,26 @@ public class GlobalExceptionHandler {
   public ResponseEntity<Object> handleInvalidToken(InvalidTokenException ex, WebRequest request) {
     return buildErrorResponse(ex.getMessage(), HttpStatus.UNAUTHORIZED, request);
   }
+
+  // ==================== NEW HANDLERS FOR ROLE MANAGEMENT ====================
+
+  @ExceptionHandler(ValidationException.class)
+  public ResponseEntity<Object> handleValidation(ValidationException ex, WebRequest request) {
+    return buildErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST, request);
+  }
+
+  @ExceptionHandler(UnauthorizedException.class)
+  public ResponseEntity<Object> handleUnauthorized(UnauthorizedException ex, WebRequest request) {
+    return buildErrorResponse(ex.getMessage(), HttpStatus.FORBIDDEN, request);
+  }
+
+  @ExceptionHandler(AccessDeniedException.class)
+  public ResponseEntity<Object> handleAccessDenied(AccessDeniedException ex, WebRequest request) {
+    return buildErrorResponse(
+        "Access denied: " + ex.getMessage(), HttpStatus.FORBIDDEN, request);
+  }
+
+  // ==================== GENERIC HANDLERS ====================
 
   @ExceptionHandler(IllegalArgumentException.class)
   public ResponseEntity<Object> handleIllegalArgument(
