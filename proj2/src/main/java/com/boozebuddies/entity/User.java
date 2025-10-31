@@ -54,7 +54,8 @@ public class User {
    * For MERCHANT_ADMIN role: The merchant this admin manages.
    * Null for other roles.
    */
-  @Column(name = "merchant_id")
+  @Column(name = "merchant_id", nullable = true)
+
   private Long merchantId;
 
   /**

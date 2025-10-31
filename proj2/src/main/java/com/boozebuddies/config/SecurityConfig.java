@@ -52,6 +52,7 @@ public class SecurityConfig {
 
                     // ==================== USER ENDPOINTS ====================
                     // Users can view/update their own profile (enforced in controller)
+                    //TODO: have users be able to see restaurant near them.
                     .requestMatchers(HttpMethod.GET, "/api/users/me").authenticated()
                     .requestMatchers(HttpMethod.GET, "/api/users/{id}").authenticated()
                     .requestMatchers(HttpMethod.PUT, "/api/users/{id}").authenticated()

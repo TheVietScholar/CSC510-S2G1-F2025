@@ -125,19 +125,4 @@ public class DriverController {
     }
   }
 
-  @GetMapping("/nearby")
-  @IsUser
-  public ResponseEntity<ApiResponse<List<DriverDTO>>> getNearbyDrivers(
-      @RequestParam Double latitude,
-      @RequestParam Double longitude,
-      @RequestParam(defaultValue = "5000") Double radiusMeters) {
-
-    List<DriverDTO> nearbyDrivers = driverService
-        .getNearbyAvailableDrivers(latitude, longitude, radiusMeters)
-        .stream().map(driverMapper::toDTO)
-        .collect(Collectors.toList());
-
-    return ResponseEntity.ok(ApiResponse.success(nearbyDrivers, "Nearby drivers retrieved successfully"));
-  }
-
 }
