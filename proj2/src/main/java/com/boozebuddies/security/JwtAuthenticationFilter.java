@@ -71,47 +71,32 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     return null;
   }
 
-  /** Authenticate the JWT token and set SecurityContext */
   private void authenticateToken(String token, HttpServletRequest request) {
     String username = jwtUtil.extractUsername(token);
+    if (username == null) return;
 
-    if (username == null) {
-      log.debug("JWT token does not contain username");
-      return;
-    }
+    // Extract roles directly from token
+    Set<String> roles = jwtUtil.extractRoles(token);
 
+    // Build authorities
+    Set<SimpleGrantedAuthority> authorities = roles.stream()
+        .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
+        .collect(Collectors.toSet());
+
+    // You can skip DB lookup if you trust the token
+    // Optional: verify the user still exists / active
     User user = userService.findByEmail(username).orElse(null);
-
-    if (user == null) {
-      log.debug("User not found for username: {}", username);
-      return;
+    if (user == null || !user.isActive() || !jwtUtil.validateToken(token, user)) {
+        log.debug("JWT invalid or user inactive");
+        return;
     }
 
-    if (!user.isActive()) {
-      log.debug("User account is deactivated: {}", username);
-      return;
-    }
-
-    if (!jwtUtil.validateToken(token, user)) {
-      log.debug("JWT token validation failed for user: {}", username);
-      return;
-    }
-
-    // Build authorities from user roles
-    Set<SimpleGrantedAuthority> authorities = buildAuthorities(user);
-
-    // Create authentication token
     UsernamePasswordAuthenticationToken authentication =
         new UsernamePasswordAuthenticationToken(user, null, authorities);
-
-    // Set additional details (IP address, session ID, etc.)
     authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-    // Set authentication in SecurityContext
     SecurityContextHolder.getContext().setAuthentication(authentication);
-
-    log.debug("User authenticated successfully: {}", username);
   }
+
 
   /** Build Spring Security authorities from user roles */
   private Set<SimpleGrantedAuthority> buildAuthorities(User user) {

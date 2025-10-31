@@ -5,9 +5,13 @@ import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.stream.Collectors;
+
 import javax.crypto.SecretKey;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import java.util.Collections;
+import java.util.Set;
 
 @Component
 public class JwtUtil {
@@ -29,15 +33,21 @@ public class JwtUtil {
     this.jwtExpirationMs = jwtExpirationMs;
   }
 
-  /** Generate JWT token for user */
+  /** Generate JWT token for user with roles */
   public String generateToken(User user) {
     Date now = new Date();
     Date expiry = new Date(now.getTime() + jwtExpirationMs);
+
+    // Add user roles to token
+    var roles = user.getRoles() != null
+        ? user.getRoles().stream().map(Enum::name).toList()
+        : Collections.emptyList();
 
     return Jwts.builder()
         .setSubject(user.getEmail())
         .claim("userId", user.getId())
         .claim("name", user.getName())
+        .claim("roles", roles)
         .setIssuedAt(now)
         .setExpiration(expiry)
         .signWith(key, SignatureAlgorithm.HS256)
@@ -119,4 +129,21 @@ public class JwtUtil {
       return false;
     }
   }
+
+
+  @SuppressWarnings("unchecked")
+  public Set<String> extractRoles(String token) {
+      Claims claims = getClaims(token);
+      if (claims == null) return Collections.emptySet();
+
+      Object rolesObj = claims.get("roles");
+      if (rolesObj instanceof java.util.List<?>) {
+          return ((java.util.List<?>) rolesObj).stream()
+              .filter(String.class::isInstance)
+              .map(String.class::cast)
+              .collect(Collectors.toSet());
+      }
+      return Collections.emptySet();
+  }
+
 }
