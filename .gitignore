@@ -1,0 +1,19 @@
+# --- IDE / Editor ---
+.idea/*
+*.iml
+.classpath
+.project
+.settings/*
+.vscode/*
+
+# --- OS / Misc ---
+.DS_Store
+**/.DS_Store
+Thumbs.db
+
+# --- Logs & Temp ---
+logs/
+*.log
+*.tmp
+*.swp
+*.swo
