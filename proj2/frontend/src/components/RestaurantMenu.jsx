@@ -1,15 +1,18 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Plus, Minus, ArrowLeft } from 'lucide-react'
+import { products } from '../services/api'
 
 const RestaurantMenu = ({ restaurant, cart, onAddToCart, onRemoveFromCart, onBack, onViewCart }) => {
-  // Mock menu data
-  const menuItems = [
-    { id: 1, name: 'Craft IPA', description: 'Hoppy IPA with citrus notes', price: 8.99, isAlcohol: true, alcoholContent: 6.5 },
-    { id: 2, name: 'Imperial Stout', description: 'Rich dark beer with coffee notes', price: 9.99, isAlcohol: true, alcoholContent: 8.0 },
-    { id: 3, name: 'Pale Ale', description: 'Smooth and balanced ale', price: 7.99, isAlcohol: true, alcoholContent: 5.2 },
-    { id: 4, name: 'Craft Soda', description: 'House-made root beer', price: 4.99, isAlcohol: false },
-    { id: 5, name: 'Whiskey Sour', description: 'Classic cocktail with bourbon', price: 12.99, isAlcohol: true, alcoholContent: 15.0 },
-  ]
+  const [menuItems, setMenuItems] = useState([])
+
+  useEffect(() => {
+    if (!restaurant?.id) return
+    let mounted = true
+    products.getByMerchant(restaurant.id)
+      .then(resp => { if (mounted) setMenuItems(resp.data || []) })
+      .catch(() => setMenuItems([]))
+    return () => { mounted = false }
+  }, [restaurant?.id])
 
   const getItemQuantity = (itemId) => {
     return cart.find(item => item.id === itemId)?.quantity || 0
@@ -42,7 +45,7 @@ const RestaurantMenu = ({ restaurant, cart, onAddToCart, onRemoveFromCart, onBac
         {/* Restaurant Info */}
         <div className="bg-gray-900 border border-gray-700 rounded-lg p-6 mb-8">
           <h1 className="text-3xl font-bold mb-2">{restaurant.name}</h1>
-          <p className="text-gray-400 mb-4">{restaurant.type} • {restaurant.distance} • {restaurant.rating} ★</p>
+          <p className="text-gray-400 mb-4">{restaurant.cuisineType} • {restaurant.rating ?? 0} ★</p>
           <p className="text-white">Browse our selection of fine beverages</p>
         </div>
 
@@ -62,7 +65,7 @@ const RestaurantMenu = ({ restaurant, cart, onAddToCart, onRemoveFromCart, onBac
                         </span>
                       )}
                     </div>
-                    <span className="text-2xl font-bold text-white ml-4">${item.price}</span>
+                    <span className="text-2xl font-bold text-white ml-4">${Number(item.price)}</span>
                   </div>
                   
                   {/* Quantity Controls */}

@@ -48,8 +48,12 @@ App starts on <http://localhost:8080>
 If using Docker to provide MySQL, wait for the DB to be reachable and use the `docker` Spring profile:
 
 ```sh
-./scripts/wait-for-mysql.sh 127.0.0.1 3307 60
-./mvnw spring-boot:run -Dspring-boot.run.profiles=docker
+    docker compose up -d
+    until docker exec boozebuddies-mysql mysqladmin ping \
+      -h 127.0.0.1 -P 3306 -u app -papp --silent; do
+      echo "waiting for MySQL service..." && sleep 2
+    done
+    SPRING_PROFILES_ACTIVE=docker ./mvnw spring-boot:run
 ```
 
 ## Using your local MySQL (no Docker)

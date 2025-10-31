@@ -1,22 +1,25 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Search } from 'lucide-react'
+import { merchants } from '../services/api'
 
 const Home = ({ onSelectRestaurant }) => {
   const [searchTerm, setSearchTerm] = useState('')
 
-  // Mock data for restaurants
-  const restaurants = [
-    { id: 1, name: 'Red Dragon Brewery', type: 'Brewery', distance: '0.5 miles', rating: 4.5 },
-    { id: 2, name: 'Black Label Bar', type: 'Cocktail Bar', distance: '0.8 miles', rating: 4.2 },
-    { id: 3, name: 'Crimson Tap House', type: 'Beer Bar', distance: '1.2 miles', rating: 4.7 },
-    { id: 4, name: 'Scarlet Wine Bar', type: 'Wine Bar', distance: '1.5 miles', rating: 4.4 },
-    { id: 5, name: 'Burgundy Pub', type: 'Sports Bar', distance: '0.3 miles', rating: 4.1 },
-    { id: 6, name: 'Ruby Lounge', type: 'Lounge', distance: '2.0 miles', rating: 4.8 },
-  ]
+  const [restaurants, setRestaurants] = useState([])
+
+  useEffect(() => {
+    let mounted = true
+    merchants.getAll().then(resp => {
+      // MerchantController returns ApiResponse envelope
+      const payload = resp.data?.data || []
+      if (mounted) setRestaurants(payload)
+    }).catch(() => setRestaurants([]))
+    return () => { mounted = false }
+  }, [])
 
   const filteredRestaurants = restaurants.filter(restaurant =>
-    restaurant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    restaurant.type.toLowerCase().includes(searchTerm.toLowerCase())
+    restaurant.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    restaurant.cuisineType?.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
   return (
@@ -48,12 +51,12 @@ const Home = ({ onSelectRestaurant }) => {
               <div className="flex justify-between items-start mb-3">
                 <h3 className="text-xl font-semibold text-white">{restaurant.name}</h3>
                 <span className="bg-red-600 text-white px-2 py-1 rounded text-sm font-semibold">
-                  {restaurant.rating} ★
+                  {restaurant.rating ?? 0} ★
                 </span>
               </div>
-              <p className="text-gray-400 mb-2">{restaurant.type}</p>
+              <p className="text-gray-400 mb-2">{restaurant.cuisineType}</p>
               <div className="flex justify-between items-center text-sm text-gray-500">
-                <span>📍 {restaurant.distance}</span>
+                <span>📍 {restaurant.address}</span>
                 <button className="text-red-500 hover:text-red-400 font-semibold">
                   View Menu →
                 </button>
