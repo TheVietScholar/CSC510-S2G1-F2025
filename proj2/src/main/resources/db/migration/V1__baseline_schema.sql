@@ -167,14 +167,27 @@ CREATE TABLE deliveries (
   cancellation_reason     VARCHAR(500) NULL,
   delivered_time          TIMESTAMP NULL,
   estimated_delivery_time TIMESTAMP NULL,
+  
+  age_verified            BOOLEAN DEFAULT FALSE,
+  id_type                 VARCHAR(50) NULL,
+  id_number               VARCHAR(10) NULL,
+  age_verified_at         TIMESTAMP NULL,
+  
+
+  current_latitude        DOUBLE NULL,
+  current_longitude       DOUBLE NULL,
+  last_location_update    TIMESTAMP NULL,
+  
   created_at              TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at              TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  CONSTRAINT fk_deliveries_order  FOREIGN KEY (order_id) REFERENCES orders(id)   ON DELETE CASCADE,
+  
+  CONSTRAINT fk_deliveries_order  FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
   CONSTRAINT fk_deliveries_driver FOREIGN KEY (driver_id) REFERENCES drivers(id) ON DELETE SET NULL,
   UNIQUE KEY uq_deliveries_order (order_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE INDEX idx_deliveries_status ON deliveries(status);
+CREATE INDEX idx_deliveries_age_verified ON deliveries(age_verified);
 
 -- ============= PAYMENTS =================
 CREATE TABLE payments (
