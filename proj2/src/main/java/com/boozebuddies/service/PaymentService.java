@@ -32,7 +32,8 @@ public interface PaymentService {
    * Retrieves all payments made by a specific user.
    *
    * @param user The user whose payment history is being retrieved.
-   * @return A list of Payment objects linked to the user.
+   * @param pageable Pagination information.
+   * @return A page of Payment objects linked to the user.
    */
   Page<Payment> getPaymentsByUser(User user, Pageable pageable);
 
@@ -40,9 +41,18 @@ public interface PaymentService {
    * Retrieves the payment details for a specific order.
    *
    * @param orderId The ID of the order.
-   * @return The associated Payment object, or null if not found.
+   * @return The associated Payment object, or empty if not found.
    */
   Optional<Payment> getPaymentByOrderId(Long orderId);
+
+  /**
+   * Retrieves all payments in the system (paginated).
+   * Admin only - for financial reporting and auditing.
+   *
+   * @param pageable Pagination information.
+   * @return A page of all payments.
+   */
+  Page<Payment> getAllPayments(Pageable pageable);
 
   /**
    * Calculates the total revenue generated within a given period.
