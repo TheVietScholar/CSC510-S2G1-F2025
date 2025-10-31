@@ -1,11 +1,13 @@
 package com.boozebuddies.service.implementation;
 
+import com.boozebuddies.entity.Order;
 import com.boozebuddies.entity.User;
 import com.boozebuddies.model.Role;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import com.boozebuddies.service.PermissionService;
+import com.boozebuddies.service.OrderService;
 import com.boozebuddies.service.UserService;
 
 /**
@@ -16,6 +18,7 @@ import com.boozebuddies.service.UserService;
 public class PermissionServiceImpl implements PermissionService {
 
   private final UserService userService;
+  private final OrderService orderService;
 
   @Override
   public boolean isSelf(Authentication authentication, Long userId) {
@@ -78,26 +81,37 @@ public class PermissionServiceImpl implements PermissionService {
 
   @Override
   public boolean ownsOrder(Authentication authentication, Long orderId) {
-    // TODO: Implement when you have OrderService
-    // This would check if the order belongs to the authenticated user
-    // Example:
-    // String email = authentication.getName();
-    // User user = userService.findByEmail(email).orElse(null);
-    // Order order = orderService.getOrderById(orderId).orElse(null);
-    // return user != null && order != null && order.getUser().getId().equals(user.getId());
-    return false;
+    if (authentication == null || orderId == null) {
+      return false;
+    }
+
+    String email = authentication.getName();
+    User user = userService.findByEmail(email).orElse(null);
+    if (user == null) {
+      return false;
+    }
+
+    return orderService.getOrderById(orderId)
+        .map(order -> order.getUser() != null && order.getUser().getId().equals(user.getId()))
+        .orElse(false);
   }
 
   @Override
   public boolean merchantCanAccessOrder(Authentication authentication, Long orderId) {
-    // TODO: Implement when you have OrderService
-    // This would check if the order is for the merchant that the authenticated user manages
-    // Example:
-    // String email = authentication.getName();
-    // User user = userService.findByEmail(email).orElse(null);
-    // Order order = orderService.getOrderById(orderId).orElse(null);
-    // return user != null && order != null && user.ownsMerchant(order.getMerchant().getId());
-    return false;
+    if (authentication == null || orderId == null) {
+      return false;
+    }
+
+    String email = authentication.getName();
+    User user = userService.findByEmail(email).orElse(null);
+    if (user == null || !user.hasRole(Role.MERCHANT_ADMIN)) {
+      return false;
+    }
+
+    return orderService.getOrderById(orderId)
+        .map(order -> 
+            order.getMerchant() != null && user.ownsMerchant(order.getMerchant().getId()))
+        .orElse(false);
   }
 
   @Override
