@@ -19,4 +19,5 @@ public class ProductDTO {
   private Double alcoholContent;
   private String imageUrl;
   private boolean available;
+  private Integer volume; // in milliliters
 }
