@@ -19,8 +19,8 @@ const Login = ({ onLogin }) => {
       <div className="bg-white text-black rounded-lg shadow-2xl p-8 w-full max-w-md border-2 border-red-600">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-red-600 mb-2">🍻</h1>
-          <h2 className="text-3xl font-bold text-gray-900">BoozeBuddies</h2>
-          <p className="text-gray-600 mt-2">Your alcohol delivery service</p>
+          <h2 className="text-3xl font-bold text-gray-900">BoozeBuddies Drivers</h2>
+          <p className="text-gray-600 mt-2">The Delivery-side of the alcohol delivery service</p>
         </div>
         
         <form onSubmit={handleSubmit} className="space-y-6">

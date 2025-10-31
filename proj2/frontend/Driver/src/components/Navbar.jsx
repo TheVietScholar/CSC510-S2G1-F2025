@@ -7,12 +7,10 @@ const Navbar = () => {
       <div className="container mx-auto px-4 py-3">
         <div className="flex justify-between items-center">
           <Link to="/" className="text-xl font-bold flex items-center">
-            🍻 BoozeBuddies
+            🍻 BoozeBuddies Driver
           </Link>
           <div className="space-x-4">
-            <Link to="/" className="hover:text-blue-200">Products</Link>
             <Link to="/order" className="hover:text-blue-200">Order</Link>
-            <Link to="/register" className="hover:text-blue-200">Register</Link>
           </div>
         </div>
       </div>

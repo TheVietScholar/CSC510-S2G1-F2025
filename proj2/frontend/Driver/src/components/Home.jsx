@@ -4,21 +4,6 @@ import { Search } from 'lucide-react'
 const Home = ({ onSelectRestaurant }) => {
   const [searchTerm, setSearchTerm] = useState('')
 
-  // Mock data for restaurants
-  const restaurants = [
-    { id: 1, name: 'Red Dragon Brewery', type: 'Brewery', distance: '0.5 miles', rating: 4.5 },
-    { id: 2, name: 'Black Label Bar', type: 'Cocktail Bar', distance: '0.8 miles', rating: 4.2 },
-    { id: 3, name: 'Crimson Tap House', type: 'Beer Bar', distance: '1.2 miles', rating: 4.7 },
-    { id: 4, name: 'Scarlet Wine Bar', type: 'Wine Bar', distance: '1.5 miles', rating: 4.4 },
-    { id: 5, name: 'Burgundy Pub', type: 'Sports Bar', distance: '0.3 miles', rating: 4.1 },
-    { id: 6, name: 'Ruby Lounge', type: 'Lounge', distance: '2.0 miles', rating: 4.8 },
-  ]
-
-  const filteredRestaurants = restaurants.filter(restaurant =>
-    restaurant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    restaurant.type.toLowerCase().includes(searchTerm.toLowerCase())
-  )
-
   return (
     <div className="min-h-screen bg-black text-white p-4">
       <div className="max-w-4xl mx-auto">
