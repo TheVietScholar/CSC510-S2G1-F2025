@@ -79,7 +79,7 @@ public class MerchantController {
   // ==================== RETRIEVE (ALL AUTHENTICATED USERS) ====================
 
   @GetMapping("/{id}")
-  @IsAuthenticated
+  @IsAdmin
   public ResponseEntity<?> getMerchantById(@PathVariable Long id) {
     try {
       if (id == null || id <= 0) {
@@ -95,6 +95,10 @@ public class MerchantController {
           .body(ApiResponse.error("An error occurred retrieving merchant"));
     }
   }
+
+   //Todo : add get merchant by name (is authenticated)
+
+   //Todo: get merchant by distance (is authenticated)
 
   @GetMapping
   @IsAuthenticated
