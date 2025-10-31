@@ -35,10 +35,7 @@ public class PaymentController {
 
   // ==================== PROCESS PAYMENT ====================
 
-  /**
-   * Process a payment for an order.
-   * Only users can pay for their own orders.
-   */
+  /** Process a payment for an order. Only users can pay for their own orders. */
   @PostMapping("/process")
   @IsUser
   public ResponseEntity<ApiResponse<PaymentDTO>> processPayment(
@@ -49,8 +46,10 @@ public class PaymentController {
       User user = permissionService.getAuthenticatedUser(authentication);
 
       // Verify the order exists and belongs to the authenticated user
-      Order order = orderService.getOrderById(orderId)
-          .orElseThrow(() -> new RuntimeException("Order not found"));
+      Order order =
+          orderService
+              .getOrderById(orderId)
+              .orElseThrow(() -> new RuntimeException("Order not found"));
 
       if (order.getUser() == null || !order.getUser().getId().equals(user.getId())) {
         throw new AccessDeniedException("You can only pay for your own orders");
@@ -60,8 +59,7 @@ public class PaymentController {
       return ResponseEntity.ok(
           ApiResponse.success(paymentMapper.toDTO(payment), "Payment processed successfully"));
     } catch (AccessDeniedException e) {
-      return ResponseEntity.status(HttpStatus.FORBIDDEN)
-          .body(ApiResponse.error(e.getMessage()));
+      return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error(e.getMessage()));
     } catch (Exception e) {
       return ResponseEntity.badRequest()
           .body(ApiResponse.error("Failed to process payment: " + e.getMessage()));
@@ -70,18 +68,16 @@ public class PaymentController {
 
   // ==================== REFUND PAYMENT ====================
 
-  /**
-   * Issue a refund for an order.
-   * Admin only.
-   */
+  /** Issue a refund for an order. Admin only. */
   @PostMapping("/refund")
   @IsAdmin
   public ResponseEntity<ApiResponse<PaymentDTO>> refundPayment(
-      @RequestParam Long orderId,
-      @RequestParam String reason) {
+      @RequestParam Long orderId, @RequestParam String reason) {
     try {
-      Order order = orderService.getOrderById(orderId)
-          .orElseThrow(() -> new RuntimeException("Order not found"));
+      Order order =
+          orderService
+              .getOrderById(orderId)
+              .orElseThrow(() -> new RuntimeException("Order not found"));
 
       Payment payment = paymentService.refundPayment(order, reason);
       return ResponseEntity.ok(
@@ -94,15 +90,11 @@ public class PaymentController {
 
   // ==================== RETRIEVE PAYMENTS ====================
 
-  /**
-   * Get the authenticated user's payment history.
-   * Users can only view their own payments.
-   */
+  /** Get the authenticated user's payment history. Users can only view their own payments. */
   @GetMapping("/my-payments")
   @IsUser
   public ResponseEntity<ApiResponse<Page<PaymentDTO>>> getMyPayments(
-      Authentication authentication,
-      Pageable pageable) {
+      Authentication authentication, Pageable pageable) {
     try {
       User user = permissionService.getAuthenticatedUser(authentication);
       Page<Payment> payments = paymentService.getPaymentsByUser(user, pageable);
@@ -116,15 +108,13 @@ public class PaymentController {
   }
 
   /**
-   * Get payments by user ID.
-   * Users can view their own payments, admins can view any user's payments.
+   * Get payments by user ID. Users can view their own payments, admins can view any user's
+   * payments.
    */
   @GetMapping("/user/{userId}")
   @IsAuthenticated
   public ResponseEntity<ApiResponse<Page<PaymentDTO>>> getPaymentsByUser(
-      @PathVariable Long userId,
-      Authentication authentication,
-      Pageable pageable) {
+      @PathVariable Long userId, Authentication authentication, Pageable pageable) {
     try {
       User authenticatedUser = permissionService.getAuthenticatedUser(authentication);
 
@@ -137,11 +127,9 @@ public class PaymentController {
       user.setId(userId);
       Page<Payment> payments = paymentService.getPaymentsByUser(user, pageable);
       Page<PaymentDTO> paymentDTOs = payments.map(paymentMapper::toDTO);
-      return ResponseEntity.ok(
-          ApiResponse.success(paymentDTOs, "Payments retrieved successfully"));
+      return ResponseEntity.ok(ApiResponse.success(paymentDTOs, "Payments retrieved successfully"));
     } catch (AccessDeniedException e) {
-      return ResponseEntity.status(HttpStatus.FORBIDDEN)
-          .body(ApiResponse.error(e.getMessage()));
+      return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error(e.getMessage()));
     } catch (Exception e) {
       return ResponseEntity.badRequest()
           .body(ApiResponse.error("Failed to retrieve payments: " + e.getMessage()));
@@ -149,24 +137,25 @@ public class PaymentController {
   }
 
   /**
-   * Get payment by order ID.
-   * Users can view payment for their own orders, admins can view any payment.
+   * Get payment by order ID. Users can view payment for their own orders, admins can view any
+   * payment.
    */
   @GetMapping("/order/{orderId}")
   @IsAuthenticated
   public ResponseEntity<ApiResponse<PaymentDTO>> getPaymentByOrderId(
-      @PathVariable Long orderId,
-      Authentication authentication) {
+      @PathVariable Long orderId, Authentication authentication) {
     try {
       User user = permissionService.getAuthenticatedUser(authentication);
 
       // Get the order to verify ownership
-      Order order = orderService.getOrderById(orderId)
-          .orElseThrow(() -> new RuntimeException("Order not found"));
+      Order order =
+          orderService
+              .getOrderById(orderId)
+              .orElseThrow(() -> new RuntimeException("Order not found"));
 
       // Check if user owns the order or is an admin
-      if (order.getUser() == null || 
-          (!order.getUser().getId().equals(user.getId()) && !user.hasRole(Role.ADMIN))) {
+      if (order.getUser() == null
+          || (!order.getUser().getId().equals(user.getId()) && !user.hasRole(Role.ADMIN))) {
         throw new AccessDeniedException("You can only view payments for your own orders");
       }
 
@@ -177,11 +166,9 @@ public class PaymentController {
 
       return ResponseEntity.ok(
           ApiResponse.success(
-              paymentMapper.toDTO(paymentOpt.get()),
-              "Payment retrieved successfully"));
+              paymentMapper.toDTO(paymentOpt.get()), "Payment retrieved successfully"));
     } catch (AccessDeniedException e) {
-      return ResponseEntity.status(HttpStatus.FORBIDDEN)
-          .body(ApiResponse.error(e.getMessage()));
+      return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error(e.getMessage()));
     } catch (Exception e) {
       return ResponseEntity.badRequest()
           .body(ApiResponse.error("Failed to retrieve payment: " + e.getMessage()));
@@ -190,10 +177,7 @@ public class PaymentController {
 
   // ==================== ADMIN OPERATIONS ====================
 
-  /**
-   * Calculate total revenue within a period.
-   * Admin only.
-   */
+  /** Calculate total revenue within a period. Admin only. */
   @GetMapping("/revenue")
   @IsAdmin
   public ResponseEntity<ApiResponse<Object>> calculateTotalRevenue(
@@ -201,18 +185,14 @@ public class PaymentController {
       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate) {
     try {
       Object revenue = paymentService.calculateTotalRevenue(startDate, endDate);
-      return ResponseEntity.ok(
-          ApiResponse.success(revenue, "Revenue calculated successfully"));
+      return ResponseEntity.ok(ApiResponse.success(revenue, "Revenue calculated successfully"));
     } catch (Exception e) {
       return ResponseEntity.badRequest()
           .body(ApiResponse.error("Failed to calculate revenue: " + e.getMessage()));
     }
   }
 
-  /**
-   * Get all payments (paginated).
-   * Admin only.
-   */
+  /** Get all payments (paginated). Admin only. */
   @GetMapping
   @IsAdmin
   public ResponseEntity<ApiResponse<Page<PaymentDTO>>> getAllPayments(Pageable pageable) {
@@ -230,8 +210,8 @@ public class PaymentController {
   // ==================== PAYMENT METHOD VALIDATION ====================
 
   /**
-   * Validate a payment method.
-   * Users can validate their own payment methods, admins can validate for any user.
+   * Validate a payment method. Users can validate their own payment methods, admins can validate
+   * for any user.
    */
   @PostMapping("/validate")
   @IsAuthenticated
@@ -253,8 +233,7 @@ public class PaymentController {
       return ResponseEntity.ok(
           ApiResponse.success(isValid, "Payment method validated successfully"));
     } catch (AccessDeniedException e) {
-      return ResponseEntity.status(HttpStatus.FORBIDDEN)
-          .body(ApiResponse.error(e.getMessage()));
+      return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error(e.getMessage()));
     } catch (Exception e) {
       return ResponseEntity.badRequest()
           .body(ApiResponse.error("Failed to validate payment method: " + e.getMessage()));

@@ -10,13 +10,13 @@ import com.boozebuddies.security.annotation.RoleAnnotations.*;
 import com.boozebuddies.service.DriverService;
 import com.boozebuddies.service.PermissionService;
 import jakarta.validation.Valid;
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/drivers")
@@ -31,7 +31,8 @@ public class DriverController {
 
   @PostMapping("/register")
   @IsAdmin
-  public ResponseEntity<ApiResponse<DriverDTO>> registerDriver(@Valid @RequestBody DriverDTO driverDTO) {
+  public ResponseEntity<ApiResponse<DriverDTO>> registerDriver(
+      @Valid @RequestBody DriverDTO driverDTO) {
     Driver driver = driverMapper.toEntity(driverDTO);
     Driver registeredDriver = driverService.registerDriver(driver);
     DriverDTO responseDTO = driverMapper.toDTO(registeredDriver);
@@ -43,20 +44,23 @@ public class DriverController {
   @PutMapping("/{driverId}/certification")
   @IsAdmin
   public ResponseEntity<ApiResponse<DriverDTO>> updateCertificationStatus(
-      @PathVariable Long driverId,
-      @RequestParam CertificationStatus status) {
+      @PathVariable Long driverId, @RequestParam CertificationStatus status) {
 
     Driver updatedDriver = driverService.updateCertificationStatus(driverId, status);
     DriverDTO driverDTO = driverMapper.toDTO(updatedDriver);
-    return ResponseEntity.ok(ApiResponse.success(driverDTO, "Certification status updated successfully"));
+    return ResponseEntity.ok(
+        ApiResponse.success(driverDTO, "Certification status updated successfully"));
   }
 
   @GetMapping("/available")
   @IsAdmin
   public ResponseEntity<ApiResponse<List<DriverDTO>>> getAvailableDrivers() {
-    List<DriverDTO> drivers = driverService.getAvailableDrivers()
-        .stream().map(driverMapper::toDTO).collect(Collectors.toList());
-    return ResponseEntity.ok(ApiResponse.success(drivers, "Available drivers retrieved successfully"));
+    List<DriverDTO> drivers =
+        driverService.getAvailableDrivers().stream()
+            .map(driverMapper::toDTO)
+            .collect(Collectors.toList());
+    return ResponseEntity.ok(
+        ApiResponse.success(drivers, "Available drivers retrieved successfully"));
   }
 
   @GetMapping("/{driverId}")
@@ -70,8 +74,10 @@ public class DriverController {
   @GetMapping
   @IsAdmin
   public ResponseEntity<ApiResponse<List<DriverDTO>>> getAllDrivers() {
-    List<DriverDTO> drivers = driverService.getAllDrivers()
-        .stream().map(driverMapper::toDTO).collect(Collectors.toList());
+    List<DriverDTO> drivers =
+        driverService.getAllDrivers().stream()
+            .map(driverMapper::toDTO)
+            .collect(Collectors.toList());
     return ResponseEntity.ok(ApiResponse.success(drivers, "All drivers retrieved successfully"));
   }
 
@@ -95,8 +101,10 @@ public class DriverController {
     Driver driver = driverService.updateAvailability(user.getDriver().getId(), available);
     DriverDTO driverDTO = driverMapper.toDTO(driver);
 
-    String message = available ? "You are now available for deliveries"
-                               : "You are now unavailable for deliveries";
+    String message =
+        available
+            ? "You are now available for deliveries"
+            : "You are now unavailable for deliveries";
     return ResponseEntity.ok(ApiResponse.success(driverDTO, message));
   }
 
@@ -132,12 +140,12 @@ public class DriverController {
       @RequestParam Double longitude,
       @RequestParam(defaultValue = "5000") Double radiusMeters) {
 
-    List<DriverDTO> nearbyDrivers = driverService
-        .getNearbyAvailableDrivers(latitude, longitude, radiusMeters)
-        .stream().map(driverMapper::toDTO)
-        .collect(Collectors.toList());
+    List<DriverDTO> nearbyDrivers =
+        driverService.getNearbyAvailableDrivers(latitude, longitude, radiusMeters).stream()
+            .map(driverMapper::toDTO)
+            .collect(Collectors.toList());
 
-    return ResponseEntity.ok(ApiResponse.success(nearbyDrivers, "Nearby drivers retrieved successfully"));
+    return ResponseEntity.ok(
+        ApiResponse.success(nearbyDrivers, "Nearby drivers retrieved successfully"));
   }
-
 }

@@ -29,36 +29,31 @@ public class OrderController {
   @Autowired private OrderMapper orderMapper;
 
   // ==================== CREATE ORDER (USER ONLY) ====================
-  
-  /**
-   * Create a new order.
-   * Only users with USER role can place orders.
-   */
+
+  /** Create a new order. Only users with USER role can place orders. */
   @PostMapping
   @IsUser
   public ResponseEntity<ApiResponse<OrderDTO>> createOrder(
-      @RequestBody CreateOrderRequest createOrderRequest,
-      Authentication authentication) {
+      @RequestBody CreateOrderRequest createOrderRequest, Authentication authentication) {
     try {
       User user = permissionService.getAuthenticatedUser(authentication);
-      
+
       // Ensure the order is being created for the authenticated user
-      if (createOrderRequest.getUserId() != null 
+      if (createOrderRequest.getUserId() != null
           && !createOrderRequest.getUserId().equals(user.getId())) {
         throw new AccessDeniedException("You can only create orders for yourself");
       }
-      
+
       // Set the user ID from authenticated user if not provided
       createOrderRequest.setUserId(user.getId());
-      
+
       // Convert CreateOrderRequest to Order entity using mapper
       Order order = orderMapper.toEntity(createOrderRequest);
       Order createdOrder = orderService.createOrder(order);
       OrderDTO orderDTO = orderMapper.toDTO(createdOrder);
       return ResponseEntity.ok(ApiResponse.success(orderDTO, "Order created successfully"));
     } catch (AccessDeniedException e) {
-      return ResponseEntity.status(HttpStatus.FORBIDDEN)
-          .body(ApiResponse.error(e.getMessage()));
+      return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error(e.getMessage()));
     } catch (Exception e) {
       return ResponseEntity.badRequest()
           .body(ApiResponse.error("Failed to create order: " + e.getMessage()));
@@ -68,47 +63,40 @@ public class OrderController {
   // ==================== RETRIEVE ORDERS ====================
 
   /**
-   * Get order by ID.
-   * Users can view their own orders, merchant admins can view orders for their merchant,
-   * drivers can view assigned orders, and admins can view all orders.
+   * Get order by ID. Users can view their own orders, merchant admins can view orders for their
+   * merchant, drivers can view assigned orders, and admins can view all orders.
    */
   @GetMapping("/{orderId}")
-  @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN') or @permissionService.ownsOrder(authentication, #orderId) or @permissionService.merchantCanAccessOrder(authentication, #orderId) or @permissionService.driverCanAccessOrder(authentication, #orderId)")
+  @org.springframework.security.access.prepost.PreAuthorize(
+      "hasRole('ADMIN') or @permissionService.ownsOrder(authentication, #orderId) or @permissionService.merchantCanAccessOrder(authentication, #orderId) or @permissionService.driverCanAccessOrder(authentication, #orderId)")
   public ResponseEntity<ApiResponse<OrderDTO>> getOrderById(
-    @PathVariable Long orderId,
-    Authentication authentication) {
+      @PathVariable Long orderId, Authentication authentication) {
     try {
       if (orderId == null || orderId <= 0) {
-        return ResponseEntity.badRequest()
-            .body(ApiResponse.error("Invalid order ID"));
+        return ResponseEntity.badRequest().body(ApiResponse.error("Invalid order ID"));
       }
 
-    Optional<Order> orderOpt = orderService.getOrderById(orderId);
-      
+      Optional<Order> orderOpt = orderService.getOrderById(orderId);
+
       if (orderOpt.isEmpty()) {
         return ResponseEntity.notFound().build();
       }
-      
+
       Order order = orderOpt.get();
       OrderDTO orderDTO = orderMapper.toDTO(order);
       return ResponseEntity.ok(ApiResponse.success(orderDTO, "Order retrieved successfully"));
     } catch (AccessDeniedException e) {
-      return ResponseEntity.status(HttpStatus.FORBIDDEN)
-          .body(ApiResponse.error(e.getMessage()));
+      return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error(e.getMessage()));
     } catch (Exception e) {
       return ResponseEntity.badRequest()
           .body(ApiResponse.error("Failed to retrieve order: " + e.getMessage()));
     }
   }
 
-  /**
-   * Get all orders for the authenticated user.
-   * Users can only view their own orders.
-   */
+  /** Get all orders for the authenticated user. Users can only view their own orders. */
   @GetMapping("/my-orders")
   @IsUser
-  public ResponseEntity<ApiResponse<List<OrderDTO>>> getMyOrders(
-      Authentication authentication) {
+  public ResponseEntity<ApiResponse<List<OrderDTO>>> getMyOrders(Authentication authentication) {
     try {
       User user = permissionService.getAuthenticatedUser(authentication);
       List<Order> orders = orderService.getOrdersByUser(user.getId());
@@ -122,20 +110,15 @@ public class OrderController {
     }
   }
 
-  /**
-   * Get all orders for a specific user.
-   * Admin only - to view any user's orders.
-   */
+  /** Get all orders for a specific user. Admin only - to view any user's orders. */
   @GetMapping("/user/{userId}")
   @IsAdmin
-  public ResponseEntity<ApiResponse<List<OrderDTO>>> getOrdersByUser(
-      @PathVariable Long userId) {
+  public ResponseEntity<ApiResponse<List<OrderDTO>>> getOrdersByUser(@PathVariable Long userId) {
     try {
       if (userId == null || userId <= 0) {
-        return ResponseEntity.badRequest()
-            .body(ApiResponse.error("Invalid user ID"));
+        return ResponseEntity.badRequest().body(ApiResponse.error("Invalid user ID"));
       }
-      
+
       List<Order> orders = orderService.getOrdersByUser(userId);
       List<OrderDTO> orderDTOs =
           orders.stream().map(orderMapper::toDTO).collect(Collectors.toList());
@@ -147,9 +130,7 @@ public class OrderController {
     }
   }
 
-  /**
-   * Get all orders (Admin only).
-   */
+  /** Get all orders (Admin only). */
   @GetMapping
   @IsAdmin
   public ResponseEntity<ApiResponse<List<OrderDTO>>> getAllOrders() {
@@ -164,9 +145,7 @@ public class OrderController {
     }
   }
 
-  /**
-   * Get orders for the merchant managed by the authenticated merchant admin.
-   */
+  /** Get orders for the merchant managed by the authenticated merchant admin. */
   @GetMapping("/merchant/my-orders")
   @IsMerchantAdmin
   public ResponseEntity<ApiResponse<List<OrderDTO>>> getMyMerchantOrders(
@@ -191,18 +170,16 @@ public class OrderController {
   }
 
   /**
-   * Get orders for a specific merchant.
-   * Admin or merchant admin (if they own the merchant) can access.
+   * Get orders for a specific merchant. Admin or merchant admin (if they own the merchant) can
+   * access.
    */
   @GetMapping("/merchant/{merchantId}")
   @IsAdminOrMerchantAdmin
   public ResponseEntity<ApiResponse<List<OrderDTO>>> getOrdersByMerchant(
-      @PathVariable Long merchantId,
-      Authentication authentication) {
+      @PathVariable Long merchantId, Authentication authentication) {
     try {
       if (merchantId == null || merchantId <= 0) {
-        return ResponseEntity.badRequest()
-            .body(ApiResponse.error("Invalid merchant ID"));
+        return ResponseEntity.badRequest().body(ApiResponse.error("Invalid merchant ID"));
       }
 
       User user = permissionService.getAuthenticatedUser(authentication);
@@ -218,17 +195,14 @@ public class OrderController {
       return ResponseEntity.ok(
           ApiResponse.success(orderDTOs, "Merchant orders retrieved successfully"));
     } catch (AccessDeniedException e) {
-      return ResponseEntity.status(HttpStatus.FORBIDDEN)
-          .body(ApiResponse.error(e.getMessage()));
+      return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error(e.getMessage()));
     } catch (Exception e) {
       return ResponseEntity.badRequest()
           .body(ApiResponse.error("Failed to retrieve merchant orders: " + e.getMessage()));
     }
   }
 
-  /**
-   * Get orders assigned to the authenticated driver.
-   */
+  /** Get orders assigned to the authenticated driver. */
   @GetMapping("/driver/assigned")
   @IsDriver
   public ResponseEntity<ApiResponse<List<OrderDTO>>> getDriverOrders(
@@ -254,41 +228,35 @@ public class OrderController {
 
   // ==================== UPDATE ORDERS ====================
 
-  /**
-   * Cancel an order.
-   * Only the user who placed the order can cancel it.
-   */
+  /** Cancel an order. Only the user who placed the order can cancel it. */
   @PostMapping("/{orderId}/cancel")
   @IsUser
   public ResponseEntity<ApiResponse<OrderDTO>> cancelOrder(
-      @PathVariable Long orderId,
-      Authentication authentication) {
+      @PathVariable Long orderId, Authentication authentication) {
     try {
       if (orderId == null || orderId <= 0) {
-        return ResponseEntity.badRequest()
-            .body(ApiResponse.error("Invalid order ID"));
+        return ResponseEntity.badRequest().body(ApiResponse.error("Invalid order ID"));
       }
 
-    User user = permissionService.getAuthenticatedUser(authentication);
-    Optional<Order> orderOpt = orderService.getOrderById(orderId);
-      
+      User user = permissionService.getAuthenticatedUser(authentication);
+      Optional<Order> orderOpt = orderService.getOrderById(orderId);
+
       if (orderOpt.isEmpty()) {
         return ResponseEntity.notFound().build();
       }
-      
+
       Order order = orderOpt.get();
-      
+
       // Check if user owns this order
       if (order.getUser() == null || !order.getUser().getId().equals(user.getId())) {
         throw new AccessDeniedException("You can only cancel your own orders");
       }
-      
+
       Order cancelledOrder = orderService.cancelOrder(orderId);
       OrderDTO orderDTO = orderMapper.toDTO(cancelledOrder);
       return ResponseEntity.ok(ApiResponse.success(orderDTO, "Order cancelled successfully"));
     } catch (AccessDeniedException e) {
-      return ResponseEntity.status(HttpStatus.FORBIDDEN)
-          .body(ApiResponse.error(e.getMessage()));
+      return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error(e.getMessage()));
     } catch (Exception e) {
       return ResponseEntity.badRequest()
           .body(ApiResponse.error("Failed to cancel order: " + e.getMessage()));
@@ -296,34 +264,31 @@ public class OrderController {
   }
 
   /**
-   * Update order status.
-   * Admin can update any order, merchant admin can update orders for their merchant.
+   * Update order status. Admin can update any order, merchant admin can update orders for their
+   * merchant.
    */
   @PutMapping("/{orderId}/status")
-  @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN') or @permissionService.merchantCanAccessOrder(authentication, #orderId)")
+  @org.springframework.security.access.prepost.PreAuthorize(
+      "hasRole('ADMIN') or @permissionService.merchantCanAccessOrder(authentication, #orderId)")
   public ResponseEntity<ApiResponse<OrderDTO>> updateOrderStatus(
-      @PathVariable Long orderId,
-      @RequestParam String status,
-      Authentication authentication) {
+      @PathVariable Long orderId, @RequestParam String status, Authentication authentication) {
     try {
       if (orderId == null || orderId <= 0) {
-        return ResponseEntity.badRequest()
-            .body(ApiResponse.error("Invalid order ID"));
+        return ResponseEntity.badRequest().body(ApiResponse.error("Invalid order ID"));
       }
 
-  Optional<Order> orderOpt = orderService.getOrderById(orderId);
-      
+      Optional<Order> orderOpt = orderService.getOrderById(orderId);
+
       if (orderOpt.isEmpty()) {
         return ResponseEntity.notFound().build();
       }
-      
-  // Authorization for admin/merchant admin is handled by PreAuthorize above
+
+      // Authorization for admin/merchant admin is handled by PreAuthorize above
       Order updatedOrder = orderService.updateOrderStatus(orderId, status);
       OrderDTO orderDTO = orderMapper.toDTO(updatedOrder);
       return ResponseEntity.ok(ApiResponse.success(orderDTO, "Order status updated successfully"));
     } catch (AccessDeniedException e) {
-      return ResponseEntity.status(HttpStatus.FORBIDDEN)
-          .body(ApiResponse.error(e.getMessage()));
+      return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error(e.getMessage()));
     } catch (Exception e) {
       return ResponseEntity.badRequest()
           .body(ApiResponse.error("Failed to update order status: " + e.getMessage()));

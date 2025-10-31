@@ -1,8 +1,8 @@
 package com.boozebuddies.exception;
 
 /**
- * Exception thrown when user lacks required authorization (e.g., missing role, insufficient permissions).
- * Results in HTTP 403 Forbidden.
+ * Exception thrown when user lacks required authorization (e.g., missing role, insufficient
+ * permissions). Results in HTTP 403 Forbidden.
  */
 public class UnauthorizedException extends RuntimeException {
 

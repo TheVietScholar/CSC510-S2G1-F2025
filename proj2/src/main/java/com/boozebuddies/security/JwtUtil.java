@@ -4,14 +4,13 @@ import com.boozebuddies.entity.User;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.Date;
+import java.util.Set;
 import java.util.stream.Collectors;
-
 import javax.crypto.SecretKey;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import java.util.Collections;
-import java.util.Set;
 
 @Component
 public class JwtUtil {
@@ -39,9 +38,10 @@ public class JwtUtil {
     Date expiry = new Date(now.getTime() + jwtExpirationMs);
 
     // Add user roles to token
-    var roles = user.getRoles() != null
-        ? user.getRoles().stream().map(Enum::name).toList()
-        : Collections.emptyList();
+    var roles =
+        user.getRoles() != null
+            ? user.getRoles().stream().map(Enum::name).toList()
+            : Collections.emptyList();
 
     return Jwts.builder()
         .setSubject(user.getEmail())
@@ -130,20 +130,19 @@ public class JwtUtil {
     }
   }
 
-
   @SuppressWarnings("unchecked")
   public Set<String> extractRoles(String token) {
-      Claims claims = getClaims(token);
-      if (claims == null) return Collections.emptySet();
+    Claims claims = getClaims(token);
+    if (claims == null) return Collections.emptySet();
 
-      Object rolesObj = claims.get("roles");
-      if (rolesObj instanceof java.util.List<?>) {
-          return ((java.util.List<?>) rolesObj).stream()
+    Object rolesObj = claims.get("roles");
+    if (rolesObj instanceof java.util.List<?>) {
+      return ((java.util.List<?>) rolesObj)
+          .stream()
               .filter(String.class::isInstance)
               .map(String.class::cast)
               .collect(Collectors.toSet());
-      }
-      return Collections.emptySet();
+    }
+    return Collections.emptySet();
   }
-
 }

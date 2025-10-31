@@ -135,12 +135,13 @@ public class MerchantController {
   // ==================== ORDERS BY MERCHANT ====================
 
   @GetMapping("/{id}/orders")
-  @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN') or @permissionService.ownsMerchant(authentication, #id)")
+  @org.springframework.security.access.prepost.PreAuthorize(
+      "hasRole('ADMIN') or @permissionService.ownsMerchant(authentication, #id)")
   public ResponseEntity<?> getOrdersByMerchant(
-    @PathVariable Long id,
-    @RequestParam(defaultValue = "0") int page,
-    @RequestParam(defaultValue = "10") int size,
-    Authentication authentication) {
+      @PathVariable Long id,
+      @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "10") int size,
+      Authentication authentication) {
     try {
       if (id == null || id <= 0) {
         return ResponseEntity.badRequest().body(ApiResponse.error("Invalid merchant ID"));
@@ -161,9 +162,7 @@ public class MerchantController {
 
   // ==================== MERCHANT_ADMIN ENDPOINTS ====================
 
-  /**
-   * Get the merchant managed by the authenticated merchant admin.
-   */
+  /** Get the merchant managed by the authenticated merchant admin. */
   @GetMapping("/my-merchant")
   @IsMerchantAdmin
   public ResponseEntity<?> getMyMerchant(Authentication authentication) {
@@ -185,9 +184,7 @@ public class MerchantController {
     }
   }
 
-  /**
-   * Get orders for the merchant managed by the authenticated merchant admin.
-   */
+  /** Get orders for the merchant managed by the authenticated merchant admin. */
   @GetMapping("/my-merchant/orders")
   @IsMerchantAdmin
   public ResponseEntity<?> getMyMerchantOrders(

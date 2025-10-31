@@ -118,9 +118,7 @@ public class ProductServiceImpl implements ProductService {
 
   // ==================== HELPER METHODS ====================
 
-  /**
-   * Validate product data before saving.
-   */
+  /** Validate product data before saving. */
   private void validateProduct(Product product) {
     if (product.getName() == null || product.getName().trim().isEmpty()) {
       throw new IllegalArgumentException("Product name is required");
@@ -151,13 +149,11 @@ public class ProductServiceImpl implements ProductService {
     if (product.getVolume() != null && product.getVolume() <= 0) {
       throw new IllegalArgumentException("Volume must be greater than zero");
     }
-
-
   }
 
   /**
-   * Calculate distance between two points using the Haversine formula.
-   * Returns distance in kilometers.
+   * Calculate distance between two points using the Haversine formula. Returns distance in
+   * kilometers.
    */
   private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
     final int EARTH_RADIUS_KM = 6371;

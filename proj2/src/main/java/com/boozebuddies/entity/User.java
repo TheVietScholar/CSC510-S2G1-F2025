@@ -49,23 +49,20 @@ public class User {
   private Set<Role> roles = new HashSet<>();
 
   // ==================== ROLE-SPECIFIC FIELDS ====================
-  
-  /**
-   * For MERCHANT_ADMIN role: The merchant this admin manages.
-   * Null for other roles.
-   */
+
+  /** For MERCHANT_ADMIN role: The merchant this admin manages. Null for other roles. */
   @Column(name = "merchant_id")
   private Long merchantId;
 
   /**
-   * For DRIVER role: Link to Driver entity with certification and vehicle details.
-   * Null for other roles.
+   * For DRIVER role: Link to Driver entity with certification and vehicle details. Null for other
+   * roles.
    */
   @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
   private Driver driver;
 
   // ==================== AUTHENTICATION FIELDS ====================
-  
+
   @Builder.Default
   @Column(name = "is_active")
   private boolean isActive = true;
@@ -84,7 +81,7 @@ public class User {
   private LocalDateTime refreshTokenExpiryDate;
 
   // ==================== RELATIONSHIPS ====================
-  
+
   @Transient private Object address; // Placeholder - replace with @ManyToOne Address when ready
 
   @Builder.Default
@@ -104,14 +101,14 @@ public class User {
   private List<Rating> ratings = new ArrayList<>();
 
   // ==================== LIFECYCLE ====================
-  
+
   @PreUpdate
   public void preUpdate() {
     this.updatedAt = LocalDateTime.now();
   }
 
   // ==================== HELPER METHODS ====================
-  
+
   public boolean isActive() {
     return isActive;
   }
@@ -124,16 +121,12 @@ public class User {
     return ageVerified;
   }
 
-  /**
-   * Check if user has a specific role.
-   */
+  /** Check if user has a specific role. */
   public boolean hasRole(Role role) {
     return roles != null && roles.contains(role);
   }
 
-  /**
-   * Check if user has any of the specified roles.
-   */
+  /** Check if user has any of the specified roles. */
   public boolean hasAnyRole(Role... roles) {
     if (this.roles == null || roles == null) {
       return false;
@@ -146,9 +139,7 @@ public class User {
     return false;
   }
 
-  /**
-   * Check if user has all of the specified roles.
-   */
+  /** Check if user has all of the specified roles. */
   public boolean hasAllRoles(Role... roles) {
     if (this.roles == null || roles == null) {
       return false;
@@ -161,9 +152,7 @@ public class User {
     return true;
   }
 
-  /**
-   * Add a role to the user.
-   */
+  /** Add a role to the user. */
   public void addRole(Role role) {
     if (this.roles == null) {
       this.roles = new HashSet<>();
@@ -171,39 +160,29 @@ public class User {
     this.roles.add(role);
   }
 
-  /**
-   * Remove a role from the user.
-   */
+  /** Remove a role from the user. */
   public void removeRole(Role role) {
     if (this.roles != null) {
       this.roles.remove(role);
     }
   }
 
-  /**
-   * Check if user is a merchant admin.
-   */
+  /** Check if user is a merchant admin. */
   public boolean isMerchantAdmin() {
     return hasRole(Role.MERCHANT_ADMIN) && merchantId != null;
   }
 
-  /**
-   * Check if user is a driver.
-   */
+  /** Check if user is a driver. */
   public boolean isDriver() {
     return hasRole(Role.DRIVER) && driver != null;
   }
 
-  /**
-   * Check if user is an admin.
-   */
+  /** Check if user is an admin. */
   public boolean isAdmin() {
     return hasRole(Role.ADMIN);
   }
 
-  /**
-   * Check if user owns/manages a specific merchant.
-   */
+  /** Check if user owns/manages a specific merchant. */
   public boolean ownsMerchant(Long merchantId) {
     return isMerchantAdmin() && this.merchantId != null && this.merchantId.equals(merchantId);
   }
