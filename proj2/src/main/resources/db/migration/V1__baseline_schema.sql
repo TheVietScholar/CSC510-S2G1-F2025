@@ -4,17 +4,25 @@
 -- MySQL 8.0.43+ (ENGINE InnoDB, utf8mb4)
 -- ===================================================================
 
--- ============= USERS ==================
+-- ============= USERS (After V2 Migration) ==================
 CREATE TABLE users (
-  id            BIGINT PRIMARY KEY AUTO_INCREMENT,
-  name          VARCHAR(120)      NOT NULL,
-  email         VARCHAR(190)      NOT NULL UNIQUE,
-  password_hash VARCHAR(255)      NOT NULL,
-  phone         VARCHAR(40)       NULL,
-  date_of_birth DATE              NULL,
-  age_verified  BOOLEAN           NOT NULL DEFAULT FALSE,
-  created_at    TIMESTAMP         NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at    TIMESTAMP         NULL     DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
+  id                     BIGINT PRIMARY KEY AUTO_INCREMENT,
+  name                   VARCHAR(120)      NOT NULL,
+  email                  VARCHAR(190)      NOT NULL UNIQUE,
+  password_hash          VARCHAR(255)      NOT NULL,
+  phone                  VARCHAR(40)       NULL,
+  date_of_birth          DATE              NULL,
+  age_verified           BOOLEAN           NOT NULL DEFAULT FALSE,
+  is_active              BOOLEAN           NOT NULL DEFAULT TRUE,        -- NEW
+  is_email_verified      BOOLEAN           NOT NULL DEFAULT FALSE,       -- NEW
+  last_login_at          TIMESTAMP         NULL,                         -- NEW
+  refresh_token          VARCHAR(512)      NULL,                         -- NEW
+  refresh_token_expiry   TIMESTAMP         NULL,                         -- NEW
+  created_at             TIMESTAMP         NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at             TIMESTAMP         NULL     DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  
+  INDEX idx_users_refresh_token (refresh_token),                        -- NEW
+  INDEX idx_users_active (is_active)                                    -- NEW
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE user_roles (

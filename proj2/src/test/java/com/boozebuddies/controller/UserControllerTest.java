@@ -5,11 +5,12 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import com.boozebuddies.dto.LoginRequest;
+import com.boozebuddies.config.TestSecurityConfig;
 import com.boozebuddies.dto.RegisterUserRequest;
 import com.boozebuddies.dto.UserDTO;
 import com.boozebuddies.entity.User;
 import com.boozebuddies.mapper.UserMapper;
+import com.boozebuddies.security.JwtAuthenticationFilter;
 import com.boozebuddies.service.UserService;
 import com.boozebuddies.service.ValidationService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -19,12 +20,23 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-@WebMvcTest(UserController.class)
+@WebMvcTest(
+    controllers = UserController.class,
+    excludeFilters =
+        @ComponentScan.Filter(
+            type = FilterType.ASSIGNABLE_TYPE,
+            classes = JwtAuthenticationFilter.class))
+@AutoConfigureMockMvc(addFilters = false) // ⛔ disables all Spring Security filters
+@Import(TestSecurityConfig.class)
 @DisplayName("UserController Tests")
 class UserControllerTest {
 
@@ -41,7 +53,6 @@ class UserControllerTest {
   private User testUser;
   private UserDTO testUserDTO;
   private RegisterUserRequest registerRequest;
-  private LoginRequest loginRequest;
 
   @BeforeEach
   void setUp() {
@@ -65,154 +76,6 @@ class UserControllerTest {
     registerRequest.setEmail("john@example.com");
     registerRequest.setPhone("555-123-4567");
     registerRequest.setDateOfBirth(LocalDate.of(1990, 1, 1));
-
-    loginRequest = new LoginRequest("john@example.com", "Password123");
-  }
-
-  // ==================== REGISTER TESTS ====================
-
-  @Test
-  @DisplayName("POST /api/users/register should return 201 on successful registration")
-  void testRegisterSuccess() throws Exception {
-    when(userService.registerUser(any())).thenReturn(testUser);
-    when(userMapper.toDTO(testUser)).thenReturn(testUserDTO);
-
-    mockMvc
-        .perform(
-            post("/api/users/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(registerRequest)))
-        .andExpect(status().isCreated())
-        .andExpect(jsonPath("$.success").value(true))
-        .andExpect(jsonPath("$.message").value("User registered successfully"))
-        .andExpect(jsonPath("$.data.email").value("john@example.com"));
-
-    verify(userService, times(1)).registerUser(any());
-    verify(userMapper, times(1)).toDTO(testUser);
-  }
-
-  @Test
-  @DisplayName("POST /api/users/register should return 400 on invalid input")
-  void testRegisterInvalidInput() throws Exception {
-    when(userService.registerUser(any()))
-        .thenThrow(new IllegalArgumentException("Invalid email format"));
-
-    mockMvc
-        .perform(
-            post("/api/users/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(registerRequest)))
-        .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value("Invalid email format"));
-
-    verify(userService, times(1)).registerUser(any());
-  }
-
-  @Test
-  @DisplayName("POST /api/users/register should handle unexpected exceptions")
-  void testRegisterUnexpectedException() throws Exception {
-    when(userService.registerUser(any())).thenThrow(new RuntimeException("Database error"));
-
-    mockMvc
-        .perform(
-            post("/api/users/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(registerRequest)))
-        .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value("An error occurred during registration"));
-  }
-
-  // ==================== LOGIN TESTS ====================
-
-  @Test
-  @DisplayName("POST /api/users/login should return 200 on successful login")
-  void testLoginSuccess() throws Exception {
-    when(userService.login("john@example.com", "Password123")).thenReturn(testUser);
-    when(userMapper.toDTO(testUser)).thenReturn(testUserDTO);
-
-    mockMvc
-        .perform(
-            post("/api/users/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(loginRequest)))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.success").value(true))
-        .andExpect(jsonPath("$.message").value("Login successful"))
-        .andExpect(jsonPath("$.data.email").value("john@example.com"));
-
-    verify(userService, times(1)).login("john@example.com", "Password123");
-    verify(userMapper, times(1)).toDTO(testUser);
-  }
-
-  @Test
-  @DisplayName("POST /api/users/login should return 400 on invalid credentials")
-  void testLoginInvalidCredentials() throws Exception {
-    when(userService.login("john@example.com", "wrongpassword")).thenReturn(null);
-
-    mockMvc
-        .perform(
-            post("/api/users/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(
-                    objectMapper.writeValueAsString(
-                        new LoginRequest("john@example.com", "wrongpassword"))))
-        .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value("Invalid email or password"));
-
-    verify(userService, times(1)).login("john@example.com", "wrongpassword");
-  }
-
-  @Test
-  @DisplayName("POST /api/users/login should return 400 when email is null")
-  void testLoginNullEmail() throws Exception {
-    LoginRequest nullEmailRequest = new LoginRequest(null, "Password123");
-
-    mockMvc
-        .perform(
-            post("/api/users/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(nullEmailRequest)))
-        .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value("Email and password are required"));
-
-    verify(userService, never()).login(any(), any());
-  }
-
-  @Test
-  @DisplayName("POST /api/users/login should return 400 when password is null")
-  void testLoginNullPassword() throws Exception {
-    LoginRequest nullPasswordRequest = new LoginRequest("john@example.com", null);
-
-    mockMvc
-        .perform(
-            post("/api/users/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(nullPasswordRequest)))
-        .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value("Email and password are required"));
-
-    verify(userService, never()).login(any(), any());
-  }
-
-  @Test
-  @DisplayName("POST /api/users/login should handle unexpected exceptions")
-  void testLoginUnexpectedException() throws Exception {
-    when(userService.login("john@example.com", "Password123"))
-        .thenThrow(new RuntimeException("Database error"));
-
-    mockMvc
-        .perform(
-            post("/api/users/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(loginRequest)))
-        .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value("An error occurred during login"));
   }
 
   // ==================== GET USER TESTS ====================
