@@ -4,34 +4,6 @@
 -- MySQL 8.0.43+ (ENGINE InnoDB, utf8mb4)
 -- ===================================================================
 
--- ============= USERS (After V2 Migration) ==================
-CREATE TABLE users (
-  id                     BIGINT PRIMARY KEY AUTO_INCREMENT,
-  name                   VARCHAR(120)      NOT NULL,
-  email                  VARCHAR(190)      NOT NULL UNIQUE,
-  password_hash          VARCHAR(255)      NOT NULL,
-  phone                  VARCHAR(40)       NULL,
-  date_of_birth          DATE              NULL,
-  age_verified           BOOLEAN           NOT NULL DEFAULT FALSE,
-  is_active              BOOLEAN           NOT NULL DEFAULT TRUE,        -- NEW
-  is_email_verified      BOOLEAN           NOT NULL DEFAULT FALSE,       -- NEW
-  last_login_at          TIMESTAMP         NULL,                         -- NEW
-  refresh_token          VARCHAR(512)      NULL,                         -- NEW
-  refresh_token_expiry   TIMESTAMP         NULL,                         -- NEW
-  created_at             TIMESTAMP         NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at             TIMESTAMP         NULL     DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
-  
-  INDEX idx_users_refresh_token (refresh_token),                        -- NEW
-  INDEX idx_users_active (is_active)                                    -- NEW
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE user_roles (
-  user_id BIGINT      NOT NULL,
-  role    VARCHAR(64) NOT NULL,
-  PRIMARY KEY (user_id, role),
-  CONSTRAINT fk_user_roles_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
 -- ============= MERCHANTS ==============
 CREATE TABLE merchants (
   id            BIGINT PRIMARY KEY AUTO_INCREMENT,
@@ -47,8 +19,46 @@ CREATE TABLE merchants (
   rating        DOUBLE NOT NULL DEFAULT 0.0,
   total_ratings INT NOT NULL DEFAULT 0,
   image_url     VARCHAR(512) NULL,
+  latitude      DOUBLE NULL,
+  longitude     DOUBLE NULL,
   created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE INDEX idx_merchants_active ON merchants(is_active);
+CREATE INDEX idx_merchants_location ON merchants(latitude, longitude);
+
+-- ============= USERS (After V2 Migration) ==================
+CREATE TABLE users (
+  id                     BIGINT PRIMARY KEY AUTO_INCREMENT,
+  name                   VARCHAR(120)      NOT NULL,
+  email                  VARCHAR(190)      NOT NULL UNIQUE,
+  password_hash          VARCHAR(255)      NOT NULL,
+  phone                  VARCHAR(40)       NULL,
+  date_of_birth          DATE              NULL,
+  age_verified           BOOLEAN           NOT NULL DEFAULT FALSE,
+  latitude               DOUBLE            NULL,
+  longitude              DOUBLE            NULL,
+  merchant_id            BIGINT            NULL,
+  is_active              BOOLEAN           NOT NULL DEFAULT TRUE,
+  is_email_verified      BOOLEAN           NOT NULL DEFAULT FALSE,
+  last_login_at          TIMESTAMP         NULL,
+  refresh_token          VARCHAR(512)      NULL,
+  refresh_token_expiry   TIMESTAMP         NULL,
+  created_at             TIMESTAMP         NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at             TIMESTAMP         NULL     DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  
+  FOREIGN KEY (merchant_id) REFERENCES merchants(id) ON DELETE SET NULL,
+  INDEX idx_users_refresh_token (refresh_token),
+  INDEX idx_users_active (is_active),
+  INDEX idx_users_merchant_id (merchant_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE user_roles (
+  user_id BIGINT      NOT NULL,
+  role    VARCHAR(64) NOT NULL,
+  PRIMARY KEY (user_id, role),
+  CONSTRAINT fk_user_roles_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ============= CATEGORIES ==============
@@ -71,10 +81,9 @@ CREATE TABLE products (
   merchant_id     BIGINT       NOT NULL,
   is_alcohol      BOOLEAN      NOT NULL DEFAULT FALSE,
   alcohol_content DOUBLE       NULL,
-  volume          INT          NULL, -- new field replacing stock_quantity
+  volume_ml       INT          NULL,
   available       BOOLEAN      NOT NULL DEFAULT TRUE,
   image_url       VARCHAR(512) NULL,
-  version         BIGINT       NULL,
   CONSTRAINT fk_products_category 
       FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL,
   CONSTRAINT fk_products_merchant 
@@ -83,11 +92,12 @@ CREATE TABLE products (
 
 CREATE INDEX idx_products_available ON products(available);
 CREATE INDEX idx_products_merchant ON products(merchant_id);
-
+CREATE INDEX idx_products_category ON products(category_id);
 
 -- ============= DRIVERS ==================
 CREATE TABLE drivers (
   id                     BIGINT PRIMARY KEY AUTO_INCREMENT,
+  user_id                BIGINT NOT NULL UNIQUE,
   name                   VARCHAR(120) NOT NULL,
   email                  VARCHAR(190) NOT NULL UNIQUE,
   phone                  VARCHAR(40)  NULL,
@@ -105,10 +115,14 @@ CREATE TABLE drivers (
   expiry_date            DATE NULL,
   valid                  BOOLEAN NOT NULL DEFAULT TRUE,
   created_at             TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at             TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  updated_at             TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE INDEX idx_drivers_available ON drivers(is_available);
+CREATE INDEX idx_drivers_user_id ON drivers(user_id);
+CREATE INDEX idx_drivers_certification ON drivers(certification_status);
 
 -- ============= ORDERS ===================
 CREATE TABLE orders (
