@@ -1,5 +1,6 @@
 package com.boozebuddies.service.implementation;
 
+import com.boozebuddies.entity.Merchant;
 import com.boozebuddies.entity.User;
 import com.boozebuddies.exception.UnauthorizedException;
 import com.boozebuddies.exception.ValidationException;
@@ -10,7 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.boozebuddies.service.RoleService;
 import com.boozebuddies.service.UserService;
-
+import com.boozebuddies.service.MerchantService;
 /**
  * Implementation of role management service.
  */
@@ -19,6 +20,7 @@ import com.boozebuddies.service.UserService;
 public class RoleServiceImpl implements RoleService {
 
   private final UserService userService;
+  private final MerchantService merchantService;
 
   @Override
   @Transactional
@@ -103,11 +105,16 @@ public class RoleServiceImpl implements RoleService {
       throw new ValidationException("Merchant ID cannot be null");
     }
     
-    // TODO: Validate that merchant exists using MerchantService when available
+    // Validate that merchant exists
+    Merchant merchant = merchantService.getMerchantById(merchantId);
+    if (merchant == null) {
+      throw new ValidationException("Merchant not found with ID: " + merchantId);
+    }
     
     user.setMerchantId(merchantId);
     return userService.updateUser(userId, user);
   }
+
 
   @Override
   @Transactional

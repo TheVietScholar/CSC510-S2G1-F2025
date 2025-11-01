@@ -28,6 +28,8 @@ public class UserDTO {
   private LocalDateTime lastLoginAt; // NEW - last login timestamp
   private LocalDateTime createdAt;
   private LocalDateTime updatedAt;
+  private Double latitude;
+  private Double longitude;
 
   // Note: passwordHash, refreshToken, and refreshTokenExpiryDate are intentionally excluded
   // for security reasons - never expose these in API responses

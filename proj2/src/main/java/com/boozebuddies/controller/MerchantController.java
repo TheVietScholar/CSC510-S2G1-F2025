@@ -10,6 +10,8 @@ import com.boozebuddies.security.annotation.RoleAnnotations.*;
 import com.boozebuddies.service.MerchantService;
 import com.boozebuddies.service.PermissionService;
 import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -96,9 +98,62 @@ public class MerchantController {
     }
   }
 
-   //Todo : add get merchant by name (is authenticated)
+  /**
+   * Get merchant by name.
+   * Authenticated users only.
+   */
+  @GetMapping("/name/{name}")
+  @IsAuthenticated
+  public ResponseEntity<ApiResponse<MerchantDTO>> getMerchantByName(
+      @PathVariable String name) {
+    try {
+      Merchant merchant = merchantService.getMerchantByName(name);
+      
+      if (merchant == null) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(ApiResponse.error("Merchant not found"));
+      }
+      
+      return ResponseEntity.ok(
+          ApiResponse.success(merchantMapper.toDTO(merchant), "Merchant retrieved successfully"));
+    } catch (Exception e) {
+      return ResponseEntity.badRequest()
+          .body(ApiResponse.error("Failed to retrieve merchant: " + e.getMessage()));
+    }
+  }
 
-   //Todo: get merchant by distance (is authenticated)
+  /**
+   * Get all merchants sorted by distance from authenticated user's location.
+   * Authenticated users only - uses user's stored location.
+   */
+  @GetMapping("/by-distance")
+  @IsAuthenticated
+  public ResponseEntity<ApiResponse<List<MerchantDTO>>> getMerchantsByDistanceFromUser(
+      Authentication authentication) {
+    try {
+      User user = permissionService.getAuthenticatedUser(authentication);
+      
+      if (user == null) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            .body(ApiResponse.error("User not authenticated"));
+      }
+      
+      if (user.getLatitude() == null || user.getLongitude() == null) {
+        return ResponseEntity.badRequest()
+            .body(ApiResponse.error("User location not set. Please update your profile with your location."));
+      }
+      
+      List<Merchant> merchants = merchantService.getMerchantsSortedByDistance(
+          user.getLatitude(), user.getLongitude());
+      List<MerchantDTO> merchantDTOs =
+          merchants.stream().map(merchantMapper::toDTO).collect(Collectors.toList());
+      return ResponseEntity.ok(
+          ApiResponse.success(merchantDTOs, "Merchants sorted by distance from your location"));
+    } catch (Exception e) {
+      return ResponseEntity.badRequest()
+          .body(ApiResponse.error("Failed to retrieve merchants: " + e.getMessage()));
+    }
+  }
 
   @GetMapping
   @IsAuthenticated

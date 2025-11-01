@@ -24,6 +24,8 @@ public class MerchantMapper {
         .rating(merchant.getRating())
         .totalRatings(merchant.getTotalRatings())
         .imageUrl(merchant.getImageUrl())
+        .latitude(merchant.getLatitude())
+        .longitude(merchant.getLongitude())
         .build();
   }
 
@@ -40,6 +42,8 @@ public class MerchantMapper {
         .openingTime(merchantDTO.getOpeningTime())
         .closingTime(merchantDTO.getClosingTime())
         .imageUrl(merchantDTO.getImageUrl())
+        .latitude(merchantDTO.getLatitude())
+        .longitude(merchantDTO.getLongitude())
         .build();
   }
 }

@@ -13,6 +13,7 @@ import com.boozebuddies.security.annotation.RoleAnnotations.*;
 import com.boozebuddies.service.DeliveryService;
 import com.boozebuddies.service.OrderService;
 import com.boozebuddies.service.PermissionService;
+import com.boozebuddies.service.DriverService;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
 
 @RestController
 @RequestMapping("/api/deliveries")
@@ -31,6 +33,7 @@ public class DeliveryController {
   private final DeliveryMapper deliveryMapper;
   private final PermissionService permissionService;
   private final OrderService orderService;
+  private final DriverService driverService;
 
   // ==================== ADMIN ENDPOINTS ====================
 
@@ -48,9 +51,10 @@ public class DeliveryController {
       Order order = orderService.getOrderById(orderId)
           .orElseThrow(() -> new RuntimeException("Order not found"));
 
-      Driver driver = new Driver();
-      driver.setId(driverId);
-      // TODO: Fetch actual driver entity from DriverService when available
+      Driver driver = driverService.getDriverById(driverId); // ← FIXED
+      if (driver == null) {
+        throw new RuntimeException("Driver not found");
+      }
 
       Delivery delivery = deliveryService.assignDriverToOrder(order, driver);
       DeliveryDTO deliveryDTO = deliveryMapper.toDTO(delivery);
