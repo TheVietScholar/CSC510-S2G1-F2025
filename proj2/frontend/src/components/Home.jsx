@@ -2,11 +2,14 @@ import React, { useEffect, useState } from 'react'
 import { Search } from 'lucide-react'
 import { merchants } from '../services/api'
 import { THUMBNAIL_SIZE, TOP_BAR_HEIGHT, PAGE_BG, BORDER_LIGHT, BUTTON_SECONDARY } from '../config/ui'
+const IMG_PLACEHOLDER = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="%23e5e7eb"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="10" fill="%239ca3af">No Image</text></svg>'
+import UserSettings from './UserSettings'
 
 const Home = ({ onSelectRestaurant }) => {
   const [searchTerm, setSearchTerm] = useState('')
 
   const [restaurants, setRestaurants] = useState([])
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
   useEffect(() => {
     let mounted = true
@@ -33,7 +36,6 @@ const Home = ({ onSelectRestaurant }) => {
         <div
           style={{ display: 'flex', alignItems: 'center', gap: 16, maxWidth: 960, margin: '0 auto', padding: '12px 24px' }}
         >
-          <div style={{ flex: 1 }} />
           <div className="relative" style={{ width: '100%', maxWidth: 640 }}>
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
             <input
@@ -45,10 +47,7 @@ const Home = ({ onSelectRestaurant }) => {
             />
           </div>
           <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
-            <button
-              onClick={() => typeof onOpenSettings === 'function' && onOpenSettings()}
-              className={`${BUTTON_SECONDARY}`}
-            >
+            <button onClick={() => setSettingsOpen(true)} className={`${BUTTON_SECONDARY}`}>
               User Settings
             </button>
           </div>
@@ -69,13 +68,13 @@ const Home = ({ onSelectRestaurant }) => {
             >
               <div className="mb-3" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                 <img
-                  src={restaurant.imageUrl}
+                  src={restaurant.imageUrl || IMG_PLACEHOLDER}
                   alt={restaurant.name}
                   width={THUMBNAIL_SIZE}
                   height={THUMBNAIL_SIZE}
                   className="object-cover"
                   style={{ borderRadius: 8, flexShrink: 0 }}
-                  onError={(e) => { e.currentTarget.style.display = 'none' }}
+                  onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = IMG_PLACEHOLDER }}
                 />
                 <div className="flex-1">
                   <div className="flex justify-between items-start">
@@ -94,11 +93,7 @@ const Home = ({ onSelectRestaurant }) => {
                   <p className="text-gray-600 text-sm">📍 {restaurant.address}</p>
                 </div>
               </div>
-              <div className="flex justify-end">
-                <button className="text-red-600 hover:text-red-500 font-semibold">
-                  View Menu →
-                </button>
-              </div>
+              <div className="flex justify-end"></div>
             </div>
           ))}
         </div>
@@ -109,6 +104,16 @@ const Home = ({ onSelectRestaurant }) => {
           </div>
         )}
       </div>
+
+      {/* Settings Modal */}
+      {settingsOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setSettingsOpen(false)} />
+          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-auto p-0">
+            <UserSettings asModal onClose={() => setSettingsOpen(false)} />
+          </div>
+        </div>
+      )}
     </div>
   )
 }

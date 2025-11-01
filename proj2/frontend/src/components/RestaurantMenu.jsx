@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { Plus, Minus, ArrowLeft } from 'lucide-react'
 import { products } from '../services/api'
 import { THUMBNAIL_SIZE } from '../config/ui'
+const IMG_PLACEHOLDER = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="%23e5e7eb"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="10" fill="%239ca3af">No Image</text></svg>'
 
 const RestaurantMenu = ({ restaurant, cart, onAddToCart, onRemoveFromCart, onBack, onViewCart }) => {
   const [menuItems, setMenuItems] = useState([])
@@ -82,13 +83,13 @@ const RestaurantMenu = ({ restaurant, cart, onAddToCart, onRemoveFromCart, onBac
             <div key={item.id} className="bg-white p-6 rounded-xl border border-transparent shadow-sm transition-all duration-300 ease-out hover:-translate-y-1.5 hover:shadow-2xl hover:border-gray-300">
               <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                 <img
-                  src={item.imageUrl}
+                  src={item.imageUrl || IMG_PLACEHOLDER}
                   alt={item.name}
                   width={THUMBNAIL_SIZE}
                   height={THUMBNAIL_SIZE}
                   className="object-cover"
                   style={{ borderRadius: 8, flexShrink: 0 }}
-                  onError={(e) => { e.currentTarget.style.display = 'none' }}
+                  onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = IMG_PLACEHOLDER }}
                 />
                 <div className="flex-1">
                   <div className="flex items-start justify-between">
