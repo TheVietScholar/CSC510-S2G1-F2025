@@ -3,6 +3,7 @@ import Login from './components/Login'
 import Home from './components/Home'
 import RestaurantMenu from './components/RestaurantMenu'
 import Cart from './components/Cart'
+import UserSettings from './components/UserSettings'
 import './App.css'
 
 function App() {
@@ -72,7 +73,7 @@ function App() {
       case 'login':
         return <Login onLogin={handleLogin} />
       case 'home':
-        return <Home onSelectRestaurant={handleSelectRestaurant} />
+        return <Home onSelectRestaurant={handleSelectRestaurant} onOpenSettings={() => setCurrentPage('settings')} />
       case 'menu':
         return (
           <RestaurantMenu
@@ -94,6 +95,8 @@ function App() {
             onCheckout={() => alert('Checkout would go here!')}
           />
         )
+      case 'settings':
+        return <UserSettings onBack={() => setCurrentPage('home')} />
       default:
         return <Login onLogin={handleLogin} />
     }
