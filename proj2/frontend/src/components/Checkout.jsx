@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { ArrowLeft, Lock, RefreshCw } from 'lucide-react'
 import UserSettings from './UserSettings'
-import { orders as ordersAPI, deliveries as deliveriesAPI } from '../services/api'
+import { orders as ordersAPI, deliveries as deliveriesAPI, users as usersAPI, drivers as driversAPI } from '../services/api'
 
 const Checkout = ({ cart, onBack, onConfirm, user, restaurant }) => {
   const [showPayment, setShowPayment] = useState(false)
@@ -46,8 +46,18 @@ const Checkout = ({ cart, onBack, onConfirm, user, restaurant }) => {
       const deliveryAddress = [address.line1, address.line2, address.city, address.state, address.zip]
         .filter(Boolean).join(', ')
 
+      // Ensure a valid user id (fallback to first existing user)
+      let userId = user?.id
+      if (!userId) {
+        try {
+          const ures = await usersAPI.getAll()
+          const list = ures.data?.data || ures.data || []
+          userId = list[0]?.id || 1
+        } catch {}
+      }
+
       const payload = {
-        userId: user?.id || 1,
+        userId,
         merchantId: restaurant?.id,
         deliveryAddress,
         specialInstructions: null,
@@ -62,10 +72,26 @@ const Checkout = ({ cart, onBack, onConfirm, user, restaurant }) => {
       const mockPayment = { status: 'PAID_TEST' }
       console.log('Payment mock result:', mockPayment)
 
-      // Assign delivery with demo driver id
-      const assigned = await deliveriesAPI.assign({ orderId: orderData.id, driverId: 10 })
-      const dlv = assigned.data?.data || assigned.data || assigned
-      setDelivery(dlv)
+      // Try to find an available driver; if none or assign fails, fall back to mock delivery
+      let driverId = null
+      try {
+        const dres = await driversAPI.getAvailable()
+        const dlist = dres.data?.data || dres.data || []
+        driverId = dlist[0]?.id || null
+      } catch {}
+
+      if (driverId) {
+        try {
+          const assigned = await deliveriesAPI.assign({ orderId: orderData.id, driverId })
+          const dlv = assigned.data?.data || assigned.data || assigned
+          setDelivery(dlv)
+        } catch (e) {
+          console.warn('Assign failed, using mock delivery', e)
+          setDelivery({ id: 'TEST', status: 'PENDING' })
+        }
+      } else {
+        setDelivery({ id: 'TEST', status: 'PENDING' })
+      }
       setShowPayment(false)
     } catch (e) {
       console.error(e)
