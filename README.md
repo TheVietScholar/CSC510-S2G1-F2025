@@ -1,4 +1,8 @@
 
+[![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?logo=github-actions&logoColor=white)](https://github.com/TheVietScholar/CSC510-S2G1-F2025/actions)
+
+[![CI (proj2 Spring Boot)](https://github.com/TheVietScholar/CSC510-S2G1-F2025/actions/workflows/java-ci.yml/badge.svg)](https://github.com/TheVietScholar/CSC510-S2G1-F2025/actions/workflows/java-ci.yml)
+
 # CSC510-S2G1-F2025 Project Setup Guide
 
 This document provides step-by-step instructions to set up the project environment locally and connect to the MySQL database running in Docker.
