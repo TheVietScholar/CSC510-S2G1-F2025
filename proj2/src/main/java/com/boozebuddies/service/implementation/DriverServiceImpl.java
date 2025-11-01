@@ -96,6 +96,4 @@ public class DriverServiceImpl implements DriverService {
       return driverRepository.findNearbyAvailableDrivers(latitude, longitude, radiusMeters);
   }
 
-
-
 }

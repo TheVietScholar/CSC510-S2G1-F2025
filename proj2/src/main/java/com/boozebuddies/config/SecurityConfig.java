@@ -52,7 +52,6 @@ public class SecurityConfig {
 
                     // ==================== USER ENDPOINTS ====================
                     // Users can view/update their own profile (enforced in controller)
-                    //TODO: have users be able to see restaurant near them.
                     .requestMatchers(HttpMethod.GET, "/api/users/me").authenticated()
                     .requestMatchers(HttpMethod.GET, "/api/users/{id}").authenticated()
                     .requestMatchers(HttpMethod.PUT, "/api/users/{id}").authenticated()
@@ -71,8 +70,12 @@ public class SecurityConfig {
                     // ==================== MERCHANT ENDPOINTS ====================
                     // Anyone authenticated can browse/search merchants
                     .requestMatchers(HttpMethod.GET, "/api/merchants").authenticated()
-                    .requestMatchers(HttpMethod.GET, "/api/merchants/{id}").authenticated()
                     .requestMatchers(HttpMethod.GET, "/api/merchants/search/**").authenticated()
+                    .requestMatchers(HttpMethod.GET, "/api/merchants/by-distance").authenticated()
+                    .requestMatchers(HttpMethod.GET, "/api/merchants/name/**").authenticated() 
+
+                    // Only ADMIN can view merchant by ID
+                    .requestMatchers(HttpMethod.GET, "/api/merchants/{id}").hasRole("ADMIN")
                     
                     // Only ADMIN can create/delete merchants
                     .requestMatchers(HttpMethod.POST, "/api/merchants").hasRole("ADMIN")
