@@ -1,186 +1,159 @@
 import React, { useState } from 'react'
-import { ArrowLeft, CreditCard, Lock } from 'lucide-react'
+import { ArrowLeft, Lock, RefreshCw } from 'lucide-react'
+import UserSettings from './UserSettings'
+import { orders as ordersAPI, deliveries as deliveriesAPI, users as usersAPI, drivers as driversAPI } from '../services/api'
 
-const Checkout = ({ cart, onBack, onConfirm }) => {
-  const [paymentInfo, setPaymentInfo] = useState({
-    cardNumber: '',
-    expiryDate: '',
-    cvv: '',
-    name: '',
-    address: '',
-    city: '',
-    zipCode: ''
-  })
+const Checkout = ({ cart, onBack, onConfirm, user, restaurant }) => {
+  const [showPayment, setShowPayment] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
+  const [placing, setPlacing] = useState(false)
+  const [order, setOrder] = useState(null)
+  const [delivery, setDelivery] = useState(null)
 
   const subtotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0)
   const tax = subtotal * 0.08
   const deliveryFee = 2.99
   const total = subtotal + tax + deliveryFee
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    // In real app, you'd process payment here
-    onConfirm()
+  const loadLocal = () => {
+    let address = null, payment = null
+    try {
+      address = JSON.parse(localStorage.getItem('bb_address') || 'null')
+      payment = JSON.parse(localStorage.getItem('bb_payment') || 'null')
+    } catch {}
+    return { address, payment }
   }
 
-  const handleInputChange = (field, value) => {
-    setPaymentInfo(prev => ({
-      ...prev,
-      [field]: value
-    }))
+  const isValid = (address, payment) => {
+    const okAddress = address && address.line1 && address.city && address.state && address.zip
+    const okPayment = payment && payment.cardNumber && payment.exp && payment.cvc
+    return !!(okAddress && okPayment)
+  }
+
+  const handlePlaceOrder = () => {
+    const { address, payment } = loadLocal()
+    if (!isValid(address, payment)) {
+      setShowSettings(true)
+      return
+    }
+    setShowPayment(true)
+  }
+
+  const confirmPaymentAndCreate = async () => {
+    try {
+      setPlacing(true)
+      const { address } = loadLocal()
+      const deliveryAddress = [address.line1, address.line2, address.city, address.state, address.zip]
+        .filter(Boolean).join(', ')
+
+      // Ensure a valid user id (fallback to first existing user)
+      let userId = user?.id
+      if (!userId) {
+        try {
+          const ures = await usersAPI.getAll()
+          const list = ures.data?.data || ures.data || []
+          userId = list[0]?.id || 1
+        } catch {}
+      }
+
+      const payload = {
+        userId,
+        merchantId: restaurant?.id,
+        deliveryAddress,
+        specialInstructions: null,
+        items: cart.map(i => ({ productId: i.id, quantity: i.quantity, unitPrice: i.price }))
+      }
+
+      const created = await ordersAPI.create(payload)
+      const orderData = created.data?.data || created.data || created
+      setOrder(orderData)
+
+      // Mock payment confirm
+      const mockPayment = { status: 'PAID_TEST' }
+      console.log('Payment mock result:', mockPayment)
+
+      // Try to find an available driver; if none or assign fails, fall back to mock delivery
+      let driverId = null
+      try {
+        const dres = await driversAPI.getAvailable()
+        const dlist = dres.data?.data || dres.data || []
+        driverId = dlist[0]?.id || null
+      } catch {}
+
+      if (driverId) {
+        try {
+          const assigned = await deliveriesAPI.assign({ orderId: orderData.id, driverId })
+          const dlv = assigned.data?.data || assigned.data || assigned
+          setDelivery(dlv)
+        } catch (e) {
+          console.warn('Assign failed, using mock delivery', e)
+          setDelivery({ id: 'TEST', status: 'PENDING' })
+        }
+      } else {
+        setDelivery({ id: 'TEST', status: 'PENDING' })
+      }
+      setShowPayment(false)
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setPlacing(false)
+    }
+  }
+
+  const refreshDelivery = async () => {
+    if (!delivery?.id) return
+    const res = await deliveriesAPI.getById(delivery.id)
+    const dlv = res.data?.data || res.data || res
+    setDelivery(dlv)
   }
 
   return (
-    <div className="min-h-screen bg-black text-white p-4">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gray-50 text-gray-900">
+      <div className="max-w-5xl mx-auto px-6 py-6">
         <button
           onClick={onBack}
-          className="flex items-center text-gray-400 hover:text-white transition duration-200 mb-8"
+          className="flex items-center text-gray-600 hover:text-gray-900 transition duration-200 mb-8"
         >
           <ArrowLeft className="w-5 h-5 mr-2" />
           Back to Cart
         </button>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Payment Form */}
+          {/* Checkout action */}
           <div>
             <h1 className="text-3xl font-bold mb-2">Checkout</h1>
-            <p className="text-gray-400 mb-8">Complete your order with secure payment</p>
-
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Card Details */}
-              <div className="bg-gray-900 border border-gray-700 rounded-lg p-6">
-                <h2 className="text-xl font-semibold mb-4 flex items-center">
-                  <CreditCard className="w-5 h-5 mr-2 text-red-600" />
-                  Payment Information
-                </h2>
-                
-                <div className="space-y-4">
+            <p className="text-gray-600 mb-8">Review and place your order</p>
+            <button
+              onClick={handlePlaceOrder}
+              disabled={placing}
+              className="w-full bg-red-600 text-white py-4 px-6 rounded-lg font-semibold hover:bg-red-700 transition duration-200 flex items-center justify-center text-lg"
+            >
+              <Lock className="w-5 h-5 mr-2" />
+              {placing ? 'Placing…' : `Pay & Place Order - $${total.toFixed(2)}`}
+            </button>
+            {delivery && (
+              <div className="mt-6 bg-white border border-transparent rounded-xl shadow-sm p-4">
+                <div className="flex items-center justify-between">
                   <div>
-                    <label className="block text-sm font-medium text-gray-400 mb-2">
-                      Card Number
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="1234 5678 9012 3456"
-                      value={paymentInfo.cardNumber}
-                      onChange={(e) => handleInputChange('cardNumber', e.target.value)}
-                      className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-red-600"
-                      required
-                    />
+                    <div className="text-sm text-gray-600">Delivery ID</div>
+                    <div className="text-lg font-semibold">{delivery.id}</div>
                   </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-400 mb-2">
-                        Expiry Date
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="MM/YY"
-                        value={paymentInfo.expiryDate}
-                        onChange={(e) => handleInputChange('expiryDate', e.target.value)}
-                        className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-red-600"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-400 mb-2">
-                        CVV
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="123"
-                        value={paymentInfo.cvv}
-                        onChange={(e) => handleInputChange('cvv', e.target.value)}
-                        className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-red-600"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-400 mb-2">
-                      Name on Card
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="John Doe"
-                      value={paymentInfo.name}
-                      onChange={(e) => handleInputChange('name', e.target.value)}
-                      className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-red-600"
-                      required
-                    />
+                  <div className="text-right">
+                    <div className="text-sm text-gray-600">Status</div>
+                    <div className="text-lg font-semibold">{delivery.status}</div>
                   </div>
                 </div>
+                <button onClick={refreshDelivery} className="mt-4 inline-flex items-center px-3 py-2 rounded-lg border border-gray-300 hover:bg-gray-100">
+                  <RefreshCw className="w-4 h-4 mr-2" /> Refresh status
+                </button>
               </div>
-
-              {/* Delivery Address */}
-              <div className="bg-gray-900 border border-gray-700 rounded-lg p-6">
-                <h2 className="text-xl font-semibold mb-4">Delivery Address</h2>
-                
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-400 mb-2">
-                      Street Address
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="123 Main St"
-                      value={paymentInfo.address}
-                      onChange={(e) => handleInputChange('address', e.target.value)}
-                      className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-red-600"
-                      required
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-400 mb-2">
-                        City
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="New York"
-                        value={paymentInfo.city}
-                        onChange={(e) => handleInputChange('city', e.target.value)}
-                        className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-red-600"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-400 mb-2">
-                        ZIP Code
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="10001"
-                        value={paymentInfo.zipCode}
-                        onChange={(e) => handleInputChange('zipCode', e.target.value)}
-                        className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-red-600"
-                        required
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                className="w-full bg-red-600 text-white py-4 px-6 rounded-lg font-semibold hover:bg-red-700 transition duration-200 flex items-center justify-center text-lg"
-              >
-                <Lock className="w-5 h-5 mr-3" />
-                Confirm Order - ${total.toFixed(2)}
-              </button>
-            </form>
+            )}
           </div>
 
           {/* Order Summary */}
           <div>
-            <div className="bg-gray-900 border border-gray-700 rounded-lg p-6 sticky top-4">
+            <div className="bg-white border border-transparent rounded-xl shadow-sm p-6 sticky top-4">
               <h2 className="text-2xl font-bold mb-4">Order Summary</h2>
-              
-              {/* Cart Items */}
               <div className="space-y-3 mb-6">
                 {cart.map(item => (
                   <div key={item.id} className="flex justify-between items-center">
@@ -188,30 +161,28 @@ const Checkout = ({ cart, onBack, onConfirm }) => {
                       <span className="bg-red-600 text-white text-sm font-semibold px-2 py-1 rounded">
                         {item.quantity}
                       </span>
-                      <span className="text-gray-300">{item.name}</span>
+                      <span className="text-gray-800">{item.name}</span>
                     </div>
-                    <span className="text-white font-semibold">
+                    <span className="font-semibold">
                       ${(item.price * item.quantity).toFixed(2)}
                     </span>
                   </div>
                 ))}
               </div>
-
-              {/* Totals */}
-              <div className="space-y-2 border-t border-gray-700 pt-4">
-                <div className="flex justify-between text-gray-400">
+              <div className="space-y-2 border-t border-gray-200 pt-4">
+                <div className="flex justify-between text-gray-600">
                   <span>Subtotal</span>
                   <span>${subtotal.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between text-gray-400">
+                <div className="flex justify-between text-gray-600">
                   <span>Tax</span>
                   <span>${tax.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between text-gray-400">
+                <div className="flex justify-between text-gray-600">
                   <span>Delivery Fee</span>
                   <span>${deliveryFee.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between text-xl font-bold text-white border-t border-gray-700 pt-2">
+                <div className="flex justify-between text-xl font-bold border-t border-gray-200 pt-2">
                   <span>Total</span>
                   <span>${total.toFixed(2)}</span>
                 </div>
@@ -220,6 +191,31 @@ const Checkout = ({ cart, onBack, onConfirm }) => {
           </div>
         </div>
       </div>
+
+      {/* Payment modal */}
+      {showPayment && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShowPayment(false)} />
+          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
+            <h2 className="text-xl font-semibold mb-2">Confirm Payment</h2>
+            <p className="text-gray-600 mb-4">This is a mock confirmation. No real charge will occur.</p>
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setShowPayment(false)} className="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-100">Cancel</button>
+              <button onClick={confirmPaymentAndCreate} disabled={placing} className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700">{placing ? 'Processing…' : 'Confirm'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Settings modal when info missing */}
+      {showSettings && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShowSettings(false)} />
+          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-auto">
+            <UserSettings asModal onClose={() => setShowSettings(false)} />
+          </div>
+        </div>
+      )}
     </div>
   )
 }

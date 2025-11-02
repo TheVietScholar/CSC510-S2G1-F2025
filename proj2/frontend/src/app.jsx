@@ -3,6 +3,8 @@ import Login from './components/Login'
 import Home from './components/Home'
 import RestaurantMenu from './components/RestaurantMenu'
 import Cart from './components/Cart'
+import Checkout from './components/Checkout'
+import UserSettings from './components/UserSettings'
 import './App.css'
 
 function App() {
@@ -12,7 +14,7 @@ function App() {
   const [cart, setCart] = useState([])
 
   const handleLogin = () => {
-    setUser({ username: 'user' })
+    setUser({ id: 1, username: 'user' })
     setCurrentPage('home')
   }
 
@@ -72,7 +74,7 @@ function App() {
       case 'login':
         return <Login onLogin={handleLogin} />
       case 'home':
-        return <Home onSelectRestaurant={handleSelectRestaurant} />
+        return <Home onSelectRestaurant={handleSelectRestaurant} onOpenSettings={() => setCurrentPage('settings')} />
       case 'menu':
         return (
           <RestaurantMenu
@@ -91,9 +93,21 @@ function App() {
             onUpdateQuantity={handleUpdateQuantity}
             onRemoveItem={handleRemoveItem}
             onBack={() => setCurrentPage('menu')}
-            onCheckout={() => alert('Checkout would go here!')}
+            onCheckout={() => setCurrentPage('checkout')}
           />
         )
+      case 'checkout':
+        return (
+          <Checkout
+            cart={cart}
+            user={user}
+            restaurant={selectedRestaurant}
+            onBack={() => setCurrentPage('cart')}
+            onConfirm={() => setCurrentPage('home')}
+          />
+        )
+      case 'settings':
+        return <UserSettings onBack={() => setCurrentPage('home')} />
       default:
         return <Login onLogin={handleLogin} />
     }

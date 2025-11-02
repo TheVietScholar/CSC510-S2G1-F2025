@@ -1,63 +1,99 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Search } from 'lucide-react'
+import { merchants } from '../services/api'
+import { THUMBNAIL_SIZE, TOP_BAR_HEIGHT, PAGE_BG, BORDER_LIGHT, BUTTON_SECONDARY } from '../config/ui'
+const IMG_PLACEHOLDER = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="%23e5e7eb"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="10" fill="%239ca3af">No Image</text></svg>'
+import UserSettings from './UserSettings'
 
 const Home = ({ onSelectRestaurant }) => {
   const [searchTerm, setSearchTerm] = useState('')
 
-  // Mock data for restaurants
-  const restaurants = [
-    { id: 1, name: 'Red Dragon Brewery', type: 'Brewery', distance: '0.5 miles', rating: 4.5 },
-    { id: 2, name: 'Black Label Bar', type: 'Cocktail Bar', distance: '0.8 miles', rating: 4.2 },
-    { id: 3, name: 'Crimson Tap House', type: 'Beer Bar', distance: '1.2 miles', rating: 4.7 },
-    { id: 4, name: 'Scarlet Wine Bar', type: 'Wine Bar', distance: '1.5 miles', rating: 4.4 },
-    { id: 5, name: 'Burgundy Pub', type: 'Sports Bar', distance: '0.3 miles', rating: 4.1 },
-    { id: 6, name: 'Ruby Lounge', type: 'Lounge', distance: '2.0 miles', rating: 4.8 },
-  ]
+  const [restaurants, setRestaurants] = useState([])
+  const [settingsOpen, setSettingsOpen] = useState(false)
+
+  useEffect(() => {
+    let mounted = true
+    merchants.getAll().then(resp => {
+      // MerchantController returns ApiResponse envelope
+      const payload = resp.data?.data || []
+      if (mounted) setRestaurants(payload)
+    }).catch(() => setRestaurants([]))
+    return () => { mounted = false }
+  }, [])
 
   const filteredRestaurants = restaurants.filter(restaurant =>
-    restaurant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    restaurant.type.toLowerCase().includes(searchTerm.toLowerCase())
+    restaurant.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    restaurant.cuisineType?.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
   return (
-    <div className="min-h-screen bg-black text-white p-4">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold mb-2">Find Bars & Restaurants</h1>
-        <p className="text-gray-400 mb-8">Discover the best alcohol delivery near you</p>
-        
-        {/* Search Bar */}
-        <div className="relative mb-8">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-          <input
-            type="text"
-            placeholder="Search restaurants or bars..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-red-600"
-          />
+    <div className="min-h-screen bg-gray-50 text-gray-900">
+      {/* Floating search bar */}
+      <div
+        className="fixed top-0 inset-x-0 z-50 w-full"
+        style={{ background: PAGE_BG, borderBottom: `1px solid ${BORDER_LIGHT}` }}
+      >
+        <div
+          style={{ display: 'flex', alignItems: 'center', gap: 16, maxWidth: 960, margin: '0 auto', padding: '12px 24px' }}
+        >
+          <div className="relative" style={{ width: '100%', maxWidth: 640 }}>
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <input
+              type="text"
+              placeholder="Search restaurants or bars..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 shadow-sm"
+            />
+          </div>
+          <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
+            <button onClick={() => setSettingsOpen(true)} className={`${BUTTON_SECONDARY}`}>
+              User Settings
+            </button>
+          </div>
         </div>
+      </div>
 
+      {/* Spacer for fixed bar */}
+      <div style={{ height: TOP_BAR_HEIGHT }} />
+
+      <div className="px-6 pb-10" style={{ maxWidth: 960, margin: '0 auto' }}>
         {/* Restaurants Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
           {filteredRestaurants.map(restaurant => (
             <div
               key={restaurant.id}
               onClick={() => onSelectRestaurant(restaurant)}
-              className="bg-gray-900 border border-gray-700 rounded-lg p-6 cursor-pointer hover:border-red-600 transition duration-200 transform hover:scale-105"
+              className="bg-white p-6 rounded-xl border border-transparent shadow-sm cursor-pointer transition-all duration-300 ease-out hover:-translate-y-1.5 hover:shadow-2xl hover:border-gray-300"
             >
-              <div className="flex justify-between items-start mb-3">
-                <h3 className="text-xl font-semibold text-white">{restaurant.name}</h3>
-                <span className="bg-red-600 text-white px-2 py-1 rounded text-sm font-semibold">
-                  {restaurant.rating} ★
-                </span>
+              <div className="mb-3" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                <img
+                  src={restaurant.imageUrl || IMG_PLACEHOLDER}
+                  alt={restaurant.name}
+                  width={THUMBNAIL_SIZE}
+                  height={THUMBNAIL_SIZE}
+                  className="object-cover"
+                  style={{ borderRadius: 8, flexShrink: 0 }}
+                  onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = IMG_PLACEHOLDER }}
+                />
+                <div className="flex-1">
+                  <div className="flex justify-between items-start">
+                    <h3 className="text-xl font-semibold">{restaurant.name}</h3>
+                    <span className="bg-red-600 text-white px-2 py-1 rounded-md text-sm font-semibold">
+                      {restaurant.rating ?? 0} ★
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 mb-2">
+                    {restaurant.cuisineType && (
+                      <span className="text-xs px-2 py-1 rounded-full bg-gray-100 border border-gray-300 text-gray-700">
+                        {restaurant.cuisineType}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-gray-600 text-sm">📍 {restaurant.address}</p>
+                </div>
               </div>
-              <p className="text-gray-400 mb-2">{restaurant.type}</p>
-              <div className="flex justify-between items-center text-sm text-gray-500">
-                <span>📍 {restaurant.distance}</span>
-                <button className="text-red-500 hover:text-red-400 font-semibold">
-                  View Menu →
-                </button>
-              </div>
+              <div className="flex justify-end"></div>
             </div>
           ))}
         </div>
@@ -68,6 +104,16 @@ const Home = ({ onSelectRestaurant }) => {
           </div>
         )}
       </div>
+
+      {/* Settings Modal */}
+      {settingsOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setSettingsOpen(false)} />
+          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-auto p-0">
+            <UserSettings asModal onClose={() => setSettingsOpen(false)} />
+          </div>
+        </div>
+      )}
     </div>
   )
 }
