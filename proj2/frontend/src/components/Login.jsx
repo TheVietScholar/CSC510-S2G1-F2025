@@ -6,11 +6,16 @@ const Login = ({ onLogin }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault()
+    
     // Simple authentication - in real app, call your backend
     if (username === 'user' && password === 'password') {
-      onLogin()
+      onLogin({ username: 'user', role: 'user' })
+    } else if (username === 'admin' && password === 'password') {
+      onLogin({ username: 'admin', role: 'admin' })
+    } else if (username === 'merchant1' && password === 'password') {
+      onLogin({ username: 'merchant1', role: 'merchant' })
     } else {
-      alert('Invalid credentials. Use: user / password')
+      alert('Invalid credentials. Use: user/password, admin/password, or merchant1/password')
     }
   }
 
@@ -62,8 +67,9 @@ const Login = ({ onLogin }) => {
         
         <div className="mt-6 text-center text-sm text-gray-600">
           <p>Demo credentials:</p>
-          <p className="font-mono">Username: user</p>
-          <p className="font-mono">Password: password</p>
+          <p className="font-mono">User: user / password</p>
+          <p className="font-mono">Admin: admin / password</p>
+          <p className="font-mono">Merchant: merchant1 / password</p>
         </div>
       </div>
     </div>
