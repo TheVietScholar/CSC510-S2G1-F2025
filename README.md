@@ -1,4 +1,23 @@
-![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/TheVietScholar/CSC510-S2G1-F2025/java-ci.yml?style=for-the-badge)[![Maven Central](https://img.shields.io/maven-central/v/com.diffplug.spotless/spotless-maven-plugin.svg)](https://search.maven.org/artifact/com.diffplug.spotless/spotless-maven-plugin)![Java](https://img.shields.io/badge/java-%23ED8B00.svg?style=for-the-badge&logo=openjdk&logoColor=white)![JavaScript](https://img.shields.io/badge/javascript-%23323330.svg?style=for-the-badge&logo=javascript&logoColor=%23F7DF1E)![YAML](https://img.shields.io/badge/yaml-%23ffffff.svg?style=for-the-badge&logo=yaml&logoColor=151515)![GitHub](https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white)![MySQL](https://img.shields.io/badge/mysql-4479A1.svg?style=for-the-badge&logo=mysql&logoColor=white)![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/TheVietScholar/CSC510-S2G1-F2025/java-ci.yml?style=for-the-badge)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17458738.svg)](https://zenodo.org/doi/10.5281/zenodo.17458738)
+
+# Tech Stack #
+Front-End:
+
+![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![Vite](https://img.shields.io/badge/Vite-B73BFE?style=for-the-badge&logo=vite&logoColor=FFD62E)
+
+Back-End:
+
+![Java](https://img.shields.io/badge/java-%23ED8B00.svg?style=for-the-badge&logo=openjdk&logoColor=white)![JavaScript](https://img.shields.io/badge/javascript-%23323330.svg?style=for-the-badge&logo=javascript&logoColor=%23F7DF1E)![YAML](https://img.shields.io/badge/yaml-%23ffffff.svg?style=for-the-badge&logo=yaml&logoColor=151515)
+
+Database:
+
+![MySQL](https://img.shields.io/badge/mysql-4479A1.svg?style=for-the-badge&logo=mysql&logoColor=white)
+
+Dev-Tools:
+
+![GitHub](https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white) ![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white) [![Maven Central: Spotless](https://img.shields.io/maven-central/v/com.diffplug.spotless/spotless-maven-plugin.svg)](https://search.maven.org/artifact/com.diffplug.spotless/spotless-maven-plugin)
 
 # CSC510-S2G1-F2025 Project Setup Guide
 
