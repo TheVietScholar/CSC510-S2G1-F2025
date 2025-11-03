@@ -18,19 +18,29 @@ const MerchantHome = ({ onLogout }) => {
   })
 
   // This would normally come from auth context or props
-  const currentMerchantId = 1; // TODO: Get from logged-in merchant context
+  const currentMerchantId = user.merchantId; 
 
   // Load products on component mount
   useEffect(() => {
     loadProducts()
-  }, [])
+  }, [currentMerchantId])
 
   const loadProducts = async () => {
     try {
       setLoading(true)
       setError('')
       const response = await products.getByMerchant(currentMerchantId)
-      setProductsList(response.data)
+      console.log('Products response:', response)
+      
+      // Handle nested response structure like merchants
+      if (response.data && response.data.data) {
+        setProductsList(response.data.data)
+      } else if (Array.isArray(response.data)) {
+        setProductsList(response.data)
+      } else {
+        console.error('Unexpected products response:', response.data)
+        setProductsList([])
+      }
     } catch (err) {
       setError('Failed to load products. Make sure backend is running on port 8080.')
       console.error('Error loading products:', err)
@@ -45,12 +55,11 @@ const MerchantHome = ({ onLogout }) => {
       alert('Please fill in required fields: Name and Price')
       return
     }
-
+  
     try {
       setCreating(true)
       setError('')
       
-      // Prepare product data for backend - matches CreateProductRequest
       const productData = {
         name: newProduct.name,
         description: newProduct.description || '',
@@ -63,9 +72,12 @@ const MerchantHome = ({ onLogout }) => {
       }
       
       const response = await products.create(productData)
-      setProductsList(prev => [...prev, response.data])
+      console.log('Create product response:', response)
       
-      // Reset form
+      const newProductData = response.data.data || response.data
+      
+      setProductsList(prev => [...prev, newProductData])
+      
       setNewProduct({ 
         name: '', 
         description: '', 
@@ -274,11 +286,11 @@ const MerchantHome = ({ onLogout }) => {
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold">Menu Products</h2>
               <span className="bg-red-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
-                {products.length} products
+                {productsList.length} products
               </span>
             </div>
             
-            {products.length === 0 ? (
+            {productsList.length === 0 ? (
               <div className="text-center py-8 text-gray-400">
                 <Package className="w-12 h-12 mx-auto mb-4 opacity-50" />
                 <p>No products added yet</p>
@@ -286,7 +298,7 @@ const MerchantHome = ({ onLogout }) => {
               </div>
             ) : (
               <div className="space-y-4 max-h-96 overflow-y-auto">
-                {products.map(product => (
+                {productsList.map(product => (
                   <div key={product.id} className="bg-gray-800 border border-gray-700 rounded-lg p-4 hover:border-gray-600 transition duration-200">
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
