@@ -24,6 +24,8 @@ public class DeliveryDTO {
   private LocalDateTime estimatedDeliveryTime;
   
   // Driver info (for customer to see)
+  private LocalDateTime createdAt;
+  private LocalDateTime updatedAt;
   private String driverName;
   private String driverPhone;
   
@@ -40,10 +42,6 @@ public class DeliveryDTO {
   
   // Cancellation
   private String cancellationReason;
-  
-  // Audit timestamps
-  private LocalDateTime createdAt;
-  private LocalDateTime updatedAt;
   
   // Optional: tracking URL (if you implement deep linking later)
   private String trackingUrl;

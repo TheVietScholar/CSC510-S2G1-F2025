@@ -2,6 +2,9 @@ package com.boozebuddies.mapper;
 
 import com.boozebuddies.dto.DeliveryDTO;
 import com.boozebuddies.entity.Delivery;
+import com.boozebuddies.entity.Driver;
+import com.boozebuddies.entity.Order;
+import com.boozebuddies.model.DeliveryStatus;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -51,5 +54,37 @@ public class DeliveryMapper {
         // Optional: tracking URL (implement later if needed)
         // .trackingUrl(delivery.getTrackingUrl())
         .build();
+  }
+
+  public Delivery toEntity(DeliveryDTO dto) {
+    if (dto == null) return null;
+
+    Delivery delivery = new Delivery();
+    delivery.setId(dto.getId());
+    delivery.setStatus(DeliveryStatus.valueOf(dto.getStatus()));
+    delivery.setDeliveryAddress(dto.getDeliveryAddress());
+    delivery.setDeliveryLatitude(dto.getDeliveryLatitude());
+    delivery.setDeliveryLongitude(dto.getDeliveryLongitude());
+    delivery.setPickupTime(dto.getPickupTime());
+    delivery.setDeliveredTime(dto.getDeliveredTime());
+    delivery.setEstimatedDeliveryTime(dto.getEstimatedDeliveryTime());
+    delivery.setCancellationReason(dto.getCancellationReason());
+    delivery.setUpdatedAt(dto.getUpdatedAt());
+
+    if (dto.getOrderId() != null) {
+        Order order = new Order();
+        order.setId(dto.getOrderId());
+        delivery.setOrder(order);
+    }
+
+    if (dto.getDriverId() != null) {
+        Driver driver = new Driver();
+        driver.setId(dto.getDriverId());
+        driver.setName(dto.getDriverName());
+        driver.setPhone(dto.getDriverPhone());
+        delivery.setDriver(driver);
+    }
+
+    return delivery;
   }
 }
