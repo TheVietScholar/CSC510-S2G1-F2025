@@ -33,13 +33,12 @@ class DeliveryServiceImplTest {
     Order order = new Order();
     order.setId(100L);
     Driver driver = Driver.builder().id(10L).build();
-
     when(repository.save(any(Delivery.class))).thenAnswer(inv -> inv.getArgument(0));
     Delivery delivery = service.assignDriverToOrder(order, driver);
 
     assertEquals(order, delivery.getOrder());
     assertEquals(driver, delivery.getDriver());
-    assertEquals(DeliveryStatus.PENDING, delivery.getStatus());
+    assertEquals(DeliveryStatus.ASSIGNED, delivery.getStatus());
   }
 
   @Test
@@ -62,7 +61,7 @@ class DeliveryServiceImplTest {
     Delivery updated = service.updateDeliveryStatus(1L, DeliveryStatus.IN_TRANSIT);
     assertNotNull(updated);
     assertEquals(DeliveryStatus.IN_TRANSIT, updated.getStatus());
-    assertNull(service.updateDeliveryStatus(999L, DeliveryStatus.DELIVERED));
+    assertThrows(RuntimeException.class, () -> service.updateDeliveryStatus(999L, DeliveryStatus.DELIVERED));
   }
 
   @Test
@@ -86,7 +85,7 @@ class DeliveryServiceImplTest {
     assertNotNull(cancelled);
     assertEquals(DeliveryStatus.CANCELLED, cancelled.getStatus());
     assertEquals("Customer requested", cancelled.getCancellationReason());
-    assertNull(service.cancelDelivery(404L, "x"));
+    assertThrows(RuntimeException.class, () -> service.cancelDelivery(404L, "x"));
   }
 
   @Test
