@@ -200,7 +200,7 @@ public class DeliveryController {
   @IsAuthenticated
   public ResponseEntity<ApiResponse<DeliveryDTO>> updateDeliveryStatus(
       @PathVariable Long deliveryId,
-      @RequestParam DeliveryStatus status,
+      @RequestParam("status") DeliveryStatus status,
       Authentication authentication) {
     try {
       User user = permissionService.getAuthenticatedUser(authentication);
