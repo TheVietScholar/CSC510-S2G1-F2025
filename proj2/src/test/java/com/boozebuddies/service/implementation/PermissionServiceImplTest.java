@@ -95,7 +95,7 @@ class PermissionServiceImplTest {
     assigned.setId(5L);
     delivery.setDriver(assigned);
 
-    when(deliveryService.getDeliveryById(12L)).thenReturn(delivery);
+    // when(deliveryService.getDeliveryById(12L)).thenReturn(delivery);
 
     assertFalse(permissionService.driverCanAccessDelivery(auth, 12L));
   }
