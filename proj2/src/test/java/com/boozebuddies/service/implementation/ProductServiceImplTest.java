@@ -182,19 +182,31 @@ class ProductServiceImplTest {
 
         when(productRepository.findById(999L)).thenReturn(Optional.empty());
 
-        Product result = productService.updateProduct(999L, updatedProduct);
+    assertThrows(RuntimeException.class, () -> productService.updateProduct(999L, updatedProduct));
 
-        assertNull(result);
-        verify(productRepository, times(1)).findById(999L);
-        verify(productRepository, never()).save(any());
-    }
+    verify(productRepository, times(1)).findById(999L);
+    verify(productRepository, never()).save(any());
+  }
 
-    @Test
-    void testDeleteProduct_CallsRepositoryDelete() {
-        productService.deleteProduct(1L);
+  @Test
+  void testDeleteProduct_CallsRepositoryDelete() {
 
-        verify(productRepository, times(1)).deleteById(1L);
-    }
+    Product testProduct =
+        Product.builder()
+            .id(1L)
+            .name("To Be Deleted")
+            .price(new BigDecimal("4.99"))
+            .merchant(testMerchant)
+            .category(testCategory)
+            .available(true)
+            .build();
+
+    when(productRepository.findById(1L)).thenReturn(Optional.of(testProduct));
+
+    productService.deleteProduct(1L);
+
+    verify(productRepository, times(1)).save(testProduct);
+  }
 
     @Test
     void testSearchProducts_WithKeyword_ReturnsMatchingProducts() {
@@ -212,20 +224,12 @@ class ProductServiceImplTest {
             .name("Lager")
             .price(new BigDecimal("7.99"))
             .merchant(testMerchant)
-            .category(Category.builder().name("Beer Category").build())
-            .available(true)
-            .build();
-            
-        Product nonMatchingProduct = Product.builder()
-            .id(3L)
-            .name("Wine")
-            .price(new BigDecimal("15.99"))
-            .merchant(testMerchant)
-            .category(Category.builder().name("Wine Category").build())
+            .category(testCategory)
             .available(true)
             .build();
 
-        when(productRepository.findAll()).thenReturn(Arrays.asList(matchingProduct1, matchingProduct2, nonMatchingProduct));
+    when(productRepository.searchByKeyword("beer"))
+        .thenReturn(Arrays.asList(matchingProduct1, matchingProduct2));
 
         List<Product> result = productService.searchProducts("beer");
 
@@ -239,26 +243,28 @@ class ProductServiceImplTest {
         Product product1 = Product.builder().id(1L).name("Product1").build();
         Product product2 = Product.builder().id(2L).name("Product2").build();
 
-        when(productRepository.findAll()).thenReturn(Arrays.asList(product1, product2));
+    when(productRepository.findByAvailableTrue()).thenReturn(Arrays.asList(product1, product2));
 
         List<Product> result = productService.searchProducts("");
 
-        assertEquals(2, result.size());
-        verify(productRepository, times(1)).findAll();
-    }
+    assertEquals(2, result.size());
+    verify(productRepository, times(1)).findByAvailableTrue();
+  }
 
     @Test
     void testSearchProducts_NullKeyword_ReturnsAllProducts() {
         Product product1 = Product.builder().id(1L).name("Product1").build();
         Product product2 = Product.builder().id(2L).name("Product2").build();
 
-        when(productRepository.findAll()).thenReturn(Arrays.asList(product1, product2));
-
-        List<Product> result = productService.searchProducts(null);
+    when(productRepository.findByAvailableTrue()).thenReturn(Arrays.asList(product1, product2));
 
         assertEquals(2, result.size());
-        verify(productRepository, times(1)).findAll();
     }
+=======
+    assertEquals(2, result.size());
+    verify(productRepository, times(1)).findByAvailableTrue();
+  }
+>>>>>>> c557bc6 (Fixed Test code changes from role management feature implementation)
 
     @Test
     void testIsProductAvailable_AvailableProduct_ReturnsTrue() {
@@ -326,10 +332,8 @@ class ProductServiceImplTest {
 
         List<Product> result = productService.getAvailableProducts();
 
-        assertEquals(2, result.size());
-        assertTrue(result.stream().allMatch(Product::isAvailable));
-        assertTrue(result.stream().noneMatch(p -> !p.isAvailable()));
-    }
+    when(productRepository.findByAvailableTrue())
+        .thenReturn(Arrays.asList(availableProduct1, availableProduct2));
 
     @Test
     void testGetProductsByMerchant_ReturnsCorrectMerchantProducts() {
@@ -350,7 +354,7 @@ class ProductServiceImplTest {
             .available(true)
             .build();
 
-        when(productRepository.findAll()).thenReturn(Arrays.asList(merchant1Product, merchant2Product));
+    when(productRepository.findByMerchantId(1L)).thenReturn(Arrays.asList(merchant1Product));
 
         List<Product> result = productService.getProductsByMerchant(1L);
 
@@ -377,7 +381,8 @@ class ProductServiceImplTest {
             .available(false)
             .build();
 
-        when(productRepository.findAll()).thenReturn(Arrays.asList(availableProduct, unavailableProduct));
+    when(productRepository.findByMerchantIdAndAvailableTrue(1L))
+        .thenReturn(Arrays.asList(availableProduct));
 
         List<Product> result = productService.getAvailableProductsByMerchant(1L);
 
