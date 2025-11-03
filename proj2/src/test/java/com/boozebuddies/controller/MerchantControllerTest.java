@@ -10,6 +10,7 @@ import com.boozebuddies.entity.Merchant;
 import com.boozebuddies.entity.Order;
 import com.boozebuddies.mapper.MerchantMapper;
 import com.boozebuddies.service.MerchantService;
+import com.boozebuddies.service.PermissionService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalTime;
 import java.util.List;
@@ -37,6 +38,8 @@ class MerchantControllerTest {
   @MockBean private MerchantService merchantService;
 
   @MockBean private MerchantMapper merchantMapper;
+
+  @MockBean private PermissionService permissionService;
 
   private Merchant testMerchant;
   private MerchantDTO testMerchantDTO;
