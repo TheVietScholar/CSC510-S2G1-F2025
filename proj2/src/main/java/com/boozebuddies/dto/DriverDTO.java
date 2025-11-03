@@ -17,7 +17,7 @@ public class DriverDTO {
   private String vehicleType;
   private String licensePlate;
   private boolean isAvailable;
-  private CertificationStatus certificationStatus;
+  private String certificationStatus;
   private Certification certification;
   private Double currentLatitude;
   private Double currentLongitude;
