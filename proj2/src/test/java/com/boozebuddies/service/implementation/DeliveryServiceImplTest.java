@@ -27,20 +27,19 @@ class DeliveryServiceImplTest {
         service = new DeliveryServiceImpl(repository);
     }
 
-    @Test
-    @DisplayName("assignDriverToOrder creates delivery with PENDING status")
-    void assignDriverToOrder_createsPending() {
-        Order order = new Order();
-        order.setId(100L);
-        Driver driver = Driver.builder().id(10L).build();
+  @Test
+  @DisplayName("assignDriverToOrder creates delivery with PENDING status")
+  void assignDriverToOrder_createsPending() {
+    Order order = new Order();
+    order.setId(100L);
+    Driver driver = Driver.builder().id(10L).build();
+    when(repository.save(any(Delivery.class))).thenAnswer(inv -> inv.getArgument(0));
+    Delivery delivery = service.assignDriverToOrder(order, driver);
 
-        when(repository.save(any(Delivery.class))).thenAnswer(inv -> inv.getArgument(0));
-        Delivery delivery = service.assignDriverToOrder(order, driver);
-
-        assertEquals(order, delivery.getOrder());
-        assertEquals(driver, delivery.getDriver());
-        assertEquals(DeliveryStatus.PENDING, delivery.getStatus());
-    }
+    assertEquals(order, delivery.getOrder());
+    assertEquals(driver, delivery.getDriver());
+    assertEquals(DeliveryStatus.ASSIGNED, delivery.getStatus());
+  }
 
     @Test
     @DisplayName("updateDeliveryStatus updates status or returns null for missing id")
@@ -53,11 +52,11 @@ class DeliveryServiceImplTest {
         when(repository.findById(999L)).thenReturn(Optional.empty());
         when(repository.save(any(Delivery.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        Delivery updated = service.updateDeliveryStatus(1L, DeliveryStatus.IN_TRANSIT);
-        assertNotNull(updated);
-        assertEquals(DeliveryStatus.IN_TRANSIT, updated.getStatus());
-        assertNull(service.updateDeliveryStatus(999L, DeliveryStatus.DELIVERED));
-    }
+    Delivery updated = service.updateDeliveryStatus(1L, DeliveryStatus.IN_TRANSIT);
+    assertNotNull(updated);
+    assertEquals(DeliveryStatus.IN_TRANSIT, updated.getStatus());
+    assertThrows(RuntimeException.class, () -> service.updateDeliveryStatus(999L, DeliveryStatus.DELIVERED));
+  }
 
     @Test
     @DisplayName("cancelDelivery sets CANCELLED and reason or returns null if missing")
@@ -70,12 +69,12 @@ class DeliveryServiceImplTest {
         when(repository.findById(404L)).thenReturn(Optional.empty());
         when(repository.save(any(Delivery.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        Delivery cancelled = service.cancelDelivery(2L, "Customer requested");
-        assertNotNull(cancelled);
-        assertEquals(DeliveryStatus.CANCELLED, cancelled.getStatus());
-        assertEquals("Customer requested", cancelled.getCancellationReason());
-        assertNull(service.cancelDelivery(404L, "x"));
-    }
+    Delivery cancelled = service.cancelDelivery(2L, "Customer requested");
+    assertNotNull(cancelled);
+    assertEquals(DeliveryStatus.CANCELLED, cancelled.getStatus());
+    assertEquals("Customer requested", cancelled.getCancellationReason());
+    assertThrows(RuntimeException.class, () -> service.cancelDelivery(404L, "x"));
+  }
 
     @Test
     @DisplayName("getDeliveriesByDriver filters by driver id")

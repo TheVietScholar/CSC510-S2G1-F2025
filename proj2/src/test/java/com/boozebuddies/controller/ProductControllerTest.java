@@ -214,7 +214,7 @@ public class ProductControllerTest {
     @Test
     void testUpdateProduct_NonExistingProduct_ReturnsNotFound() {
         when(productService.getProductById(999L)).thenReturn(null);
-        when(permissionService.getAuthenticatedUser(mockAuth)).thenReturn(mockUser);
+        // when(permissionService.getAuthenticatedUser(mockAuth)).thenReturn(mockUser);
 
         var response = productController.updateProduct(999L, testProductDTO, mockAuth);
         ProductDTO data = getData(response.getBody());
@@ -241,7 +241,7 @@ public class ProductControllerTest {
     @Test
     void testDeleteProduct_NonExistingProduct_ReturnsNotFound() {
         when(productService.getProductById(999L)).thenReturn(null);
-        when(permissionService.getAuthenticatedUser(mockAuth)).thenReturn(mockUser);
+        // when(permissionService.getAuthenticatedUser(mockAuth)).thenReturn(mockUser);
 
         var response = productController.deleteProduct(999L, mockAuth);
         Void data = getData(response.getBody());
