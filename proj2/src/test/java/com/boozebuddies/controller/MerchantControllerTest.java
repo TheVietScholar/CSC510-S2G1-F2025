@@ -33,7 +33,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-@WebMvcTest(controllers = MerchantController.class,
+@WebMvcTest(
+    controllers = MerchantController.class,
     excludeFilters =
         @ComponentScan.Filter(
             type = FilterType.ASSIGNABLE_TYPE,

@@ -35,7 +35,8 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-@WebMvcTest(controllers = DriverController.class,
+@WebMvcTest(
+    controllers = DriverController.class,
     excludeFilters =
         @ComponentScan.Filter(
             type = FilterType.ASSIGNABLE_TYPE,
