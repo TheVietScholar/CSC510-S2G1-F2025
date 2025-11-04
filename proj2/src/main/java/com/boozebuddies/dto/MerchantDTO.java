@@ -21,4 +21,6 @@ public class MerchantDTO {
   private Double rating;
   private Integer totalRatings;
   private String imageUrl;
+  private Double latitude;
+  private Double longitude;
 }

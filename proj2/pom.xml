@@ -121,10 +121,27 @@
           <artifactId>maven-checkstyle-plugin</artifactId>
           <version>${checkstyle.plugin.version}</version>
         </plugin> -->
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <version>3.6.3</version> <!-- Use the latest stable version -->
+            <executions>
+                <execution>
+                    <id>attach-javadocs</id>
+                    <goals>
+                        <goal>jar</goal>
+                    </goals>
+                </execution>
+            </executions>
+            <configuration>
+                <!-- Optional: Configure Javadoc generation options -->
+                <source>17</source> <!-- Specify Java source version -->
+                <doclint>none</doclint> <!-- Disable doclint if needed -->
+                <!-- Add other configurations as required -->
+            </configuration>
+        </plugin>
       </plugins>
     </pluginManagement>
-
-    
 
     <plugins>
       <!-- Compiler plugin pinned to stable version -->

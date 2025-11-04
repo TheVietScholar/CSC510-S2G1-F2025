@@ -1,9 +1,11 @@
 package com.boozebuddies.service.implementation;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import com.boozebuddies.entity.Driver;
+import com.boozebuddies.exception.DriverNotFoundException;
 import com.boozebuddies.model.CertificationStatus;
 import com.boozebuddies.repository.DriverRepository;
 import java.util.Arrays;
@@ -44,13 +46,15 @@ class DriverServiceImplTest {
   void updateCertificationStatus_updatesOrNull() {
     Driver driver = Driver.builder().id(1L).name("Bob").build();
     when(repository.findById(1L)).thenReturn(Optional.of(driver));
-    when(repository.findById(999L)).thenReturn(Optional.empty());
+    when(repository.findById(999L)).thenThrow(DriverNotFoundException.class);
     when(repository.save(any(Driver.class))).thenAnswer(inv -> inv.getArgument(0));
 
     Driver updated = service.updateCertificationStatus(1L, CertificationStatus.APPROVED);
     assertNotNull(updated);
     assertEquals(CertificationStatus.APPROVED, updated.getCertificationStatus());
-    assertNull(service.updateCertificationStatus(999L, CertificationStatus.REVOKED));
+    assertThrows(
+        DriverNotFoundException.class,
+        () -> service.updateCertificationStatus(999L, CertificationStatus.REVOKED));
   }
 
   @Test
@@ -103,5 +107,83 @@ class DriverServiceImplTest {
     List<Driver> all = service.getAllDrivers();
     assertEquals(2, all.size());
     verify(repository).findAll();
+  }
+
+  @Test
+  @DisplayName("registerDriver throws exception when driver is null")
+  void registerDriver_throwsWhenNull() {
+    assertThrows(IllegalArgumentException.class, () -> service.registerDriver(null));
+  }
+
+  @Test
+  @DisplayName("updateDriver saves and returns driver")
+  void updateDriver_savesDriver() {
+    Driver driver = Driver.builder().id(5L).name("UpdatedDriver").build();
+    when(repository.save(driver)).thenReturn(driver);
+
+    Driver result = service.updateDriver(driver);
+    assertEquals(driver, result);
+    verify(repository).save(driver);
+  }
+
+  @Test
+  @DisplayName("updateDriverLocation updates coordinates and time when found")
+  void updateDriverLocation_updatesSuccessfully() {
+    Driver existing = Driver.builder().id(1L).name("GeoDriver").build();
+    when(repository.findById(1L)).thenReturn(Optional.of(existing));
+    when(repository.save(any(Driver.class))).thenAnswer(inv -> inv.getArgument(0));
+
+    Driver updated = service.updateDriverLocation(1L, 40.7128, -74.0060);
+
+    assertEquals(40.7128, updated.getCurrentLatitude());
+    assertEquals(-74.0060, updated.getCurrentLongitude());
+    assertNotNull(updated.getUpdatedAt());
+    verify(repository).save(any(Driver.class));
+  }
+
+  @Test
+  @DisplayName("updateDriverLocation throws when driver not found")
+  void updateDriverLocation_notFoundThrows() {
+    when(repository.findById(404L)).thenReturn(Optional.empty());
+    assertThrows(
+        IllegalArgumentException.class, () -> service.updateDriverLocation(404L, 0.0, 0.0));
+  }
+
+  @Test
+  @DisplayName("getDriverProfile returns driver when found")
+  void getDriverProfile_returnsDriver() {
+    var user = new com.boozebuddies.entity.User();
+    user.setId(10L);
+    Driver driver = Driver.builder().id(10L).name("ProfileDriver").build();
+    when(repository.findById(10L)).thenReturn(Optional.of(driver));
+
+    Driver found = service.getDriverProfile(user);
+
+    assertEquals(driver, found);
+    verify(repository).findById(10L);
+  }
+
+  @Test
+  @DisplayName("getDriverProfile throws when driver not found")
+  void getDriverProfile_notFoundThrows() {
+    var user = new com.boozebuddies.entity.User();
+    user.setId(99L);
+    when(repository.findById(99L)).thenReturn(Optional.empty());
+
+    assertThrows(IllegalArgumentException.class, () -> service.getDriverProfile(user));
+  }
+
+  @Test
+  @DisplayName("getNearbyAvailableDrivers delegates to repository")
+  void getNearbyAvailableDrivers_delegatesCall() {
+    Driver d = Driver.builder().id(1L).name("Nearby").build();
+    when(repository.findNearbyAvailableDrivers(10.0, 20.0, 5000.0))
+        .thenReturn(Collections.singletonList(d));
+
+    List<Driver> result = service.getNearbyAvailableDrivers(10.0, 20.0, 5000.0);
+
+    assertEquals(1, result.size());
+    assertEquals(d.getId(), result.get(0).getId());
+    verify(repository).findNearbyAvailableDrivers(10.0, 20.0, 5000.0);
   }
 }

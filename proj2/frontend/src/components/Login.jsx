@@ -3,14 +3,51 @@ import React, { useState } from 'react'
 const Login = ({ onLogin }) => {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    // Simple authentication - in real app, call your backend
+    setLoading(true)
+
+    try {
+      // Call your backend authentication endpoint
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password }),
+      })
+
+      if (response.ok) {
+        const userData = await response.json()
+        onLogin(userData) // userData should include role, merchantId, etc.
+      } else {
+        // Fallback to hardcoded for demo
+        handleHardcodedAuth()
+      }
+    } catch (error) {
+      // Fallback to hardcoded for demo
+      handleHardcodedAuth()
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleHardcodedAuth = () => {
+    // Simple authentication fallback
     if (username === 'user' && password === 'password') {
-      onLogin()
+      onLogin({ username: 'user', role: 'user' })
+    } else if (username === 'admin' && password === 'password') {
+      onLogin({ username: 'admin', role: 'admin' })
+    } else if (username === 'merchant1' && password === 'password') {
+      onLogin({ 
+        username: 'merchant1', 
+        role: 'merchant',
+        merchantId: 1 // This should come from the actual merchant user
+      })
     } else {
-      alert('Invalid credentials. Use: user / password')
+      alert('Invalid credentials')
     }
   }
 
@@ -62,8 +99,9 @@ const Login = ({ onLogin }) => {
         
         <div className="mt-6 text-center text-sm text-gray-600">
           <p>Demo credentials:</p>
-          <p className="font-mono">Username: user</p>
-          <p className="font-mono">Password: password</p>
+          <p className="font-mono">User: user / password</p>
+          <p className="font-mono">Admin: admin / password</p>
+          <p className="font-mono">Merchant: merchant1 / password</p>
         </div>
       </div>
     </div>

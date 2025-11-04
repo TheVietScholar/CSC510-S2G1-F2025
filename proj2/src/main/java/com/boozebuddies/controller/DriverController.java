@@ -3,15 +3,20 @@ package com.boozebuddies.controller;
 import com.boozebuddies.dto.ApiResponse;
 import com.boozebuddies.dto.DriverDTO;
 import com.boozebuddies.entity.Driver;
+import com.boozebuddies.entity.User;
+import com.boozebuddies.exception.DriverNotFoundException;
 import com.boozebuddies.mapper.DriverMapper;
-// import com.boozebuddies.entity.Certification;
 import com.boozebuddies.model.CertificationStatus;
+import com.boozebuddies.security.annotation.RoleAnnotations.*;
 import com.boozebuddies.service.DriverService;
-// import com.boozebuddies.service.ValidationService;
+import com.boozebuddies.service.PermissionService;
+import jakarta.validation.Valid;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -20,102 +25,152 @@ import org.springframework.web.bind.annotation.*;
 public class DriverController {
 
   private final DriverService driverService;
-  // private final ValidationService validationService;
   private final DriverMapper driverMapper;
+  private final PermissionService permissionService;
 
-  /** Register a new driver */
+  // ==================== ADMIN ENDPOINTS ====================
+
   @PostMapping("/register")
-  public ResponseEntity<ApiResponse<DriverDTO>> registerDriver(@RequestBody DriverDTO driverDTO) {
+  @IsAdmin
+  public ResponseEntity<ApiResponse<DriverDTO>> registerDriver(
+      @Valid @RequestBody DriverDTO driverDTO) {
     try {
       Driver driver = driverMapper.toEntity(driverDTO);
       Driver registeredDriver = driverService.registerDriver(driver);
       DriverDTO responseDTO = driverMapper.toDTO(registeredDriver);
 
-      return ResponseEntity.ok(ApiResponse.success(responseDTO, "Driver registered successfully"));
+      return ResponseEntity.status(HttpStatus.CREATED)
+          .body(ApiResponse.success(responseDTO, "Driver registered successfully"));
+    } catch (IllegalArgumentException e) {
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+          .body(ApiResponse.error("Driver registration failed: " + e.getMessage()));
     } catch (Exception e) {
-      return ResponseEntity.badRequest()
-          .body(ApiResponse.error("Failed to register driver: " + e.getMessage()));
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+          .body(ApiResponse.error("Driver registration failed: " + e.getMessage()));
     }
   }
 
-  /** Update driver certification status */
   @PutMapping("/{driverId}/certification")
+  @IsAdmin
   public ResponseEntity<ApiResponse<DriverDTO>> updateCertificationStatus(
-      @PathVariable Long driverId, @RequestParam CertificationStatus status) {
+      @PathVariable Long driverId, @RequestParam("status") CertificationStatus status) {
     try {
-      Driver driver = driverService.updateCertificationStatus(driverId, status);
-      if (driver == null) {
-        return ResponseEntity.notFound().build();
-      }
-      DriverDTO driverDTO = driverMapper.toDTO(driver);
+      Driver updatedDriver = driverService.updateCertificationStatus(driverId, status);
+      DriverDTO driverDTO = driverMapper.toDTO(updatedDriver);
       return ResponseEntity.ok(
           ApiResponse.success(driverDTO, "Certification status updated successfully"));
+    } catch (DriverNotFoundException e) {
+      return ResponseEntity.status(HttpStatus.NOT_FOUND)
+          .body(ApiResponse.error("Driver not found with ID: " + driverId));
     } catch (Exception e) {
-      return ResponseEntity.badRequest()
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST)
           .body(ApiResponse.error("Failed to update certification status: " + e.getMessage()));
     }
   }
 
-  /** Update driver availability */
-  @PutMapping("/{driverId}/availability")
-  public ResponseEntity<ApiResponse<DriverDTO>> updateAvailability(
-      @PathVariable Long driverId, @RequestParam boolean available) {
-    try {
-      Driver driver = driverService.updateAvailability(driverId, available);
-      if (driver == null) {
-        return ResponseEntity.notFound().build();
-      }
-      DriverDTO driverDTO = driverMapper.toDTO(driver);
-      return ResponseEntity.ok(ApiResponse.success(driverDTO, "Availability updated successfully"));
-    } catch (Exception e) {
-      return ResponseEntity.badRequest()
-          .body(ApiResponse.error("Failed to update availability: " + e.getMessage()));
-    }
-  }
-
-  /** Get all available drivers */
   @GetMapping("/available")
+  @IsAdmin
   public ResponseEntity<ApiResponse<List<DriverDTO>>> getAvailableDrivers() {
     try {
-      List<Driver> availableDrivers = driverService.getAvailableDrivers();
-      List<DriverDTO> driverDTOs =
-          availableDrivers.stream().map(driverMapper::toDTO).collect(Collectors.toList());
+      List<DriverDTO> drivers =
+          driverService.getAvailableDrivers().stream()
+              .map(driverMapper::toDTO)
+              .collect(Collectors.toList());
       return ResponseEntity.ok(
-          ApiResponse.success(driverDTOs, "Available drivers retrieved successfully"));
+          ApiResponse.success(drivers, "Available drivers retrieved successfully"));
     } catch (Exception e) {
-      return ResponseEntity.badRequest()
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST)
           .body(ApiResponse.error("Failed to retrieve available drivers: " + e.getMessage()));
     }
   }
 
-  /** Get driver by ID */
   @GetMapping("/{driverId}")
+  @IsAdmin
   public ResponseEntity<ApiResponse<DriverDTO>> getDriverById(@PathVariable Long driverId) {
     try {
       Driver driver = driverService.getDriverById(driverId);
-      if (driver == null) {
-        return ResponseEntity.notFound().build();
-      }
       DriverDTO driverDTO = driverMapper.toDTO(driver);
       return ResponseEntity.ok(ApiResponse.success(driverDTO, "Driver retrieved successfully"));
+    } catch (DriverNotFoundException e) {
+      return ResponseEntity.status(HttpStatus.NOT_FOUND)
+          .body(ApiResponse.error("Driver not found with ID: " + driverId));
     } catch (Exception e) {
-      return ResponseEntity.badRequest()
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST)
           .body(ApiResponse.error("Failed to retrieve driver: " + e.getMessage()));
     }
   }
 
-  /** Get all drivers */
   @GetMapping
+  @IsAdmin
   public ResponseEntity<ApiResponse<List<DriverDTO>>> getAllDrivers() {
     try {
-      List<Driver> allDrivers = driverService.getAllDrivers();
-      List<DriverDTO> driverDTOs =
-          allDrivers.stream().map(driverMapper::toDTO).collect(Collectors.toList());
-      return ResponseEntity.ok(
-          ApiResponse.success(driverDTOs, "All drivers retrieved successfully"));
+      List<DriverDTO> drivers =
+          driverService.getAllDrivers().stream()
+              .map(driverMapper::toDTO)
+              .collect(Collectors.toList());
+      return ResponseEntity.ok(ApiResponse.success(drivers, "All drivers retrieved successfully"));
     } catch (Exception e) {
-      return ResponseEntity.badRequest()
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST)
           .body(ApiResponse.error("Failed to retrieve drivers: " + e.getMessage()));
+    }
+  }
+
+  // ==================== DRIVER ENDPOINTS ====================
+
+  @GetMapping("/my-profile")
+  @IsDriver
+  public ResponseEntity<ApiResponse<DriverDTO>> getMyProfile(Authentication authentication) {
+    User user = permissionService.getAuthenticatedUser(authentication);
+    Driver driver = driverService.getDriverProfile(user);
+    DriverDTO driverDTO = driverMapper.toDTO(driver);
+    return ResponseEntity.ok(ApiResponse.success(driverDTO, "Your profile retrieved successfully"));
+  }
+
+  @PutMapping("/my-profile/availability")
+  @IsDriver
+  public ResponseEntity<ApiResponse<DriverDTO>> updateMyAvailability(
+      @RequestParam("available") boolean available, Authentication authentication) {
+    try {
+      User user = permissionService.getAuthenticatedUser(authentication);
+      Driver driver = driverService.updateAvailability(user.getDriver().getId(), available);
+      DriverDTO driverDTO = driverMapper.toDTO(driver);
+
+      String message =
+          available
+              ? "You are now available for deliveries"
+              : "You are now unavailable for deliveries";
+      return ResponseEntity.ok(ApiResponse.success(driverDTO, message));
+    } catch (DriverNotFoundException e) {
+      return ResponseEntity.status(HttpStatus.NOT_FOUND)
+          .body(ApiResponse.error("Driver not found for the authenticated user"));
+    } catch (Exception e) {
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+          .body(ApiResponse.error("Failed to update availability: " + e.getMessage()));
+    }
+  }
+
+  @PutMapping("/my-profile/location")
+  @IsDriver
+  public ResponseEntity<ApiResponse<DriverDTO>> updateMyLocation(
+      @RequestParam Double latitude,
+      @RequestParam Double longitude,
+      Authentication authentication) {
+    try {
+      User user = permissionService.getAuthenticatedUser(authentication);
+
+      if (user.getDriver() == null) {
+        return ResponseEntity.badRequest()
+            .body(ApiResponse.error("No driver profile found for this user"));
+      }
+
+      Driver updatedDriver =
+          driverService.updateDriverLocation(user.getDriver().getId(), latitude, longitude);
+      DriverDTO driverDTO = driverMapper.toDTO(updatedDriver);
+
+      return ResponseEntity.ok(ApiResponse.success(driverDTO, "Location updated successfully"));
+    } catch (Exception e) {
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+          .body(ApiResponse.error("Failed to update location: " + e.getMessage()));
     }
   }
 }

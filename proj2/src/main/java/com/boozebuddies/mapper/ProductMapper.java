@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class ProductMapper {
 
+  /** Convert a Product entity to a ProductDTO for API responses. */
   public ProductDTO toDTO(Product product) {
     if (product == null) return null;
 
@@ -26,21 +27,28 @@ public class ProductMapper {
         .build();
   }
 
-  public Product toEntity(ProductDTO productDTO) {
-    if (productDTO == null) return null;
+  /**
+   * Convert a ProductDTO to a Product entity. (Relationships like category/merchant should be set
+   * in the service layer.)
+   */
+  public Product toEntity(ProductDTO dto) {
+    if (dto == null) return null;
 
     return Product.builder()
-        .id(productDTO.getId())
-        .name(productDTO.getName())
-        .description(productDTO.getDescription())
-        .price(productDTO.getPrice())
-        .isAlcohol(productDTO.isAlcohol())
-        .alcoholContent(productDTO.getAlcoholContent())
-        .imageUrl(productDTO.getImageUrl())
-        .available(productDTO.isAvailable())
+        .id(dto.getId())
+        .name(dto.getName())
+        .description(dto.getDescription())
+        .price(dto.getPrice())
+        .isAlcohol(dto.isAlcohol())
+        .alcoholContent(dto.getAlcoholContent())
+        .imageUrl(dto.getImageUrl())
+        .available(dto.isAvailable())
         .build();
   }
 
+  /**
+   * Convert a CreateProductRequest to a Product entity. (Used for creating new products via API.)
+   */
   public Product toEntity(CreateProductRequest request) {
     if (request == null) return null;
 
@@ -51,7 +59,7 @@ public class ProductMapper {
         .isAlcohol(request.isAlcohol())
         .alcoholContent(request.getAlcoholContent())
         .imageUrl(request.getImageUrl())
-        .available(true) // Default to available
+        .available(true) // default to available for MVP
         .build();
   }
 }

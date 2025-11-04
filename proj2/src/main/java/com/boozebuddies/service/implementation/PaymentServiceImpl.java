@@ -101,6 +101,12 @@ public class PaymentServiceImpl implements PaymentService {
     return paymentRepository.findByOrder_Id(orderId);
   }
 
+  /** Retrieves all payments in the system (paginated). */
+  @Override
+  public Page<Payment> getAllPayments(Pageable pageable) {
+    return paymentRepository.findAll(pageable);
+  }
+
   /** Calculates the total revenue generated within a given period. */
   @Override
   public BigDecimal calculateTotalRevenue(LocalDateTime startDate, LocalDateTime endDate) {

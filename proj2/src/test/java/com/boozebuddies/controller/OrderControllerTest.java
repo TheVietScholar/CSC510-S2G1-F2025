@@ -1,55 +1,92 @@
 package com.boozebuddies.controller;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import com.boozebuddies.dto.ApiResponse;
-import com.boozebuddies.dto.CreateOrderRequest;
-import com.boozebuddies.dto.OrderDTO;
-import com.boozebuddies.dto.OrderItemRequest;
-import com.boozebuddies.entity.Merchant;
-import com.boozebuddies.entity.Order;
-import com.boozebuddies.entity.OrderItem;
-import com.boozebuddies.entity.Product;
-import com.boozebuddies.entity.User;
+import com.boozebuddies.config.TestSecurityConfig;
+import com.boozebuddies.dto.*;
+import com.boozebuddies.entity.*;
+import com.boozebuddies.mapper.OrderMapper;
 import com.boozebuddies.model.OrderStatus;
+import com.boozebuddies.model.Role;
+import com.boozebuddies.security.JwtAuthenticationFilter;
 import com.boozebuddies.service.OrderService;
+import com.boozebuddies.service.PermissionService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
+import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
 
-@ExtendWith(MockitoExtension.class)
+@WebMvcTest(
+    controllers = OrderController.class,
+    excludeFilters =
+        @ComponentScan.Filter(
+            type = FilterType.ASSIGNABLE_TYPE,
+            classes = JwtAuthenticationFilter.class))
+@AutoConfigureMockMvc(addFilters = false)
+@Import(TestSecurityConfig.class)
+@DisplayName("OrderController Tests")
 public class OrderControllerTest {
 
-  @Mock private OrderService orderService;
+  @Autowired private MockMvc mockMvc;
 
-  @InjectMocks private OrderController orderController;
+  @Autowired private ObjectMapper objectMapper;
 
-  private Order testOrder;
+  @MockBean private OrderService orderService;
+  @MockBean private OrderMapper orderMapper;
+  @MockBean private PermissionService permissionService;
+
   private User testUser;
+  private User adminUser;
+  private User merchantAdminUser;
+  private User driverUser;
   private Merchant testMerchant;
+  private Order testOrder;
+  private OrderDTO testOrderDTO;
   private OrderItem testOrderItem;
   private Product testProduct;
   private CreateOrderRequest testCreateRequest;
+  private Driver testDriver;
 
   @BeforeEach
   void setUp() {
+    // Test user
     testUser = User.builder().id(1L).name("John Doe").build();
+    testUser.addRole(Role.USER);
 
+    // Admin user
+    adminUser = User.builder().id(99L).name("Admin").build();
+    adminUser.setRoles(Set.of(Role.ADMIN));
+
+    // Merchant admin user
+    merchantAdminUser = User.builder().id(20L).name("Merchant Admin").merchantId(1L).build();
+    merchantAdminUser.addRole(Role.MERCHANT_ADMIN);
+
+    // Driver user
+    testDriver = Driver.builder().id(5L).name("Driver Joe").build();
+    driverUser = User.builder().id(30L).name("Driver User").build();
+    driverUser.addRole(Role.DRIVER);
+    driverUser.setDriver(testDriver);
+    testDriver.setUser(driverUser);
+
+    // Merchant
     testMerchant = Merchant.builder().id(1L).name("Test Liquor Store").build();
 
+    // Product
     testProduct =
         Product.builder()
             .id(1L)
@@ -58,6 +95,7 @@ public class OrderControllerTest {
             .merchant(testMerchant)
             .build();
 
+    // Order Item
     testOrderItem =
         OrderItem.builder()
             .id(1L)
@@ -66,6 +104,7 @@ public class OrderControllerTest {
             .unitPrice(new BigDecimal("19.99"))
             .build();
 
+    // Order
     testOrder =
         Order.builder()
             .id(1L)
@@ -77,149 +116,672 @@ public class OrderControllerTest {
             .createdAt(LocalDateTime.now())
             .build();
 
+    // Order DTO
+    testOrderDTO =
+        OrderDTO.builder()
+            .id(1L)
+            .userId(1L)
+            .merchantId(1L)
+            .totalAmount(new BigDecimal("39.98"))
+            .status("PENDING")
+            .build();
+
+    // Create Order Request
     testCreateRequest =
         CreateOrderRequest.builder()
             .userId(1L)
             .merchantId(1L)
             .items(
-                Arrays.asList(
+                List.of(
                     OrderItemRequest.builder()
                         .productId(1L)
                         .quantity(2)
-                        .unitPrice(new BigDecimal("10.00"))
+                        .unitPrice(new BigDecimal("19.99"))
                         .build()))
             .build();
   }
 
+  // ==================== CREATE ORDER TESTS ====================
+
   @Test
-  void createOrder_Success() {
+  @DisplayName("POST /api/orders should return 200 on success")
+  void createOrder_Success() throws Exception {
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
+    when(orderMapper.toEntity(any(CreateOrderRequest.class))).thenReturn(testOrder);
     when(orderService.createOrder(any(Order.class))).thenReturn(testOrder);
+    when(orderMapper.toDTO(testOrder)).thenReturn(testOrderDTO);
 
-    ResponseEntity<ApiResponse<OrderDTO>> response = orderController.createOrder(testCreateRequest);
-
-    assertEquals(HttpStatus.OK, response.getStatusCode());
-    ApiResponse<OrderDTO> body = response.getBody();
-    assertNotNull(body);
-    assertTrue(body.isSuccess());
-    assertEquals("Order created successfully", body.getMessage());
+    mockMvc
+        .perform(
+            post("/api/orders")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(testCreateRequest)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.success").value(true))
+        .andExpect(jsonPath("$.message").value("Order created successfully"))
+        .andExpect(jsonPath("$.data.id").value(1));
   }
 
   @Test
-  void getOrderById_Found() {
+  @DisplayName(
+      "POST /api/orders should return 403 when user tries to create order for someone else")
+  void createOrder_AccessDenied() throws Exception {
+    CreateOrderRequest invalidRequest =
+        CreateOrderRequest.builder()
+            .userId(99L)
+            .merchantId(1L)
+            .items(testCreateRequest.getItems())
+            .build();
+
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
+
+    mockMvc
+        .perform(
+            post("/api/orders")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(invalidRequest)))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("only create orders for yourself")));
+  }
+
+  @Test
+  @DisplayName("POST /api/orders should set userId from authenticated user when null")
+  void createOrder_NullUserId_Success() throws Exception {
+    CreateOrderRequest requestWithNullUserId =
+        CreateOrderRequest.builder()
+            .userId(null)
+            .merchantId(1L)
+            .items(testCreateRequest.getItems())
+            .build();
+
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
+    when(orderMapper.toEntity(any(CreateOrderRequest.class))).thenReturn(testOrder);
+    when(orderService.createOrder(any(Order.class))).thenReturn(testOrder);
+    when(orderMapper.toDTO(testOrder)).thenReturn(testOrderDTO);
+
+    mockMvc
+        .perform(
+            post("/api/orders")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(requestWithNullUserId)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.success").value(true));
+  }
+
+  @Test
+  @DisplayName("POST /api/orders should return 400 on exception")
+  void createOrder_Exception() throws Exception {
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
+    when(orderMapper.toEntity(any(CreateOrderRequest.class))).thenReturn(testOrder);
+    when(orderService.createOrder(any(Order.class)))
+        .thenThrow(new RuntimeException("Order creation failed"));
+
+    mockMvc
+        .perform(
+            post("/api/orders")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(testCreateRequest)))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("Failed to create order")));
+  }
+
+  // ==================== GET ORDER BY ID TESTS ====================
+
+  @Test
+  @DisplayName("GET /api/orders/{id} should return 200 with order data")
+  void getOrderById_Success() throws Exception {
     when(orderService.getOrderById(1L)).thenReturn(Optional.of(testOrder));
+    when(orderMapper.toDTO(testOrder)).thenReturn(testOrderDTO);
 
-    ResponseEntity<ApiResponse<OrderDTO>> response = orderController.getOrderById(1L);
-
-    assertEquals(HttpStatus.OK, response.getStatusCode());
-    ApiResponse<OrderDTO> body = response.getBody();
-    assertNotNull(body);
-    assertTrue(body.isSuccess());
-    assertEquals("Order retrieved successfully", body.getMessage());
+    mockMvc
+        .perform(get("/api/orders/1"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.success").value(true))
+        .andExpect(jsonPath("$.message").value("Order retrieved successfully"))
+        .andExpect(jsonPath("$.data.id").value(1));
   }
 
   @Test
-  void getOrderById_NotFound() {
+  @DisplayName("GET /api/orders/{id} should return 404 when order not found")
+  void getOrderById_NotFound() throws Exception {
     when(orderService.getOrderById(99L)).thenReturn(Optional.empty());
 
-    ResponseEntity<ApiResponse<OrderDTO>> response = orderController.getOrderById(99L);
-
-    assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    mockMvc.perform(get("/api/orders/99")).andExpect(status().isNotFound());
   }
 
   @Test
-  void getOrdersByUser_Success() {
+  @DisplayName("GET /api/orders/{id} should return 400 with invalid ID")
+  void getOrderById_InvalidId() throws Exception {
+    mockMvc
+        .perform(get("/api/orders/0"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(jsonPath("$.message").value("Invalid order ID"));
+
+    verify(orderService, never()).getOrderById(any());
+  }
+
+  @Test
+  @DisplayName("GET /api/orders/{id} should return 400 with negative ID")
+  void getOrderById_NegativeId() throws Exception {
+    mockMvc
+        .perform(get("/api/orders/-1"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(jsonPath("$.message").value("Invalid order ID"));
+
+    verify(orderService, never()).getOrderById(any());
+  }
+
+  @Test
+  @DisplayName("GET /api/orders/{id} should return 400 on exception")
+  void getOrderById_Exception() throws Exception {
+    when(orderService.getOrderById(1L)).thenThrow(new RuntimeException("Database error"));
+
+    mockMvc
+        .perform(get("/api/orders/1"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("Failed to retrieve order")));
+  }
+
+  // ==================== GET MY ORDERS TESTS ====================
+
+  @Test
+  @DisplayName("GET /api/orders/my-orders should return 200 with user's orders")
+  void getMyOrders_Success() throws Exception {
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
     when(orderService.getOrdersByUser(1L)).thenReturn(List.of(testOrder));
+    when(orderMapper.toDTO(testOrder)).thenReturn(testOrderDTO);
 
-    ResponseEntity<ApiResponse<List<OrderDTO>>> response = orderController.getOrdersByUser(1L);
-
-    assertEquals(HttpStatus.OK, response.getStatusCode());
-    ApiResponse<List<OrderDTO>> body = response.getBody();
-    assertNotNull(body);
-    assertTrue(body.isSuccess());
-    assertEquals("User orders retrieved successfully", body.getMessage());
+    mockMvc
+        .perform(get("/api/orders/my-orders"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.success").value(true))
+        .andExpect(jsonPath("$.message").value("Your orders retrieved successfully"))
+        .andExpect(jsonPath("$.data").isArray())
+        .andExpect(jsonPath("$.data[0].id").value(1));
   }
 
   @Test
-  void updateOrderStatus_Success() {
-    when(orderService.updateOrderStatus(eq(1L), eq("CONFIRMED"))).thenReturn(testOrder);
+  @DisplayName("GET /api/orders/my-orders should return 200 with empty list")
+  void getMyOrders_EmptyList() throws Exception {
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
+    when(orderService.getOrdersByUser(1L)).thenReturn(List.of());
 
-    ResponseEntity<ApiResponse<OrderDTO>> response =
-        orderController.updateOrderStatus(1L, "CONFIRMED");
-
-    assertEquals(HttpStatus.OK, response.getStatusCode());
-    ApiResponse<OrderDTO> body = response.getBody();
-    assertNotNull(body);
-    assertTrue(body.isSuccess());
-    assertEquals("Order status updated successfully", body.getMessage());
+    mockMvc
+        .perform(get("/api/orders/my-orders"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.success").value(true))
+        .andExpect(jsonPath("$.data").isArray())
+        .andExpect(jsonPath("$.data.length()").value(0));
   }
 
   @Test
-  void updateOrderStatus_NotFound() {
-    when(orderService.updateOrderStatus(eq(99L), anyString()))
-        .thenThrow(new IllegalArgumentException("Order not found"));
+  @DisplayName("GET /api/orders/my-orders should return 400 on exception")
+  void getMyOrders_Exception() throws Exception {
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
+    when(orderService.getOrdersByUser(1L)).thenThrow(new RuntimeException("Database error"));
 
-    ResponseEntity<ApiResponse<OrderDTO>> response =
-        orderController.updateOrderStatus(99L, "CONFIRMED");
+    mockMvc
+        .perform(get("/api/orders/my-orders"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("Failed to retrieve your orders")));
+  }
 
-    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-    ApiResponse<OrderDTO> body = response.getBody();
-    assertNotNull(body);
-    assertFalse(body.isSuccess());
-    assertEquals("Failed to update order status: Order not found", body.getMessage());
+  // ==================== GET ORDERS BY USER (ADMIN) TESTS ====================
+
+  @Test
+  @DisplayName("GET /api/orders/user/{userId} should return 200 with user's orders")
+  void getOrdersByUser_Success() throws Exception {
+    when(orderService.getOrdersByUser(1L)).thenReturn(List.of(testOrder));
+    when(orderMapper.toDTO(testOrder)).thenReturn(testOrderDTO);
+
+    mockMvc
+        .perform(get("/api/orders/user/1"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.success").value(true))
+        .andExpect(jsonPath("$.message").value("User orders retrieved successfully"))
+        .andExpect(jsonPath("$.data").isArray())
+        .andExpect(jsonPath("$.data[0].id").value(1));
   }
 
   @Test
-  void cancelOrder_Success() {
-    Order cancelledOrder = Order.builder().id(1L).status(OrderStatus.CANCELLED).build();
+  @DisplayName("GET /api/orders/user/{userId} should return 400 with invalid ID")
+  void getOrdersByUser_InvalidId() throws Exception {
+    mockMvc
+        .perform(get("/api/orders/user/0"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(jsonPath("$.message").value("Invalid user ID"));
 
-    when(orderService.cancelOrder(1L)).thenReturn(cancelledOrder);
-
-    ResponseEntity<ApiResponse<OrderDTO>> response = orderController.cancelOrder(1L);
-
-    assertEquals(HttpStatus.OK, response.getStatusCode());
-    ApiResponse<OrderDTO> body = response.getBody();
-    assertNotNull(body);
-    assertTrue(body.isSuccess());
-    assertEquals("Order cancelled successfully", body.getMessage());
+    verify(orderService, never()).getOrdersByUser(any());
   }
 
   @Test
-  void cancelOrder_NotFound() {
-    when(orderService.cancelOrder(99L)).thenThrow(new IllegalArgumentException("Order not found"));
+  @DisplayName("GET /api/orders/user/{userId} should return 400 with negative ID")
+  void getOrdersByUser_NegativeId() throws Exception {
+    mockMvc
+        .perform(get("/api/orders/user/-1"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(jsonPath("$.message").value("Invalid user ID"));
 
-    ResponseEntity<ApiResponse<OrderDTO>> response = orderController.cancelOrder(99L);
-
-    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-    ApiResponse<OrderDTO> body = response.getBody();
-    assertNotNull(body);
-    assertFalse(body.isSuccess());
-    assertEquals("Failed to cancel order: Order not found", body.getMessage());
+    verify(orderService, never()).getOrdersByUser(any());
   }
 
   @Test
-  void createOrder_ValidationError() {
-    CreateOrderRequest invalidRequest = CreateOrderRequest.builder().build();
-    when(orderService.createOrder(any(Order.class)))
-        .thenThrow(new IllegalArgumentException("Invalid order data"));
+  @DisplayName("GET /api/orders/user/{userId} should return 400 on exception")
+  void getOrdersByUser_Exception() throws Exception {
+    when(orderService.getOrdersByUser(1L)).thenThrow(new RuntimeException("Database error"));
 
-    ResponseEntity<ApiResponse<OrderDTO>> response = orderController.createOrder(invalidRequest);
+    mockMvc
+        .perform(get("/api/orders/user/1"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("Failed to retrieve user orders")));
+  }
 
-    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-    ApiResponse<OrderDTO> body = response.getBody();
-    assertNotNull(body);
-    assertFalse(body.isSuccess());
-    assertEquals("Failed to create order: Invalid order data", body.getMessage());
+  // ==================== GET ALL ORDERS (ADMIN) TESTS ====================
+
+  @Test
+  @DisplayName("GET /api/orders should return 200 with all orders")
+  void getAllOrders_Success() throws Exception {
+    Order order2 = Order.builder().id(2L).user(testUser).merchant(testMerchant).build();
+    OrderDTO orderDTO2 = OrderDTO.builder().id(2L).userId(1L).merchantId(1L).build();
+
+    when(orderService.getAllOrders()).thenReturn(List.of(testOrder, order2));
+    when(orderMapper.toDTO(testOrder)).thenReturn(testOrderDTO);
+    when(orderMapper.toDTO(order2)).thenReturn(orderDTO2);
+
+    mockMvc
+        .perform(get("/api/orders"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.success").value(true))
+        .andExpect(jsonPath("$.message").value("All orders retrieved successfully"))
+        .andExpect(jsonPath("$.data").isArray())
+        .andExpect(jsonPath("$.data.length()").value(2));
   }
 
   @Test
-  void updateOrderStatus_InvalidStatus() {
-    ResponseEntity<ApiResponse<OrderDTO>> response =
-        orderController.updateOrderStatus(1L, "INVALID_STATUS");
+  @DisplayName("GET /api/orders should return 200 with empty list")
+  void getAllOrders_EmptyList() throws Exception {
+    when(orderService.getAllOrders()).thenReturn(List.of());
 
-    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-    ApiResponse<OrderDTO> body = response.getBody();
-    assertNotNull(body);
-    assertFalse(body.isSuccess());
-    assertTrue(body.getMessage().contains("Failed to update order status"));
+    mockMvc
+        .perform(get("/api/orders"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.success").value(true))
+        .andExpect(jsonPath("$.data").isArray())
+        .andExpect(jsonPath("$.data.length()").value(0));
+  }
+
+  @Test
+  @DisplayName("GET /api/orders should return 400 on exception")
+  void getAllOrders_Exception() throws Exception {
+    when(orderService.getAllOrders()).thenThrow(new RuntimeException("Database error"));
+
+    mockMvc
+        .perform(get("/api/orders"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("Failed to retrieve orders")));
+  }
+
+  // ==================== GET MY MERCHANT ORDERS TESTS ====================
+
+  @Test
+  @DisplayName("GET /api/orders/merchant/my-orders should return 200 with merchant's orders")
+  void getMyMerchantOrders_Success() throws Exception {
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(merchantAdminUser);
+    when(orderService.getOrdersByMerchant(1L)).thenReturn(List.of(testOrder));
+    when(orderMapper.toDTO(testOrder)).thenReturn(testOrderDTO);
+
+    mockMvc
+        .perform(get("/api/orders/merchant/my-orders"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.success").value(true))
+        .andExpect(jsonPath("$.message").value("Your merchant orders retrieved successfully"))
+        .andExpect(jsonPath("$.data").isArray())
+        .andExpect(jsonPath("$.data[0].id").value(1));
+  }
+
+  @Test
+  @DisplayName("GET /api/orders/merchant/my-orders should return 400 when no merchant assigned")
+  void getMyMerchantOrders_NoMerchantAssigned() throws Exception {
+    User adminWithoutMerchant =
+        User.builder().id(20L).name("Admin Without Merchant").merchantId(null).build();
+    adminWithoutMerchant.addRole(Role.MERCHANT_ADMIN);
+
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(adminWithoutMerchant);
+
+    mockMvc
+        .perform(get("/api/orders/merchant/my-orders"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(jsonPath("$.message").value("No merchant assigned to this admin"));
+
+    verify(orderService, never()).getOrdersByMerchant(any());
+  }
+
+  @Test
+  @DisplayName("GET /api/orders/merchant/my-orders should return 400 on exception")
+  void getMyMerchantOrders_Exception() throws Exception {
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(merchantAdminUser);
+    when(orderService.getOrdersByMerchant(1L)).thenThrow(new RuntimeException("Database error"));
+
+    mockMvc
+        .perform(get("/api/orders/merchant/my-orders"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("Failed to retrieve merchant orders")));
+  }
+
+  // ==================== GET ORDERS BY MERCHANT TESTS ====================
+
+  @Test
+  @DisplayName("GET /api/orders/merchant/{merchantId} should return 200 for admin")
+  void getOrdersByMerchant_AdminSuccess() throws Exception {
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(adminUser);
+    when(orderService.getOrdersByMerchant(1L)).thenReturn(List.of(testOrder));
+    when(orderMapper.toDTO(testOrder)).thenReturn(testOrderDTO);
+
+    mockMvc
+        .perform(get("/api/orders/merchant/1"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.success").value(true))
+        .andExpect(jsonPath("$.message").value("Merchant orders retrieved successfully"))
+        .andExpect(jsonPath("$.data").isArray());
+  }
+
+  @Test
+  @DisplayName(
+      "GET /api/orders/merchant/{merchantId} should return 200 for merchant admin viewing own merchant")
+  void getOrdersByMerchant_MerchantAdminSuccess() throws Exception {
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(merchantAdminUser);
+    when(orderService.getOrdersByMerchant(1L)).thenReturn(List.of(testOrder));
+    when(orderMapper.toDTO(testOrder)).thenReturn(testOrderDTO);
+
+    mockMvc
+        .perform(get("/api/orders/merchant/1"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.success").value(true));
+  }
+
+  @Test
+  @DisplayName(
+      "GET /api/orders/merchant/{merchantId} should return 403 when merchant admin tries to view other merchant")
+  void getOrdersByMerchant_AccessDenied() throws Exception {
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(merchantAdminUser);
+
+    mockMvc
+        .perform(get("/api/orders/merchant/999"))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(
+            jsonPath("$.message")
+                .value(
+                    org.hamcrest.Matchers.containsString(
+                        "only view orders for your own merchant")));
+
+    verify(orderService, never()).getOrdersByMerchant(999L);
+  }
+
+  @Test
+  @DisplayName("GET /api/orders/merchant/{merchantId} should return 400 with invalid ID")
+  void getOrdersByMerchant_InvalidId() throws Exception {
+    mockMvc
+        .perform(get("/api/orders/merchant/0"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(jsonPath("$.message").value("Invalid merchant ID"));
+
+    verify(orderService, never()).getOrdersByMerchant(any());
+  }
+
+  @Test
+  @DisplayName("GET /api/orders/merchant/{merchantId} should return 400 with negative ID")
+  void getOrdersByMerchant_NegativeId() throws Exception {
+    mockMvc
+        .perform(get("/api/orders/merchant/-1"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(jsonPath("$.message").value("Invalid merchant ID"));
+
+    verify(orderService, never()).getOrdersByMerchant(any());
+  }
+
+  @Test
+  @DisplayName("GET /api/orders/merchant/{merchantId} should return 400 on exception")
+  void getOrdersByMerchant_Exception() throws Exception {
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(adminUser);
+    when(orderService.getOrdersByMerchant(1L)).thenThrow(new RuntimeException("Database error"));
+
+    mockMvc
+        .perform(get("/api/orders/merchant/1"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("Failed to retrieve merchant orders")));
+  }
+
+  // ==================== GET DRIVER ORDERS TESTS ====================
+
+  @Test
+  @DisplayName("GET /api/orders/driver/assigned should return 200 with driver's orders")
+  void getDriverOrders_Success() throws Exception {
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(driverUser);
+    when(orderService.getOrdersByDriver(5L)).thenReturn(List.of(testOrder));
+    when(orderMapper.toDTO(testOrder)).thenReturn(testOrderDTO);
+
+    mockMvc
+        .perform(get("/api/orders/driver/assigned"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.success").value(true))
+        .andExpect(jsonPath("$.message").value("Your assigned orders retrieved successfully"))
+        .andExpect(jsonPath("$.data").isArray())
+        .andExpect(jsonPath("$.data[0].id").value(1));
+  }
+
+  @Test
+  @DisplayName("GET /api/orders/driver/assigned should return 400 when no driver profile")
+  void getDriverOrders_NoDriverProfile() throws Exception {
+    User userWithoutDriver = User.builder().id(30L).name("User Without Driver").build();
+    userWithoutDriver.addRole(Role.DRIVER);
+
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(userWithoutDriver);
+
+    mockMvc
+        .perform(get("/api/orders/driver/assigned"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(jsonPath("$.message").value("No driver profile found for this user"));
+
+    verify(orderService, never()).getOrdersByDriver(any());
+  }
+
+  @Test
+  @DisplayName("GET /api/orders/driver/assigned should return 400 on exception")
+  void getDriverOrders_Exception() throws Exception {
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(driverUser);
+    when(orderService.getOrdersByDriver(5L)).thenThrow(new RuntimeException("Database error"));
+
+    mockMvc
+        .perform(get("/api/orders/driver/assigned"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("Failed to retrieve driver orders")));
+  }
+
+  // ==================== CANCEL ORDER TESTS ====================
+
+  @Test
+  @DisplayName("POST /api/orders/{id}/cancel should return 200 on success")
+  void cancelOrder_Success() throws Exception {
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
+    when(orderService.getOrderById(1L)).thenReturn(Optional.of(testOrder));
+    when(orderService.cancelOrder(1L)).thenReturn(testOrder);
+    when(orderMapper.toDTO(testOrder)).thenReturn(testOrderDTO);
+
+    mockMvc
+        .perform(post("/api/orders/1/cancel"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.success").value(true))
+        .andExpect(jsonPath("$.message").value("Order cancelled successfully"));
+  }
+
+  @Test
+  @DisplayName("POST /api/orders/{id}/cancel should return 403 when user doesn't own order")
+  void cancelOrder_NotOwner() throws Exception {
+    User otherUser = User.builder().id(2L).build();
+    Order orderForOther = Order.builder().id(1L).user(otherUser).build();
+
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
+    when(orderService.getOrderById(1L)).thenReturn(Optional.of(orderForOther));
+
+    mockMvc
+        .perform(post("/api/orders/1/cancel"))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("only cancel your own orders")));
+  }
+
+  @Test
+  @DisplayName("POST /api/orders/{id}/cancel should return 400 with invalid ID")
+  void cancelOrder_InvalidId() throws Exception {
+    mockMvc
+        .perform(post("/api/orders/0/cancel"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(jsonPath("$.message").value("Invalid order ID"));
+
+    verify(orderService, never()).getOrderById(any());
+  }
+
+  @Test
+  @DisplayName("POST /api/orders/{id}/cancel should return 404 when order not found")
+  void cancelOrder_NotFound() throws Exception {
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
+    when(orderService.getOrderById(99L)).thenReturn(Optional.empty());
+
+    mockMvc.perform(post("/api/orders/99/cancel")).andExpect(status().isNotFound());
+  }
+
+  @Test
+  @DisplayName("POST /api/orders/{id}/cancel should return 403 when order has null user")
+  void cancelOrder_NullUser() throws Exception {
+    Order orderWithNullUser = Order.builder().id(1L).user(null).build();
+
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
+    when(orderService.getOrderById(1L)).thenReturn(Optional.of(orderWithNullUser));
+
+    mockMvc
+        .perform(post("/api/orders/1/cancel"))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.success").value(false));
+  }
+
+  @Test
+  @DisplayName("POST /api/orders/{id}/cancel should return 400 on exception")
+  void cancelOrder_Exception() throws Exception {
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
+    when(orderService.getOrderById(1L)).thenReturn(Optional.of(testOrder));
+    when(orderService.cancelOrder(1L)).thenThrow(new RuntimeException("Cancellation failed"));
+
+    mockMvc
+        .perform(post("/api/orders/1/cancel"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("Failed to cancel order")));
+  }
+
+  // ==================== UPDATE ORDER STATUS TESTS ====================
+
+  @Test
+  @DisplayName("PUT /api/orders/{id}/status should return 200 on success")
+  void updateOrderStatus_Success() throws Exception {
+    when(orderService.getOrderById(1L)).thenReturn(Optional.of(testOrder));
+    when(orderService.updateOrderStatus(1L, "CONFIRMED")).thenReturn(testOrder);
+    when(orderMapper.toDTO(testOrder)).thenReturn(testOrderDTO);
+
+    mockMvc
+        .perform(put("/api/orders/1/status").param("status", "CONFIRMED"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.success").value(true))
+        .andExpect(jsonPath("$.message").value("Order status updated successfully"));
+  }
+
+  @Test
+  @DisplayName("PUT /api/orders/{id}/status should return 404 when order not found")
+  void updateOrderStatus_NotFound() throws Exception {
+    when(orderService.getOrderById(99L)).thenReturn(Optional.empty());
+
+    mockMvc
+        .perform(put("/api/orders/99/status").param("status", "CONFIRMED"))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  @DisplayName("PUT /api/orders/{id}/status should return 400 with invalid ID")
+  void updateOrderStatus_InvalidId() throws Exception {
+    mockMvc
+        .perform(put("/api/orders/0/status").param("status", "CONFIRMED"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(jsonPath("$.message").value("Invalid order ID"));
+
+    verify(orderService, never()).getOrderById(any());
+  }
+
+  @Test
+  @DisplayName("PUT /api/orders/{id}/status should return 400 with negative ID")
+  void updateOrderStatus_NegativeId() throws Exception {
+    mockMvc
+        .perform(put("/api/orders/-1/status").param("status", "CONFIRMED"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(jsonPath("$.message").value("Invalid order ID"));
+
+    verify(orderService, never()).getOrderById(any());
+  }
+
+  @Test
+  @DisplayName("PUT /api/orders/{id}/status should return 400 on exception")
+  void updateOrderStatus_Exception() throws Exception {
+    when(orderService.getOrderById(1L)).thenReturn(Optional.of(testOrder));
+    when(orderService.updateOrderStatus(1L, "CONFIRMED"))
+        .thenThrow(new RuntimeException("Update failed"));
+
+    mockMvc
+        .perform(put("/api/orders/1/status").param("status", "CONFIRMED"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("Failed to update order status")));
   }
 }

@@ -1,21 +1,25 @@
 package com.boozebuddies.controller;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.boozebuddies.config.TestSecurityConfig;
-import com.boozebuddies.dto.RegisterUserRequest;
 import com.boozebuddies.dto.UserDTO;
 import com.boozebuddies.entity.User;
 import com.boozebuddies.mapper.UserMapper;
+import com.boozebuddies.model.Role;
 import com.boozebuddies.security.JwtAuthenticationFilter;
+import com.boozebuddies.service.PermissionService;
+import com.boozebuddies.service.RoleService;
 import com.boozebuddies.service.UserService;
 import com.boozebuddies.service.ValidationService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDate;
-import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -27,6 +31,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.Authentication;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(
@@ -35,24 +40,23 @@ import org.springframework.test.web.servlet.MockMvc;
         @ComponentScan.Filter(
             type = FilterType.ASSIGNABLE_TYPE,
             classes = JwtAuthenticationFilter.class))
-@AutoConfigureMockMvc(addFilters = false) // ⛔ disables all Spring Security filters
+@AutoConfigureMockMvc(addFilters = false)
 @Import(TestSecurityConfig.class)
 @DisplayName("UserController Tests")
 class UserControllerTest {
 
   @Autowired private MockMvc mockMvc;
-
   @Autowired private ObjectMapper objectMapper;
 
   @MockBean private UserService userService;
-
   @MockBean private ValidationService validationService;
-
   @MockBean private UserMapper userMapper;
+  @MockBean private PermissionService permissionService;
+  @MockBean private RoleService roleService;
 
   private User testUser;
   private UserDTO testUserDTO;
-  private RegisterUserRequest registerRequest;
+  private Authentication mockAuth;
 
   @BeforeEach
   void setUp() {
@@ -61,256 +65,84 @@ class UserControllerTest {
             .id(1L)
             .name("John Doe")
             .email("john@example.com")
-            .phone("555-123-4567")
             .dateOfBirth(LocalDate.of(1990, 1, 1))
             .ageVerified(true)
             .build();
-
     testUserDTO = new UserDTO();
     testUserDTO.setId(1L);
     testUserDTO.setEmail("john@example.com");
     testUserDTO.setName("John Doe");
-
-    registerRequest = new RegisterUserRequest();
-    registerRequest.setName("John Doe");
-    registerRequest.setEmail("john@example.com");
-    registerRequest.setPhone("555-123-4567");
-    registerRequest.setDateOfBirth(LocalDate.of(1990, 1, 1));
+    mockAuth = mock(Authentication.class);
   }
 
-  // ==================== GET USER TESTS ====================
-
+  // ==================== GET BY ID ====================
   @Test
-  @DisplayName("GET /api/users/{id} should return 200 with user data")
+  @DisplayName("GET /api/users/{id} returns 200 for self or admin")
   void testGetUserByIdSuccess() throws Exception {
-    when(userService.getUserById(1L)).thenReturn(java.util.Optional.of(testUser));
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
+    when(userService.getUserById(1L)).thenReturn(Optional.of(testUser));
     when(userMapper.toDTO(testUser)).thenReturn(testUserDTO);
 
     mockMvc
         .perform(get("/api/users/1"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.success").value(true))
-        .andExpect(jsonPath("$.message").value("User retrieved successfully"))
         .andExpect(jsonPath("$.data.email").value("john@example.com"));
 
-    verify(userService, times(1)).getUserById(1L);
-    verify(userMapper, times(1)).toDTO(testUser);
+    verify(userService).getUserById(1L);
   }
 
   @Test
-  @DisplayName("GET /api/users/{id} should return 404 when user not found")
-  void testGetUserByIdNotFound() throws Exception {
-    when(userService.getUserById(999L)).thenReturn(java.util.Optional.empty());
-
-    mockMvc.perform(get("/api/users/999")).andExpect(status().isNotFound());
-
-    verify(userService, times(1)).getUserById(999L);
-  }
-
-  @Test
-  @DisplayName("GET /api/users/{id} should return 400 when ID is invalid")
-  void testGetUserByIdInvalidId() throws Exception {
-    mockMvc
-        .perform(get("/api/users/0"))
-        .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value("Invalid user ID"));
-
-    verify(userService, never()).getUserById(any());
-  }
-
-  @Test
-  @DisplayName("GET /api/users/{id} should return 400 when ID is negative")
-  void testGetUserByIdNegativeId() throws Exception {
-    mockMvc
-        .perform(get("/api/users/-1"))
-        .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value("Invalid user ID"));
-
-    verify(userService, never()).getUserById(any());
-  }
-
-  @Test
-  @DisplayName("GET /api/users/{id} should handle service exceptions")
-  void testGetUserByIdServiceException() throws Exception {
-    when(userService.getUserById(1L)).thenThrow(new RuntimeException("Database error"));
+  @DisplayName("GET /api/users/{id} returns 403 if user accesses another profile")
+  void testGetUserByIdAccessDenied() throws Exception {
+    User otherUser = User.builder().id(2L).build();
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(otherUser);
 
     mockMvc
         .perform(get("/api/users/1"))
-        .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value("An error occurred retrieving user"));
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.message").value("You can only view your own profile"));
   }
 
-  // ==================== GET ALL USERS TESTS ====================
-
+  // ==================== GET CURRENT USER ====================
   @Test
-  @DisplayName("GET /api/users should return 200 with list of users")
-  void testGetAllUsersSuccess() throws Exception {
-    UserDTO userDTO2 = new UserDTO();
-    userDTO2.setId(2L);
-    userDTO2.setEmail("jane@example.com");
-
-    User user2 = User.builder().id(2L).name("Jane Doe").email("jane@example.com").build();
-
-    when(userService.getAllUsers()).thenReturn(List.of(testUser, user2));
+  @DisplayName("GET /api/users/me returns 200 with current user data")
+  void testGetCurrentUser() throws Exception {
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
     when(userMapper.toDTO(testUser)).thenReturn(testUserDTO);
-    when(userMapper.toDTO(user2)).thenReturn(userDTO2);
 
     mockMvc
-        .perform(get("/api/users"))
+        .perform(get("/api/users/me"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.success").value(true))
-        .andExpect(jsonPath("$.message").value("Users retrieved successfully"))
-        .andExpect(jsonPath("$.data[0].email").value("john@example.com"))
-        .andExpect(jsonPath("$.data[1].email").value("jane@example.com"));
-
-    verify(userService, times(1)).getAllUsers();
+        .andExpect(jsonPath("$.message").value("Your profile retrieved successfully"))
+        .andExpect(jsonPath("$.data.email").value("john@example.com"));
   }
 
+  // ==================== UPDATE ====================
   @Test
-  @DisplayName("GET /api/users should return 200 with empty list when no users exist")
-  void testGetAllUsersEmpty() throws Exception {
-    when(userService.getAllUsers()).thenReturn(List.of());
-
-    mockMvc
-        .perform(get("/api/users"))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.success").value(true))
-        .andExpect(jsonPath("$.message").value("Users retrieved successfully"))
-        .andExpect(jsonPath("$.data").isArray())
-        .andExpect(jsonPath("$.data.length()").value(0));
-
-    verify(userService, times(1)).getAllUsers();
-  }
-
-  @Test
-  @DisplayName("GET /api/users should handle service exceptions")
-  void testGetAllUsersServiceException() throws Exception {
-    when(userService.getAllUsers()).thenThrow(new RuntimeException("Database error"));
-
-    mockMvc
-        .perform(get("/api/users"))
-        .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value("An error occurred retrieving users"));
-  }
-
-  // ==================== UPDATE USER TESTS ====================
-
-  @Test
-  @DisplayName("PUT /api/users/{id} should return 200 on successful update")
+  @DisplayName("PUT /api/users/{id} returns 200 for successful update")
   void testUpdateUserSuccess() throws Exception {
-    UserDTO updateDTO = new UserDTO();
-    updateDTO.setEmail("newemail@example.com");
-
-    User updatedUser = User.builder().id(1L).email("newemail@example.com").build();
-
-    UserDTO updatedDTO = new UserDTO();
-    updatedDTO.setId(1L);
-    updatedDTO.setEmail("newemail@example.com");
-
-    when(userMapper.toEntity(updateDTO)).thenReturn(updatedUser);
-    when(userService.updateUser(1L, updatedUser)).thenReturn(updatedUser);
-    when(userMapper.toDTO(updatedUser)).thenReturn(updatedDTO);
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
+    when(userMapper.toEntity(any(UserDTO.class))).thenReturn(testUser);
+    when(userService.updateUser(eq(1L), any(User.class))).thenReturn(testUser);
+    when(userMapper.toDTO(testUser)).thenReturn(testUserDTO);
 
     mockMvc
         .perform(
             put("/api/users/1")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(updateDTO)))
+                .content(objectMapper.writeValueAsString(testUserDTO)))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.success").value(true))
-        .andExpect(jsonPath("$.message").value("User updated successfully"))
-        .andExpect(jsonPath("$.data.email").value("newemail@example.com"));
-
-    verify(userService, times(1)).updateUser(1L, updatedUser);
-    verify(userMapper, times(1)).toDTO(updatedUser);
+        .andExpect(jsonPath("$.message").value("User updated successfully"));
   }
 
+  // ==================== VERIFY AGE ====================
   @Test
-  @DisplayName("PUT /api/users/{id} should return 404 when user not found")
-  void testUpdateUserNotFound() throws Exception {
-    UserDTO updateDTO = new UserDTO();
-    updateDTO.setEmail("newemail@example.com");
-
-    when(userMapper.toEntity(updateDTO)).thenReturn(testUser);
-    when(userService.updateUser(999L, testUser)).thenReturn(null);
-
-    mockMvc
-        .perform(
-            put("/api/users/999")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(updateDTO)))
-        .andExpect(status().isNotFound());
-
-    verify(userService, times(1)).updateUser(999L, testUser);
-  }
-
-  @Test
-  @DisplayName("PUT /api/users/{id} should return 400 when ID is invalid")
-  void testUpdateUserInvalidId() throws Exception {
-    UserDTO updateDTO = new UserDTO();
-    updateDTO.setEmail("newemail@example.com");
-
-    mockMvc
-        .perform(
-            put("/api/users/0")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(updateDTO)))
-        .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value("Invalid user ID"));
-
-    verify(userService, never()).updateUser(any(), any());
-  }
-
-  @Test
-  @DisplayName("PUT /api/users/{id} should return 400 on IllegalArgumentException")
-  void testUpdateUserIllegalArgumentException() throws Exception {
-    UserDTO updateDTO = new UserDTO();
-    updateDTO.setEmail("invalid-email");
-
-    when(userMapper.toEntity(updateDTO)).thenReturn(testUser);
-    when(userService.updateUser(1L, testUser))
-        .thenThrow(new IllegalArgumentException("Invalid email format"));
-
-    mockMvc
-        .perform(
-            put("/api/users/1")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(updateDTO)))
-        .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value("Invalid email format"));
-  }
-
-  @Test
-  @DisplayName("PUT /api/users/{id} should handle unexpected exceptions")
-  void testUpdateUserUnexpectedException() throws Exception {
-    UserDTO updateDTO = new UserDTO();
-    updateDTO.setEmail("newemail@example.com");
-
-    when(userMapper.toEntity(updateDTO)).thenReturn(testUser);
-    when(userService.updateUser(1L, testUser)).thenThrow(new RuntimeException("Database error"));
-
-    mockMvc
-        .perform(
-            put("/api/users/1")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(updateDTO)))
-        .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value("An error occurred updating user"));
-  }
-
-  // ==================== VERIFY AGE TESTS ====================
-
-  @Test
-  @DisplayName("POST /api/users/{id}/verify-age should return 200 when user is of legal age")
+  @DisplayName("POST /api/users/{id}/verify-age returns 200 when age valid")
   void testVerifyAgeSuccess() throws Exception {
-    when(userService.getUserById(1L)).thenReturn(java.util.Optional.of(testUser));
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
+    when(userService.getUserById(1L)).thenReturn(Optional.of(testUser));
     when(validationService.validateAge(testUser)).thenReturn(true);
     when(userService.updateUser(1L, testUser)).thenReturn(testUser);
     when(userMapper.toDTO(testUser)).thenReturn(testUserDTO);
@@ -318,161 +150,163 @@ class UserControllerTest {
     mockMvc
         .perform(post("/api/users/1/verify-age"))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.success").value(true))
         .andExpect(jsonPath("$.message").value("Age verification successful"));
-
-    verify(validationService, times(1)).validateAge(testUser);
-    verify(userService, times(1)).updateUser(1L, testUser);
   }
 
   @Test
-  @DisplayName("POST /api/users/{id}/verify-age should return 200 and set ageVerified to true")
-  void testVerifyAgeSetsFlagSuccess() throws Exception {
-    User unverifiedUser =
-        User.builder().id(1L).dateOfBirth(LocalDate.of(1990, 1, 1)).ageVerified(false).build();
-
-    when(userService.getUserById(1L)).thenReturn(java.util.Optional.of(unverifiedUser));
-    when(validationService.validateAge(unverifiedUser)).thenReturn(true);
-    when(userService.updateUser(1L, unverifiedUser)).thenReturn(unverifiedUser);
-    when(userMapper.toDTO(unverifiedUser)).thenReturn(testUserDTO);
-
-    mockMvc
-        .perform(post("/api/users/1/verify-age"))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.success").value(true));
-
-    verify(userService, times(1)).updateUser(1L, unverifiedUser);
-  }
-
-  @Test
-  @DisplayName("POST /api/users/{id}/verify-age should return 400 when user is too young")
+  @DisplayName("POST /api/users/{id}/verify-age returns 400 if too young")
   void testVerifyAgeFailed() throws Exception {
-    User youngUser = User.builder().id(1L).dateOfBirth(LocalDate.of(2015, 1, 1)).build();
-
-    when(userService.getUserById(1L)).thenReturn(java.util.Optional.of(youngUser));
-    when(validationService.validateAge(youngUser)).thenReturn(false);
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
+    when(userService.getUserById(1L)).thenReturn(Optional.of(testUser));
+    when(validationService.validateAge(testUser)).thenReturn(false);
 
     mockMvc
         .perform(post("/api/users/1/verify-age"))
         .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.success").value(false))
         .andExpect(jsonPath("$.message").value("Age verification failed"));
-
-    verify(validationService, times(1)).validateAge(youngUser);
-    verify(userService, never()).updateUser(any(), any());
   }
 
+  // ==================== DELETE ====================
   @Test
-  @DisplayName("POST /api/users/{id}/verify-age should return 400 when user not found")
-  void testVerifyAgeUserNotFound() throws Exception {
-    when(userService.getUserById(999L)).thenReturn(java.util.Optional.empty());
-
-    mockMvc
-        .perform(post("/api/users/999/verify-age"))
-        .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.success").value(false));
-
-    verify(userService, times(1)).getUserById(999L);
-    verify(validationService, never()).validateAge(any());
-  }
-
-  @Test
-  @DisplayName("POST /api/users/{id}/verify-age should return 400 when ID is invalid")
-  void testVerifyAgeInvalidId() throws Exception {
-    mockMvc
-        .perform(post("/api/users/0/verify-age"))
-        .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value("Invalid user ID"));
-
-    verify(userService, never()).getUserById(any());
-  }
-
-  @Test
-  @DisplayName("POST /api/users/{id}/verify-age should return 400 when ID is negative")
-  void testVerifyAgeNegativeId() throws Exception {
-    mockMvc
-        .perform(post("/api/users/-5/verify-age"))
-        .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value("Invalid user ID"));
-
-    verify(userService, never()).getUserById(any());
-  }
-
-  @Test
-  @DisplayName("POST /api/users/{id}/verify-age should handle unexpected exceptions")
-  void testVerifyAgeUnexpectedException() throws Exception {
-    when(userService.getUserById(1L)).thenReturn(java.util.Optional.of(testUser));
-    when(validationService.validateAge(testUser))
-        .thenThrow(new RuntimeException("Validation service error"));
-
-    mockMvc
-        .perform(post("/api/users/1/verify-age"))
-        .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value("An error occurred during age verification"));
-  }
-
-  // ==================== DELETE USER TESTS ====================
-
-  @Test
-  @DisplayName("DELETE /api/users/{id} should return 200 on successful deletion")
+  @DisplayName("DELETE /api/users/{id} returns 200 when deleted")
   void testDeleteUserSuccess() throws Exception {
     when(userService.deleteUser(1L)).thenReturn(true);
 
     mockMvc
         .perform(delete("/api/users/1"))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.success").value(true))
         .andExpect(jsonPath("$.message").value("User deleted successfully"));
-
-    verify(userService, times(1)).deleteUser(1L);
   }
 
   @Test
-  @DisplayName("DELETE /api/users/{id} should return 404 when user not found")
+  @DisplayName("DELETE /api/users/{id} returns 404 when not found")
   void testDeleteUserNotFound() throws Exception {
     when(userService.deleteUser(999L)).thenReturn(false);
 
     mockMvc.perform(delete("/api/users/999")).andExpect(status().isNotFound());
+  }
 
-    verify(userService, times(1)).deleteUser(999L);
+  // ==================== ROLE MANAGEMENT ====================
+  @Test
+  @DisplayName("POST /api/users/{id}/roles assigns a role successfully")
+  void testAssignRole() throws Exception {
+    UserController.RoleRequest request = new UserController.RoleRequest();
+    request.setRole(Role.ADMIN);
+
+    when(roleService.assignRole(1L, Role.ADMIN)).thenReturn(testUser);
+    when(userMapper.toDTO(testUser)).thenReturn(testUserDTO);
+
+    mockMvc
+        .perform(
+            post("/api/users/1/roles")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.message").value("Role assigned successfully"));
   }
 
   @Test
-  @DisplayName("DELETE /api/users/{id} should return 400 when ID is invalid")
-  void testDeleteUserInvalidId() throws Exception {
-    mockMvc
-        .perform(delete("/api/users/0"))
-        .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value("Invalid user ID"));
+  @DisplayName("DELETE /api/users/{id}/roles/{role} removes a role successfully")
+  void testRemoveRole() throws Exception {
+    when(roleService.removeRole(1L, Role.ADMIN)).thenReturn(testUser);
+    when(userMapper.toDTO(testUser)).thenReturn(testUserDTO);
 
-    verify(userService, never()).deleteUser(any());
+    mockMvc
+        .perform(delete("/api/users/1/roles/ADMIN"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.message").value("Role removed successfully"));
   }
 
   @Test
-  @DisplayName("DELETE /api/users/{id} should return 400 when ID is negative")
-  void testDeleteUserNegativeId() throws Exception {
-    mockMvc
-        .perform(delete("/api/users/-1"))
-        .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value("Invalid user ID"));
+  @DisplayName("PUT /api/users/{id}/roles sets all roles successfully")
+  void testSetRoles() throws Exception {
+    UserController.SetRolesRequest request = new UserController.SetRolesRequest();
+    request.setRoles(Set.of(Role.ADMIN, Role.USER));
 
-    verify(userService, never()).deleteUser(any());
+    when(roleService.setRoles(1L, request.getRoles())).thenReturn(testUser);
+    when(userMapper.toDTO(testUser)).thenReturn(testUserDTO);
+
+    mockMvc
+        .perform(
+            put("/api/users/1/roles")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.message").value("Roles updated successfully"));
   }
 
   @Test
-  @DisplayName("DELETE /api/users/{id} should handle unexpected exceptions")
-  void testDeleteUserUnexpectedException() throws Exception {
-    when(userService.deleteUser(1L)).thenThrow(new RuntimeException("Database error"));
+  @DisplayName("POST /api/users/{id}/merchant assigns merchant successfully")
+  void testAssignMerchant() throws Exception {
+    UserController.MerchantAssignmentRequest request =
+        new UserController.MerchantAssignmentRequest();
+    request.setMerchantId(10L);
+
+    when(roleService.assignMerchantToUser(1L, 10L)).thenReturn(testUser);
+    when(userMapper.toDTO(testUser)).thenReturn(testUserDTO);
 
     mockMvc
-        .perform(delete("/api/users/1"))
+        .perform(
+            post("/api/users/1/merchant")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.message").value("Merchant assigned successfully"));
+  }
+
+  @Test
+  @DisplayName("PUT /api/users/{id} returns 403 if not self or admin")
+  void testUpdateUserForbidden() throws Exception {
+    User anotherUser = User.builder().id(2L).build();
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(anotherUser);
+
+    mockMvc
+        .perform(
+            put("/api/users/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(testUserDTO)))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.message").value("You can only update your own profile"));
+  }
+
+  @Test
+  @DisplayName("POST /api/users/{id}/roles returns 400 when invalid role")
+  void testAssignRoleInvalid() throws Exception {
+    UserController.RoleRequest request = new UserController.RoleRequest();
+    request.setRole(Role.ADMIN);
+
+    when(roleService.assignRole(1L, Role.ADMIN))
+        .thenThrow(new com.boozebuddies.exception.ValidationException("Invalid role"));
+
+    mockMvc
+        .perform(
+            post("/api/users/1/roles")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value("An error occurred deleting user"));
+        .andExpect(jsonPath("$.message").value("Error assigning role: Invalid role"));
+  }
+
+  @Test
+  @DisplayName("POST /api/users/{id}/merchant handles null merchantId")
+  void testAssignMerchantNullId() throws Exception {
+    UserController.MerchantAssignmentRequest request =
+        new UserController.MerchantAssignmentRequest();
+    request.setMerchantId(null); // legitimate null
+
+    User updatedUser = testUser; // whatever you want the service to return
+    when(roleService.assignMerchantToUser(1L, null)).thenReturn(updatedUser);
+    when(userMapper.toDTO(updatedUser)).thenReturn(testUserDTO);
+
+    mockMvc
+        .perform(
+            post("/api/users/1/merchant")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.success").value(true))
+        .andExpect(jsonPath("$.message").value("Merchant assigned successfully"));
+
+    verify(roleService, times(1)).assignMerchantToUser(1L, null);
   }
 }

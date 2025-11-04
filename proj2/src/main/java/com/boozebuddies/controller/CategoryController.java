@@ -4,6 +4,7 @@ import com.boozebuddies.dto.ApiResponse;
 import com.boozebuddies.dto.CategoryDTO;
 import com.boozebuddies.entity.Category;
 import com.boozebuddies.mapper.CategoryMapper;
+import com.boozebuddies.security.annotation.RoleAnnotations.*;
 import com.boozebuddies.service.CategoryService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -59,6 +60,7 @@ public class CategoryController {
   // ==================== CREATE ====================
 
   @PostMapping
+  @IsAdmin
   public ResponseEntity<ApiResponse<CategoryDTO>> createCategory(
       @Valid @RequestBody CategoryDTO dto) {
     try {

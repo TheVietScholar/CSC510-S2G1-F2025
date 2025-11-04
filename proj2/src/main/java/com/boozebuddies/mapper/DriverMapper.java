@@ -2,6 +2,7 @@ package com.boozebuddies.mapper;
 
 import com.boozebuddies.dto.DriverDTO;
 import com.boozebuddies.entity.Driver;
+import com.boozebuddies.model.CertificationStatus;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -22,7 +23,8 @@ public class DriverMapper {
         .currentLongitude(driver.getCurrentLongitude())
         .rating(driver.getRating())
         .totalDeliveries(driver.getTotalDeliveries())
-        .certificationStatus(driver.getCertificationStatus())
+        .certificationStatus(driver.getCertificationStatus().name())
+        .certification(driver.getCertification())
         .createdAt(driver.getCreatedAt())
         .updatedAt(driver.getUpdatedAt())
         .build();
@@ -32,6 +34,7 @@ public class DriverMapper {
     if (driverDTO == null) return null;
 
     return Driver.builder()
+        .id(driverDTO.getId())
         .name(driverDTO.getName())
         .email(driverDTO.getEmail())
         .phone(driverDTO.getPhone())
@@ -39,6 +42,13 @@ public class DriverMapper {
         .licensePlate(driverDTO.getLicensePlate())
         .currentLatitude(driverDTO.getCurrentLatitude())
         .currentLongitude(driverDTO.getCurrentLongitude())
+        .isAvailable(driverDTO.isAvailable())
+        .rating(driverDTO.getRating())
+        .totalDeliveries(driverDTO.getTotalDeliveries())
+        .certificationStatus(CertificationStatus.valueOf(driverDTO.getCertificationStatus()))
+        .certification(driverDTO.getCertification())
+        .createdAt(driverDTO.getCreatedAt())
+        .updatedAt(driverDTO.getUpdatedAt())
         .build();
   }
 }

@@ -53,4 +53,18 @@ public interface DriverService {
    * @return A list of all drivers.
    */
   List<Driver> getAllDrivers();
+
+  /**
+   * Updates driver information.
+   *
+   * @param driver The driver object containing updated information.
+   * @return The updated Driver object.
+   */
+  Driver updateDriver(Driver driver);
+
+  Driver getDriverProfile(com.boozebuddies.entity.User user);
+
+  List<Driver> getNearbyAvailableDrivers(Double latitude, Double longitude, Double radiusMeters);
+
+  Driver updateDriverLocation(Long userId, Double latitude, Double longitude);
 }

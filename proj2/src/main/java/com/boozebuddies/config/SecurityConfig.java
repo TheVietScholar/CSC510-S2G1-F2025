@@ -17,7 +17,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity
+@EnableMethodSecurity(prePostEnabled = true, securedEnabled = true)
 public class SecurityConfig {
 
   private final JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -44,52 +44,147 @@ public class SecurityConfig {
         .authorizeHttpRequests(
             auth ->
                 auth
-                    // Public endpoints - no authentication required
+                    // ==================== PUBLIC ENDPOINTS ====================
                     .requestMatchers("/api/auth/**")
                     .permitAll()
-                    .requestMatchers("/api/auth/register")
-                    .permitAll()
-                    .requestMatchers("/api/auth/login")
-                    .permitAll()
-                    .requestMatchers("/api/auth/refresh")
-                    .permitAll()
-
-                    // Health check endpoints (Spring Actuator)
                     .requestMatchers("/actuator/health")
                     .permitAll()
-
-                    // H2 Console (only for development)
                     .requestMatchers("/h2-console/**")
                     .permitAll()
-
-                    // Swagger/OpenAPI (if you add it later)
                     .requestMatchers("/swagger-ui/**", "/v3/api-docs/**")
                     .permitAll()
 
-                    // User endpoints - require authentication
-                    .requestMatchers(HttpMethod.GET, "/api/users/**")
+                    // ==================== USER ENDPOINTS ====================
+                    // Users can view/update their own profile (enforced in controller)
+                    .requestMatchers(HttpMethod.GET, "/api/users/me")
                     .authenticated()
-                    .requestMatchers(HttpMethod.PUT, "/api/users/**")
+                    .requestMatchers(HttpMethod.GET, "/api/users/{id}")
                     .authenticated()
+                    .requestMatchers(HttpMethod.PUT, "/api/users/{id}")
+                    .authenticated()
+
+                    // Only ADMIN can view all users or delete users
+                    .requestMatchers(HttpMethod.GET, "/api/users")
+                    .hasRole("ADMIN")
                     .requestMatchers(HttpMethod.DELETE, "/api/users/**")
                     .hasRole("ADMIN")
 
-                    // Merchant endpoints - require MERCHANT_ADMIN role
-                    .requestMatchers("/api/merchants/**")
-                    .hasAnyRole("MERCHANT_ADMIN", "ADMIN")
-
-                    // Driver endpoints - require DRIVER role
-                    .requestMatchers("/api/drivers/**")
-                    .hasAnyRole("DRIVER", "ADMIN")
-
-                    // Order endpoints - require authentication
-                    .requestMatchers("/api/orders/**")
+                    // Age verification
+                    .requestMatchers(HttpMethod.POST, "/api/users/{id}/verify-age")
                     .authenticated()
 
-                    // Admin endpoints - require ADMIN or SUPER_ADMIN role
-                    .requestMatchers("/api/admin/**")
-                    .hasAnyRole("ADMIN", "SUPER_ADMIN")
+                    // Role management (ADMIN only)
+                    .requestMatchers("/api/users/*/roles/**")
+                    .hasRole("ADMIN")
+                    .requestMatchers("/api/users/*/merchant")
+                    .hasRole("ADMIN")
 
+                    // ==================== MERCHANT ENDPOINTS ====================
+                    // Anyone authenticated can browse/search merchants
+                    .requestMatchers(HttpMethod.GET, "/api/merchants")
+                    .authenticated()
+                    .requestMatchers(HttpMethod.GET, "/api/merchants/search/**")
+                    .authenticated()
+                    .requestMatchers(HttpMethod.GET, "/api/merchants/by-distance")
+                    .authenticated()
+                    .requestMatchers(HttpMethod.GET, "/api/merchants/name/**")
+                    .authenticated()
+
+                    // Only ADMIN can view merchant by ID
+                    .requestMatchers(HttpMethod.GET, "/api/merchants/{id}")
+                    .hasRole("ADMIN")
+
+                    // Only ADMIN can create/delete merchants
+                    .requestMatchers(HttpMethod.POST, "/api/merchants")
+                    .hasRole("ADMIN")
+                    .requestMatchers(HttpMethod.DELETE, "/api/merchants/**")
+                    .hasRole("ADMIN")
+
+                    // ADMIN or MERCHANT_ADMIN can update merchants (ownership checked in
+                    // controller)
+                    .requestMatchers(HttpMethod.PUT, "/api/merchants/{id}")
+                    .hasAnyRole("ADMIN", "MERCHANT_ADMIN")
+
+                    // MERCHANT_ADMIN specific endpoints (their own merchant)
+                    .requestMatchers("/api/merchants/my-merchant/**")
+                    .hasRole("MERCHANT_ADMIN")
+
+                    // ==================== PRODUCT ENDPOINTS ====================
+                    .requestMatchers(HttpMethod.GET, "/api/products/**")
+                    .authenticated()
+                    .requestMatchers(HttpMethod.POST, "/api/products/**")
+                    .hasAnyRole("ADMIN", "MERCHANT_ADMIN")
+                    .requestMatchers(HttpMethod.PUT, "/api/products/**")
+                    .hasAnyRole("ADMIN", "MERCHANT_ADMIN")
+                    .requestMatchers(HttpMethod.DELETE, "/api/products/**")
+                    .hasAnyRole("ADMIN", "MERCHANT_ADMIN")
+
+                    // ==================== ORDER ENDPOINTS ====================
+                    // Users place and manage their own orders
+                    .requestMatchers(HttpMethod.POST, "/api/orders")
+                    .hasRole("USER")
+                    .requestMatchers(HttpMethod.GET, "/api/orders/my-orders/**")
+                    .hasRole("USER")
+                    .requestMatchers(HttpMethod.PUT, "/api/orders/{id}/cancel")
+                    .hasRole("USER")
+                    .requestMatchers(HttpMethod.GET, "/api/orders/my-orders")
+                    .hasRole("USER")
+
+                    // MERCHANT_ADMIN can view orders for their merchant
+                    .requestMatchers("/api/orders/merchant/**")
+                    .hasRole("MERCHANT_ADMIN")
+
+                    // DRIVER can view assigned orders
+                    .requestMatchers("/api/orders/driver/**")
+                    .hasRole("DRIVER")
+
+                    // ADMIN can view all orders
+                    .requestMatchers(HttpMethod.GET, "/api/orders")
+                    .hasRole("ADMIN")
+                    .requestMatchers(HttpMethod.GET, "/api/orders/{id}")
+                    .authenticated()
+
+                    // ==================== PAYMENT ENDPOINTS ====================
+                    .requestMatchers("/api/payments/**")
+                    .authenticated()
+
+                    // ==================== DELIVERY ENDPOINTS ====================
+                    // Drivers manage deliveries
+                    .requestMatchers("/api/deliveries/driver/**")
+                    .hasRole("DRIVER")
+                    .requestMatchers(HttpMethod.POST, "/api/deliveries/{id}/pickup")
+                    .hasRole("DRIVER")
+                    .requestMatchers(HttpMethod.POST, "/api/deliveries/{id}/deliver")
+                    .hasRole("DRIVER")
+                    .requestMatchers(HttpMethod.POST, "/api/deliveries/{id}/verify-age")
+                    .hasRole("DRIVER")
+                    .requestMatchers(HttpMethod.PUT, "/api/deliveries/{id}/location")
+                    .hasRole("DRIVER")
+
+                    // Admin can view all deliveries
+                    .requestMatchers(HttpMethod.GET, "/api/deliveries")
+                    .hasRole("ADMIN")
+
+                    // ==================== DRIVER MANAGEMENT ENDPOINTS ====================
+                    // ADMIN manages driver certifications and views all drivers
+                    .requestMatchers(HttpMethod.GET, "/api/drivers")
+                    .hasRole("ADMIN")
+                    .requestMatchers(HttpMethod.GET, "/api/drivers/available")
+                    .hasRole("ADMIN")
+                    .requestMatchers(HttpMethod.GET, "/api/drivers/{id}")
+                    .hasRole("ADMIN")
+                    .requestMatchers(HttpMethod.PUT, "/api/drivers/{id}/certification")
+                    .hasRole("ADMIN")
+
+                    // Drivers manage their own profile
+                    .requestMatchers("/api/drivers/my-profile/**")
+                    .hasRole("DRIVER")
+
+                    // ==================== ADMIN ENDPOINTS ====================
+                    .requestMatchers("/api/admin/**")
+                    .hasRole("ADMIN")
+
+                    // ==================== DEFAULT ====================
                     // All other requests require authentication
                     .anyRequest()
                     .authenticated())
