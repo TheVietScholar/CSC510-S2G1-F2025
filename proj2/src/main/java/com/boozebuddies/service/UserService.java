@@ -26,7 +26,8 @@ public interface UserService {
    */
   Optional<User> findByEmail(String email);
 
-  // ==================== User Retrieval Methods ====================
+  /**
+
 
   /**
    * Retrieves a user by their unique ID.

@@ -5,11 +5,9 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import com.boozebuddies.config.TestSecurityConfig;
 import com.boozebuddies.dto.CategoryDTO;
 import com.boozebuddies.entity.Category;
 import com.boozebuddies.mapper.CategoryMapper;
-import com.boozebuddies.security.JwtAuthenticationFilter;
 import com.boozebuddies.service.CategoryService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
@@ -18,23 +16,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.FilterType;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-@WebMvcTest(
-    controllers = CategoryController.class,
-    excludeFilters =
-        @ComponentScan.Filter(
-            type = FilterType.ASSIGNABLE_TYPE,
-            classes = JwtAuthenticationFilter.class))
-@AutoConfigureMockMvc(addFilters = false) // ⛔ disables all Spring Security filters
-@Import(TestSecurityConfig.class) // ✅ imports your test security config
+@WebMvcTest(CategoryController.class)
 @DisplayName("CategoryController Tests")
 class CategoryControllerTest {
 
@@ -72,15 +59,13 @@ class CategoryControllerTest {
   // ==================== getAllCategories() Tests ====================
 
   @Test
-  @DisplayName(
-      "GET /api/categories should return 200 with ApiResponse containing list of categories")
+  @DisplayName("GET /api/categories should return 200 with ApiResponse containing list of categories")
   void testGetAllCategories_Success() throws Exception {
     List<Category> categories = List.of(testCategory);
     when(categoryService.getAllCategories()).thenReturn(categories);
     when(categoryMapper.toDTO(testCategory)).thenReturn(testCategoryDTO);
 
-    mockMvc
-        .perform(get("/api/categories"))
+    mockMvc.perform(get("/api/categories"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.success").value(true))
         .andExpect(jsonPath("$.message").value("Categories retrieved successfully"))
@@ -97,8 +82,7 @@ class CategoryControllerTest {
   void testGetAllCategories_EmptyList() throws Exception {
     when(categoryService.getAllCategories()).thenReturn(new ArrayList<>());
 
-    mockMvc
-        .perform(get("/api/categories"))
+    mockMvc.perform(get("/api/categories"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.success").value(true))
         .andExpect(jsonPath("$.message").value("Categories retrieved successfully"))
@@ -151,8 +135,7 @@ class CategoryControllerTest {
     when(categoryMapper.toDTO(wineCategory)).thenReturn(wineDTO);
     when(categoryMapper.toDTO(liquorCategory)).thenReturn(liquorDTO);
 
-    mockMvc
-        .perform(get("/api/categories"))
+    mockMvc.perform(get("/api/categories"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.success").value(true))
         .andExpect(jsonPath("$.message").value("Categories retrieved successfully"))
@@ -168,8 +151,7 @@ class CategoryControllerTest {
   void testGetAllCategories_ServiceThrowsException() throws Exception {
     when(categoryService.getAllCategories()).thenThrow(new RuntimeException("Database error"));
 
-    mockMvc
-        .perform(get("/api/categories"))
+    mockMvc.perform(get("/api/categories"))
         .andExpect(status().isInternalServerError())
         .andExpect(jsonPath("$.success").value(false))
         .andExpect(jsonPath("$.message").value("Failed to retrieve categories"));
@@ -177,6 +159,7 @@ class CategoryControllerTest {
     verify(categoryService, times(1)).getAllCategories();
   }
 
+    
   // ==================== getCategoryById() Tests ====================
 
   @Test
@@ -249,7 +232,8 @@ class CategoryControllerTest {
   @Test
   @DisplayName("GET /api/categories/{id} should handle service exception")
   void testGetCategoryById_ServiceThrowsException() throws Exception {
-    when(categoryService.getCategoryById(1L)).thenThrow(new RuntimeException("Database error"));
+    when(categoryService.getCategoryById(1L))
+        .thenThrow(new RuntimeException("Database error"));
 
     mockMvc
         .perform(get("/api/categories/1"))
@@ -434,7 +418,10 @@ class CategoryControllerTest {
         .thenThrow(new IllegalArgumentException("Category cannot be null"));
 
     mockMvc
-        .perform(post("/api/categories").contentType(MediaType.APPLICATION_JSON).content("null"))
+        .perform(
+            post("/api/categories")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("null"))
         .andExpect(status().is4xxClientError());
   }
 
@@ -443,8 +430,7 @@ class CategoryControllerTest {
   void testCreateCategory_DuplicateName() throws Exception {
     when(categoryMapper.toEntity(testCategoryDTO)).thenReturn(testCategory);
     when(categoryService.createCategory(testCategory))
-        .thenThrow(
-            new RuntimeException("Unique constraint violation: Category name already exists"));
+        .thenThrow(new RuntimeException("Unique constraint violation: Category name already exists"));
 
     mockMvc
         .perform(
@@ -476,8 +462,7 @@ class CategoryControllerTest {
         .andExpect(jsonPath("$.message").value("An error occurred creating category"))
         .andExpect(jsonPath("$.data").doesNotExist());
   }
-
-  @Test
+   @Test
   @DisplayName("POST /api/categories should accept null description")
   void testCreateCategory_NullDescription() throws Exception {
     CategoryDTO nullDescDTO =
@@ -525,7 +510,11 @@ class CategoryControllerTest {
   @DisplayName("POST /api/categories should accept null image URL")
   void testCreateCategory_NullImageUrl() throws Exception {
     CategoryDTO nullImageDTO =
-        CategoryDTO.builder().name("Wine").description("Wine beverages").imageUrl(null).build();
+        CategoryDTO.builder()
+            .name("Wine")
+            .description("Wine beverages")
+            .imageUrl(null)
+            .build();
 
     Category categoryWithNullImage =
         Category.builder()
@@ -576,7 +565,10 @@ class CategoryControllerTest {
   @DisplayName("POST /api/categories should handle wrong content type")
   void testCreateCategory_WrongContentType() throws Exception {
     mockMvc
-        .perform(post("/api/categories").contentType(MediaType.TEXT_PLAIN).content("invalid"))
+        .perform(
+            post("/api/categories")
+                .contentType(MediaType.TEXT_PLAIN)
+                .content("invalid"))
         .andExpect(status().is4xxClientError());
   }
 
@@ -628,5 +620,5 @@ class CategoryControllerTest {
     verify(categoryMapper, times(1)).toEntity(specialCharDTO);
     verify(categoryService, times(1)).createCategory(categoryWithSpecialChars);
     verify(categoryMapper, times(1)).toDTO(categoryWithSpecialChars);
-  }
+  } 
 }

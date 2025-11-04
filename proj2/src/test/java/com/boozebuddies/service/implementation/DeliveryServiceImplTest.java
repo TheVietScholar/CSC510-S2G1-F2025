@@ -18,135 +18,114 @@ import org.junit.jupiter.api.Test;
 
 class DeliveryServiceImplTest {
 
-  private DeliveryRepository repository;
-  private DeliveryServiceImpl service;
+    private DeliveryRepository repository;
+    private DeliveryServiceImpl service;
 
-  @BeforeEach
-  void setUp() {
-    repository = mock(DeliveryRepository.class);
-    service = new DeliveryServiceImpl(repository);
-  }
+    @BeforeEach
+    void setUp() {
+        repository = mock(DeliveryRepository.class);
+        service = new DeliveryServiceImpl(repository);
+    }
 
-  @Test
-  @DisplayName("assignDriverToOrder creates delivery with PENDING status")
-  void assignDriverToOrder_createsPending() {
-    Order order = new Order();
-    order.setId(100L);
-    Driver driver = Driver.builder().id(10L).build();
+    @Test
+    @DisplayName("assignDriverToOrder creates delivery with PENDING status")
+    void assignDriverToOrder_createsPending() {
+        Order order = new Order();
+        order.setId(100L);
+        Driver driver = Driver.builder().id(10L).build();
 
-    when(repository.save(any(Delivery.class))).thenAnswer(inv -> inv.getArgument(0));
-    Delivery delivery = service.assignDriverToOrder(order, driver);
+        when(repository.save(any(Delivery.class))).thenAnswer(inv -> inv.getArgument(0));
+        Delivery delivery = service.assignDriverToOrder(order, driver);
 
-    assertEquals(order, delivery.getOrder());
-    assertEquals(driver, delivery.getDriver());
-    assertEquals(DeliveryStatus.PENDING, delivery.getStatus());
-  }
+        assertEquals(order, delivery.getOrder());
+        assertEquals(driver, delivery.getDriver());
+        assertEquals(DeliveryStatus.PENDING, delivery.getStatus());
+    }
 
-  @Test
-  @DisplayName("updateDeliveryStatus updates status or returns null for missing id")
-  void updateDeliveryStatus_updatesOrNull() {
-    Order order = new Order();
-    order.setId(1L);
-    Driver driver = Driver.builder().id(1L).build();
-    Delivery created =
-        Delivery.builder()
-            .id(1L)
-            .order(order)
-            .driver(driver)
-            .status(DeliveryStatus.PENDING)
-            .build();
-    when(repository.findById(1L)).thenReturn(Optional.of(created));
-    when(repository.findById(999L)).thenReturn(Optional.empty());
-    when(repository.save(any(Delivery.class))).thenAnswer(inv -> inv.getArgument(0));
+    @Test
+    @DisplayName("updateDeliveryStatus updates status or returns null for missing id")
+    void updateDeliveryStatus_updatesOrNull() {
+        Order order = new Order();
+        order.setId(1L);
+        Driver driver = Driver.builder().id(1L).build();
+        Delivery created = Delivery.builder().id(1L).order(order).driver(driver).status(DeliveryStatus.PENDING).build();
+        when(repository.findById(1L)).thenReturn(Optional.of(created));
+        when(repository.findById(999L)).thenReturn(Optional.empty());
+        when(repository.save(any(Delivery.class))).thenAnswer(inv -> inv.getArgument(0));
 
-    Delivery updated = service.updateDeliveryStatus(1L, DeliveryStatus.IN_TRANSIT);
-    assertNotNull(updated);
-    assertEquals(DeliveryStatus.IN_TRANSIT, updated.getStatus());
-    assertNull(service.updateDeliveryStatus(999L, DeliveryStatus.DELIVERED));
-  }
+        Delivery updated = service.updateDeliveryStatus(1L, DeliveryStatus.IN_TRANSIT);
+        assertNotNull(updated);
+        assertEquals(DeliveryStatus.IN_TRANSIT, updated.getStatus());
+        assertNull(service.updateDeliveryStatus(999L, DeliveryStatus.DELIVERED));
+    }
 
-  @Test
-  @DisplayName("cancelDelivery sets CANCELLED and reason or returns null if missing")
-  void cancelDelivery_setsCancelledOrNull() {
-    Order order = new Order();
-    order.setId(2L);
-    Driver driver = Driver.builder().id(2L).build();
-    Delivery created =
-        Delivery.builder()
-            .id(2L)
-            .order(order)
-            .driver(driver)
-            .status(DeliveryStatus.PENDING)
-            .build();
-    when(repository.findById(2L)).thenReturn(Optional.of(created));
-    when(repository.findById(404L)).thenReturn(Optional.empty());
-    when(repository.save(any(Delivery.class))).thenAnswer(inv -> inv.getArgument(0));
+    @Test
+    @DisplayName("cancelDelivery sets CANCELLED and reason or returns null if missing")
+    void cancelDelivery_setsCancelledOrNull() {
+        Order order = new Order();
+        order.setId(2L);
+        Driver driver = Driver.builder().id(2L).build();
+        Delivery created = Delivery.builder().id(2L).order(order).driver(driver).status(DeliveryStatus.PENDING).build();
+        when(repository.findById(2L)).thenReturn(Optional.of(created));
+        when(repository.findById(404L)).thenReturn(Optional.empty());
+        when(repository.save(any(Delivery.class))).thenAnswer(inv -> inv.getArgument(0));
 
-    Delivery cancelled = service.cancelDelivery(2L, "Customer requested");
-    assertNotNull(cancelled);
-    assertEquals(DeliveryStatus.CANCELLED, cancelled.getStatus());
-    assertEquals("Customer requested", cancelled.getCancellationReason());
-    assertNull(service.cancelDelivery(404L, "x"));
-  }
+        Delivery cancelled = service.cancelDelivery(2L, "Customer requested");
+        assertNotNull(cancelled);
+        assertEquals(DeliveryStatus.CANCELLED, cancelled.getStatus());
+        assertEquals("Customer requested", cancelled.getCancellationReason());
+        assertNull(service.cancelDelivery(404L, "x"));
+    }
 
-  @Test
-  @DisplayName("getDeliveriesByDriver filters by driver id")
-  void getDeliveriesByDriver_filters() {
-    Order order1 = new Order();
-    order1.setId(1L);
-    Order order2 = new Order();
-    order2.setId(2L);
-    Driver d1 = Driver.builder().id(10L).build();
-    Delivery del1 =
-        Delivery.builder().id(1L).order(order1).driver(d1).status(DeliveryStatus.PENDING).build();
-    when(repository.findByDriverId(10L)).thenReturn(Collections.singletonList(del1));
+    @Test
+    @DisplayName("getDeliveriesByDriver filters by driver id")
+    void getDeliveriesByDriver_filters() {
+        Order order1 = new Order();
+        order1.setId(1L);
+        Order order2 = new Order();
+        order2.setId(2L);
+        Driver d1 = Driver.builder().id(10L).build();
+        Delivery del1 = Delivery.builder().id(1L).order(order1).driver(d1).status(DeliveryStatus.PENDING).build();
+        when(repository.findByDriverId(10L)).thenReturn(Collections.singletonList(del1));
 
-    List<Delivery> forD1 = service.getDeliveriesByDriver(10L);
-    assertEquals(1, forD1.size());
-    assertEquals(10L, forD1.get(0).getDriver().getId());
-  }
+        List<Delivery> forD1 = service.getDeliveriesByDriver(10L);
+        assertEquals(1, forD1.size());
+        assertEquals(10L, forD1.get(0).getDriver().getId());
+    }
 
-  @Test
-  @DisplayName("getDeliveryById returns item or null")
-  void getDeliveryById_returnsOrNull() {
-    Order order = new Order();
-    order.setId(5L);
-    Driver driver = Driver.builder().id(50L).build();
-    Delivery created =
-        Delivery.builder()
-            .id(3L)
-            .order(order)
-            .driver(driver)
-            .status(DeliveryStatus.PENDING)
-            .build();
-    when(repository.findById(3L)).thenReturn(Optional.of(created));
-    when(repository.findById(999L)).thenReturn(Optional.empty());
+    @Test
+    @DisplayName("getDeliveryById returns item or null")
+    void getDeliveryById_returnsOrNull() {
+        Order order = new Order();
+        order.setId(5L);
+        Driver driver = Driver.builder().id(50L).build();
+        Delivery created = Delivery.builder().id(3L).order(order).driver(driver).status(DeliveryStatus.PENDING).build();
+        when(repository.findById(3L)).thenReturn(Optional.of(created));
+        when(repository.findById(999L)).thenReturn(Optional.empty());
 
-    assertNotNull(service.getDeliveryById(3L));
-    assertNull(service.getDeliveryById(999L));
-  }
+        assertNotNull(service.getDeliveryById(3L));
+        assertNull(service.getDeliveryById(999L));
+    }
 
-  @Test
-  @DisplayName("getActiveDeliveries excludes DELIVERED and CANCELLED")
-  void getActiveDeliveries_filters() {
-    Order o1 = new Order();
-    o1.setId(1L);
-    Order o2 = new Order();
-    o2.setId(2L);
-    Order o3 = new Order();
-    o3.setId(3L);
-    Driver d = Driver.builder().id(1L).build();
-    Delivery d1 =
-        Delivery.builder().id(11L).order(o1).driver(d).status(DeliveryStatus.IN_TRANSIT).build();
-    when(repository.findByStatus(DeliveryStatus.PENDING)).thenReturn(new ArrayList<>());
-    when(repository.findByStatus(DeliveryStatus.ASSIGNED)).thenReturn(new ArrayList<>());
-    when(repository.findByStatus(DeliveryStatus.PICKED_UP)).thenReturn(new ArrayList<>());
-    when(repository.findByStatus(DeliveryStatus.IN_TRANSIT))
-        .thenReturn(Collections.singletonList(d1));
-    when(repository.findByStatus(DeliveryStatus.FAILED)).thenReturn(new ArrayList<>());
+    @Test
+    @DisplayName("getActiveDeliveries excludes DELIVERED and CANCELLED")
+    void getActiveDeliveries_filters() {
+        Order o1 = new Order();
+        o1.setId(1L);
+        Order o2 = new Order();
+        o2.setId(2L);
+        Order o3 = new Order();
+        o3.setId(3L);
+        Driver d = Driver.builder().id(1L).build();
+        Delivery d1 = Delivery.builder().id(11L).order(o1).driver(d).status(DeliveryStatus.IN_TRANSIT).build();
+        when(repository.findByStatus(DeliveryStatus.PENDING)).thenReturn(new ArrayList<>());
+        when(repository.findByStatus(DeliveryStatus.ASSIGNED)).thenReturn(new ArrayList<>());
+        when(repository.findByStatus(DeliveryStatus.PICKED_UP)).thenReturn(new ArrayList<>());
+        when(repository.findByStatus(DeliveryStatus.IN_TRANSIT)).thenReturn(Collections.singletonList(d1));
+        when(repository.findByStatus(DeliveryStatus.FAILED)).thenReturn(new ArrayList<>());
 
-    List<Delivery> active = service.getActiveDeliveries();
-    assertEquals(1, active.size());
-    assertEquals(d1.getId(), active.get(0).getId());
-  }
+        List<Delivery> active = service.getActiveDeliveries();
+        assertEquals(1, active.size());
+        assertEquals(d1.getId(), active.get(0).getId());
+    }
 }

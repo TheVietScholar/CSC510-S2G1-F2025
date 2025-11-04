@@ -78,8 +78,7 @@ public class DriverController {
   public ResponseEntity<ApiResponse<List<DriverDTO>>> getAvailableDrivers() {
     try {
       List<Driver> availableDrivers = driverService.getAvailableDrivers();
-      List<DriverDTO> driverDTOs =
-          availableDrivers.stream().map(driverMapper::toDTO).collect(Collectors.toList());
+      List<DriverDTO> driverDTOs = availableDrivers.stream().map(driverMapper::toDTO).collect(Collectors.toList());
       return ResponseEntity.ok(
           ApiResponse.success(driverDTOs, "Available drivers retrieved successfully"));
     } catch (Exception e) {
@@ -109,8 +108,7 @@ public class DriverController {
   public ResponseEntity<ApiResponse<List<DriverDTO>>> getAllDrivers() {
     try {
       List<Driver> allDrivers = driverService.getAllDrivers();
-      List<DriverDTO> driverDTOs =
-          allDrivers.stream().map(driverMapper::toDTO).collect(Collectors.toList());
+      List<DriverDTO> driverDTOs = allDrivers.stream().map(driverMapper::toDTO).collect(Collectors.toList());
       return ResponseEntity.ok(
           ApiResponse.success(driverDTOs, "All drivers retrieved successfully"));
     } catch (Exception e) {

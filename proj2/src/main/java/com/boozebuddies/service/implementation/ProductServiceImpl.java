@@ -96,7 +96,6 @@ public class ProductServiceImpl implements ProductService {
         .filter(p -> p.getMerchant() != null && p.getMerchant().getId().equals(merchantId))
         .collect(Collectors.toList());
   }
-
   /** Gets available products by merchant. */
   @Override
   public List<Product> getAvailableProductsByMerchant(Long merchantId) {
@@ -105,4 +104,5 @@ public class ProductServiceImpl implements ProductService {
         .filter(Product::isAvailable)
         .collect(Collectors.toList());
   }
+
 }

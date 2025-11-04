@@ -1,16 +1,10 @@
 package com.boozebuddies.controller;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
-import com.boozebuddies.config.TestSecurityConfig;
+import com.boozebuddies.dto.LoginRequest;
 import com.boozebuddies.dto.RegisterUserRequest;
 import com.boozebuddies.dto.UserDTO;
 import com.boozebuddies.entity.User;
 import com.boozebuddies.mapper.UserMapper;
-import com.boozebuddies.security.JwtAuthenticationFilter;
 import com.boozebuddies.service.UserService;
 import com.boozebuddies.service.ValidationService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -20,23 +14,18 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.FilterType;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-@WebMvcTest(
-    controllers = UserController.class,
-    excludeFilters =
-        @ComponentScan.Filter(
-            type = FilterType.ASSIGNABLE_TYPE,
-            classes = JwtAuthenticationFilter.class))
-@AutoConfigureMockMvc(addFilters = false) // ⛔ disables all Spring Security filters
-@Import(TestSecurityConfig.class)
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+@WebMvcTest(UserController.class)
 @DisplayName("UserController Tests")
 class UserControllerTest {
 
@@ -53,6 +42,7 @@ class UserControllerTest {
   private User testUser;
   private UserDTO testUserDTO;
   private RegisterUserRequest registerRequest;
+  private LoginRequest loginRequest;
 
   @BeforeEach
   void setUp() {
@@ -76,7 +66,66 @@ class UserControllerTest {
     registerRequest.setEmail("john@example.com");
     registerRequest.setPhone("555-123-4567");
     registerRequest.setDateOfBirth(LocalDate.of(1990, 1, 1));
+
+    loginRequest = new LoginRequest("john@example.com", "Password123");
   }
+
+  // ==================== REGISTER TESTS ====================
+
+  @Test
+  @DisplayName("POST /api/users/register should return 201 on successful registration")
+  void testRegisterSuccess() throws Exception {
+    when(userService.registerUser(any())).thenReturn(testUser);
+    when(userMapper.toDTO(testUser)).thenReturn(testUserDTO);
+
+    mockMvc
+        .perform(
+            post("/api/users/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(registerRequest)))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.success").value(true))
+        .andExpect(jsonPath("$.message").value("User registered successfully"))
+        .andExpect(jsonPath("$.data.email").value("john@example.com"));
+
+    verify(userService, times(1)).registerUser(any());
+    verify(userMapper, times(1)).toDTO(testUser);
+  }
+
+  @Test
+  @DisplayName("POST /api/users/register should return 400 on invalid input")
+  void testRegisterInvalidInput() throws Exception {
+    when(userService.registerUser(any()))
+        .thenThrow(new IllegalArgumentException("Invalid email format"));
+
+    mockMvc
+        .perform(
+            post("/api/users/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(registerRequest)))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(jsonPath("$.message").value("Invalid email format"));
+
+    verify(userService, times(1)).registerUser(any());
+  }
+
+  @Test
+  @DisplayName("POST /api/users/register should handle unexpected exceptions")
+  void testRegisterUnexpectedException() throws Exception {
+    when(userService.registerUser(any()))
+        .thenThrow(new RuntimeException("Database error"));
+
+    mockMvc
+        .perform(
+            post("/api/users/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(registerRequest)))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(jsonPath("$.message").value("An error occurred during registration"));
+  }
+
 
   // ==================== GET USER TESTS ====================
 
@@ -134,7 +183,8 @@ class UserControllerTest {
   @Test
   @DisplayName("GET /api/users/{id} should handle service exceptions")
   void testGetUserByIdServiceException() throws Exception {
-    when(userService.getUserById(1L)).thenThrow(new RuntimeException("Database error"));
+    when(userService.getUserById(1L))
+        .thenThrow(new RuntimeException("Database error"));
 
     mockMvc
         .perform(get("/api/users/1"))
@@ -152,7 +202,12 @@ class UserControllerTest {
     userDTO2.setId(2L);
     userDTO2.setEmail("jane@example.com");
 
-    User user2 = User.builder().id(2L).name("Jane Doe").email("jane@example.com").build();
+    User user2 =
+        User.builder()
+            .id(2L)
+            .name("Jane Doe")
+            .email("jane@example.com")
+            .build();
 
     when(userService.getAllUsers()).thenReturn(List.of(testUser, user2));
     when(userMapper.toDTO(testUser)).thenReturn(testUserDTO);
@@ -205,7 +260,11 @@ class UserControllerTest {
     UserDTO updateDTO = new UserDTO();
     updateDTO.setEmail("newemail@example.com");
 
-    User updatedUser = User.builder().id(1L).email("newemail@example.com").build();
+    User updatedUser =
+        User.builder()
+            .id(1L)
+            .email("newemail@example.com")
+            .build();
 
     UserDTO updatedDTO = new UserDTO();
     updatedDTO.setId(1L);
@@ -293,7 +352,8 @@ class UserControllerTest {
     updateDTO.setEmail("newemail@example.com");
 
     when(userMapper.toEntity(updateDTO)).thenReturn(testUser);
-    when(userService.updateUser(1L, testUser)).thenThrow(new RuntimeException("Database error"));
+    when(userService.updateUser(1L, testUser))
+        .thenThrow(new RuntimeException("Database error"));
 
     mockMvc
         .perform(
@@ -329,7 +389,11 @@ class UserControllerTest {
   @DisplayName("POST /api/users/{id}/verify-age should return 200 and set ageVerified to true")
   void testVerifyAgeSetsFlagSuccess() throws Exception {
     User unverifiedUser =
-        User.builder().id(1L).dateOfBirth(LocalDate.of(1990, 1, 1)).ageVerified(false).build();
+        User.builder()
+            .id(1L)
+            .dateOfBirth(LocalDate.of(1990, 1, 1))
+            .ageVerified(false)
+            .build();
 
     when(userService.getUserById(1L)).thenReturn(java.util.Optional.of(unverifiedUser));
     when(validationService.validateAge(unverifiedUser)).thenReturn(true);
@@ -347,7 +411,11 @@ class UserControllerTest {
   @Test
   @DisplayName("POST /api/users/{id}/verify-age should return 400 when user is too young")
   void testVerifyAgeFailed() throws Exception {
-    User youngUser = User.builder().id(1L).dateOfBirth(LocalDate.of(2015, 1, 1)).build();
+    User youngUser =
+        User.builder()
+            .id(1L)
+            .dateOfBirth(LocalDate.of(2015, 1, 1))
+            .build();
 
     when(userService.getUserById(1L)).thenReturn(java.util.Optional.of(youngUser));
     when(validationService.validateAge(youngUser)).thenReturn(false);
@@ -435,7 +503,9 @@ class UserControllerTest {
   void testDeleteUserNotFound() throws Exception {
     when(userService.deleteUser(999L)).thenReturn(false);
 
-    mockMvc.perform(delete("/api/users/999")).andExpect(status().isNotFound());
+    mockMvc
+        .perform(delete("/api/users/999"))
+        .andExpect(status().isNotFound());
 
     verify(userService, times(1)).deleteUser(999L);
   }

@@ -86,8 +86,7 @@ public class DeliveryController {
       @PathVariable Long driverId) {
     try {
       List<Delivery> deliveries = deliveryService.getDeliveriesByDriver(driverId);
-      List<DeliveryDTO> deliveryDTOs =
-          deliveries.stream().map(deliveryMapper::toDTO).collect(Collectors.toList());
+      List<DeliveryDTO> deliveryDTOs = deliveries.stream().map(deliveryMapper::toDTO).collect(Collectors.toList());
       return ResponseEntity.ok(
           ApiResponse.success(deliveryDTOs, "Deliveries retrieved successfully"));
     } catch (Exception e) {
@@ -117,8 +116,8 @@ public class DeliveryController {
   public ResponseEntity<ApiResponse<List<DeliveryDTO>>> getActiveDeliveries() {
     try {
       List<Delivery> activeDeliveries = deliveryService.getActiveDeliveries();
-      List<DeliveryDTO> deliveryDTOs =
-          activeDeliveries.stream().map(deliveryMapper::toDTO).collect(Collectors.toList());
+      List<DeliveryDTO> deliveryDTOs = activeDeliveries.stream().map(deliveryMapper::toDTO)
+          .collect(Collectors.toList());
       return ResponseEntity.ok(
           ApiResponse.success(deliveryDTOs, "Active deliveries retrieved successfully"));
     } catch (Exception e) {
