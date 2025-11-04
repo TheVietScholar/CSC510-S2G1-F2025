@@ -51,6 +51,7 @@ public class UserDTO {
 
   /** When the user account was last updated */
   private LocalDateTime updatedAt;
+
   private Double latitude;
   private Double longitude;
 
