@@ -72,7 +72,7 @@ public class UserMapper {
    */
   public User toEntity(RegisterUserRequest request) {
     if (request == null) return null;
-    
+
     return User.builder()
         .name(request.getName())
         .email(request.getEmail())
