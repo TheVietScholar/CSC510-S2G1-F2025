@@ -31,6 +31,22 @@ public interface OrderService {
   List<Order> getOrdersByUser(Long userId);
 
   /**
+   * Retrieves all orders for a specific merchant.
+   *
+   * @param merchantId The merchant's ID.
+   * @return A list of orders associated with the merchant.
+   */
+  List<Order> getOrdersByMerchant(Long merchantId);
+
+  /**
+   * Retrieves all orders assigned to a specific driver.
+   *
+   * @param driverId The driver's ID.
+   * @return A list of orders assigned to the driver.
+   */
+  List<Order> getOrdersByDriver(Long driverId);
+
+  /**
    * Retrieves all orders in the system.
    *
    * @return A list of all orders.

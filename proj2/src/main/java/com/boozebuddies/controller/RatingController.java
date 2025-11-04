@@ -7,10 +7,14 @@ import com.boozebuddies.entity.Product;
 import com.boozebuddies.entity.Rating;
 import com.boozebuddies.entity.User;
 import com.boozebuddies.mapper.RatingMapper;
+import com.boozebuddies.model.Role;
+import com.boozebuddies.security.annotation.RoleAnnotations.*;
+import com.boozebuddies.service.PermissionService;
 import com.boozebuddies.service.RatingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -20,16 +24,25 @@ public class RatingController {
 
   private final RatingService ratingService;
   private final RatingMapper ratingMapper;
+  private final PermissionService permissionService;
 
   // -----------------------------
   // Rate a product
   // -----------------------------
   @PostMapping("/product")
+  @IsAuthenticated
   public ResponseEntity<RatingDTO> rateProduct(
       @RequestParam Long userId,
       @RequestParam Long productId,
       @RequestParam int rating,
-      @RequestParam(required = false) String review) {
+      @RequestParam(required = false) String review,
+      Authentication authentication) {
+
+    // Only allow the authenticated user (or admin) to rate on behalf of the userId
+    if (!permissionService.isSelf(authentication, userId)
+        && !permissionService.hasRole(authentication, Role.ADMIN)) {
+      return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+    }
 
     User user = new User();
     user.setId(userId);
@@ -45,11 +58,18 @@ public class RatingController {
   // Rate a driver
   // -----------------------------
   @PostMapping("/driver")
+  @IsAuthenticated
   public ResponseEntity<RatingDTO> rateDriver(
       @RequestParam Long userId,
       @RequestParam Long driverId,
       @RequestParam int rating,
-      @RequestParam(required = false) String review) {
+      @RequestParam(required = false) String review,
+      Authentication authentication) {
+
+    if (!permissionService.isSelf(authentication, userId)
+        && !permissionService.hasRole(authentication, Role.ADMIN)) {
+      return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+    }
 
     User user = new User();
     user.setId(userId);
@@ -65,11 +85,18 @@ public class RatingController {
   // Rate a merchant
   // -----------------------------
   @PostMapping("/merchant")
+  @IsAuthenticated
   public ResponseEntity<RatingDTO> rateMerchant(
       @RequestParam Long userId,
       @RequestParam Long merchantId,
       @RequestParam int rating,
-      @RequestParam(required = false) String review) {
+      @RequestParam(required = false) String review,
+      Authentication authentication) {
+
+    if (!permissionService.isSelf(authentication, userId)
+        && !permissionService.hasRole(authentication, Role.ADMIN)) {
+      return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+    }
 
     User user = new User();
     user.setId(userId);

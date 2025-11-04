@@ -19,6 +19,11 @@ public class Driver {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
+  /** Link to the User account for this driver. The User must have DRIVER role. */
+  @OneToOne
+  @JoinColumn(name = "user_id", nullable = false, unique = true)
+  private User user;
+
   @Column(nullable = false)
   private String name;
 
@@ -49,6 +54,10 @@ public class Driver {
   @Column(name = "total_deliveries")
   private Integer totalDeliveries = 0;
 
+  /**
+   * Certification status for handling alcohol deliveries. Must be APPROVED before driver can accept
+   * orders.
+   */
   @Enumerated(EnumType.STRING)
   @Builder.Default
   @Column(name = "certification_status")
@@ -75,5 +84,18 @@ public class Driver {
   @PreUpdate
   public void preUpdate() {
     this.updatedAt = LocalDateTime.now();
+  }
+
+  /** Check if driver is certified and available to accept deliveries. */
+  public boolean canAcceptDeliveries() {
+    return isAvailable
+        && certificationStatus == CertificationStatus.APPROVED
+        && user != null
+        && user.isActive();
+  }
+
+  /** Check if driver's certification is approved. */
+  public boolean isCertified() {
+    return certificationStatus == CertificationStatus.APPROVED;
   }
 }

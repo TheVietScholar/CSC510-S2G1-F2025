@@ -27,10 +27,7 @@ public interface UserService {
   Optional<User> findByEmail(String email);
 
   /**
-
-
-  /**
-   * Retrieves a user by their unique ID.
+   * /** Retrieves a user by their unique ID.
    *
    * @param userId The ID of the user.
    * @return An Optional containing the user if found, otherwise empty.

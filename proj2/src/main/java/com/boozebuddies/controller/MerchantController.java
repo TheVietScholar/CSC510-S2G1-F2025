@@ -4,15 +4,21 @@ import com.boozebuddies.dto.ApiResponse;
 import com.boozebuddies.dto.MerchantDTO;
 import com.boozebuddies.entity.Merchant;
 import com.boozebuddies.entity.Order;
+import com.boozebuddies.entity.User;
 import com.boozebuddies.mapper.MerchantMapper;
+import com.boozebuddies.security.annotation.RoleAnnotations.*;
 import com.boozebuddies.service.MerchantService;
+import com.boozebuddies.service.PermissionService;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -21,16 +27,22 @@ public class MerchantController {
 
   private final MerchantService merchantService;
   private final MerchantMapper merchantMapper;
+  private final PermissionService permissionService;
 
   @Autowired
-  public MerchantController(MerchantService merchantService, MerchantMapper merchantMapper) {
+  public MerchantController(
+      MerchantService merchantService,
+      MerchantMapper merchantMapper,
+      PermissionService permissionService) {
     this.merchantService = merchantService;
     this.merchantMapper = merchantMapper;
+    this.permissionService = permissionService;
   }
 
-  // ==================== REGISTER ====================
+  // ==================== REGISTER (ADMIN ONLY) ====================
 
   @PostMapping("/register")
+  @IsAdmin
   public ResponseEntity<?> registerMerchant(@RequestBody MerchantDTO merchantDTO) {
     try {
       Merchant merchant = merchantMapper.toEntity(merchantDTO);
@@ -47,9 +59,10 @@ public class MerchantController {
     }
   }
 
-  // ==================== VERIFY ====================
+  // ==================== VERIFY (ADMIN ONLY) ====================
 
   @PutMapping("/{id}/verify")
+  @IsAdmin
   public ResponseEntity<?> verifyMerchant(@PathVariable Long id, @RequestParam boolean verified) {
     try {
       Merchant verifiedMerchant = merchantService.verifyMerchant(id, verified);
@@ -64,9 +77,10 @@ public class MerchantController {
     }
   }
 
-  // ==================== RETRIEVE ====================
+  // ==================== RETRIEVE (ALL AUTHENTICATED USERS) ====================
 
   @GetMapping("/{id}")
+  @IsAdmin
   public ResponseEntity<?> getMerchantById(@PathVariable Long id) {
     try {
       if (id == null || id <= 0) {
@@ -83,7 +97,63 @@ public class MerchantController {
     }
   }
 
+  /** Get merchant by name. Authenticated users only. */
+  @GetMapping("/name/{name}")
+  @IsAuthenticated
+  public ResponseEntity<ApiResponse<MerchantDTO>> getMerchantByName(@PathVariable String name) {
+    try {
+      Merchant merchant = merchantService.getMerchantByName(name);
+
+      if (merchant == null) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(ApiResponse.error("Merchant not found"));
+      }
+
+      return ResponseEntity.ok(
+          ApiResponse.success(merchantMapper.toDTO(merchant), "Merchant retrieved successfully"));
+    } catch (Exception e) {
+      return ResponseEntity.badRequest()
+          .body(ApiResponse.error("Failed to retrieve merchant: " + e.getMessage()));
+    }
+  }
+
+  /**
+   * Get all merchants sorted by distance from authenticated user's location. Authenticated users
+   * only - uses user's stored location.
+   */
+  @GetMapping("/by-distance")
+  @IsAuthenticated
+  public ResponseEntity<ApiResponse<List<MerchantDTO>>> getMerchantsByDistanceFromUser(
+      Authentication authentication) {
+    try {
+      User user = permissionService.getAuthenticatedUser(authentication);
+
+      if (user == null) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            .body(ApiResponse.error("User not authenticated"));
+      }
+
+      if (user.getLatitude() == null || user.getLongitude() == null) {
+        return ResponseEntity.badRequest()
+            .body(
+                ApiResponse.error(
+                    "User location not set. Please update your profile with your location."));
+      }
+
+      List<Merchant> merchants =
+          merchantService.getMerchantsSortedByDistance(user.getLatitude(), user.getLongitude());
+      List<MerchantDTO> merchantDTOs =
+          merchants.stream().map(merchantMapper::toDTO).collect(Collectors.toList());
+      return ResponseEntity.ok(
+          ApiResponse.success(merchantDTOs, "Merchants sorted by distance from your location"));
+    } catch (Exception e) {
+      return ResponseEntity.badRequest()
+          .body(ApiResponse.error("Failed to retrieve merchants: " + e.getMessage()));
+    }
+  }
+
   @GetMapping
+  @IsAuthenticated
   public ResponseEntity<?> getAllMerchants() {
     try {
       List<MerchantDTO> merchants =
@@ -95,9 +165,10 @@ public class MerchantController {
     }
   }
 
-  // ==================== DELETE ====================
+  // ==================== DELETE (ADMIN ONLY) ====================
 
   @DeleteMapping("/{id}")
+  @IsAdmin
   public ResponseEntity<?> deleteMerchant(@PathVariable Long id) {
     try {
       if (id == null || id <= 0) {
@@ -120,19 +191,74 @@ public class MerchantController {
   // ==================== ORDERS BY MERCHANT ====================
 
   @GetMapping("/{id}/orders")
+  @org.springframework.security.access.prepost.PreAuthorize(
+      "hasRole('ADMIN') or @permissionService.ownsMerchant(authentication, #id)")
   public ResponseEntity<?> getOrdersByMerchant(
       @PathVariable Long id,
       @RequestParam(defaultValue = "0") int page,
-      @RequestParam(defaultValue = "10") int size) {
+      @RequestParam(defaultValue = "10") int size,
+      Authentication authentication) {
     try {
       if (id == null || id <= 0) {
         return ResponseEntity.badRequest().body(ApiResponse.error("Invalid merchant ID"));
       }
+
       Pageable pageable = PageRequest.of(page, size);
       Page<Order> orders = merchantService.getOrdersByMerchant(id, pageable);
       return ResponseEntity.ok(ApiResponse.success(orders, "Orders retrieved successfully"));
+    } catch (AccessDeniedException e) {
+      return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error(e.getMessage()));
     } catch (IllegalArgumentException e) {
       return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+    } catch (Exception e) {
+      return ResponseEntity.badRequest()
+          .body(ApiResponse.error("An error occurred retrieving orders"));
+    }
+  }
+
+  // ==================== MERCHANT_ADMIN ENDPOINTS ====================
+
+  /** Get the merchant managed by the authenticated merchant admin. */
+  @GetMapping("/my-merchant")
+  @IsMerchantAdmin
+  public ResponseEntity<?> getMyMerchant(Authentication authentication) {
+    try {
+      User user = permissionService.getAuthenticatedUser(authentication);
+
+      if (user.getMerchantId() == null) {
+        return ResponseEntity.badRequest()
+            .body(ApiResponse.error("No merchant assigned to this admin"));
+      }
+
+      Merchant merchant = merchantService.getMerchantById(user.getMerchantId());
+      return ResponseEntity.ok(
+          ApiResponse.success(
+              merchantMapper.toDTO(merchant), "Your merchant retrieved successfully"));
+    } catch (Exception e) {
+      return ResponseEntity.badRequest()
+          .body(ApiResponse.error("An error occurred retrieving your merchant"));
+    }
+  }
+
+  /** Get orders for the merchant managed by the authenticated merchant admin. */
+  @GetMapping("/my-merchant/orders")
+  @IsMerchantAdmin
+  public ResponseEntity<?> getMyMerchantOrders(
+      @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "10") int size,
+      Authentication authentication) {
+    try {
+      User user = permissionService.getAuthenticatedUser(authentication);
+
+      if (user.getMerchantId() == null) {
+        return ResponseEntity.badRequest()
+            .body(ApiResponse.error("No merchant assigned to this admin"));
+      }
+
+      Pageable pageable = PageRequest.of(page, size);
+      Page<Order> orders = merchantService.getOrdersByMerchant(user.getMerchantId(), pageable);
+      return ResponseEntity.ok(
+          ApiResponse.success(orders, "Your merchant orders retrieved successfully"));
     } catch (Exception e) {
       return ResponseEntity.badRequest()
           .body(ApiResponse.error("An error occurred retrieving orders"));

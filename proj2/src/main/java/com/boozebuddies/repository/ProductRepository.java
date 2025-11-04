@@ -1,11 +1,7 @@
 package com.boozebuddies.repository;
 
 import com.boozebuddies.entity.Product;
-import java.math.BigDecimal;
 import java.util.List;
-import java.util.Optional;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,54 +10,57 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
-  // Find all products by merchant
-  Page<Product> findByMerchant_Id(Long merchantId, Pageable pageable);
-
-  // Find available products by merchant
-  Page<Product> findByMerchant_IdAndAvailableTrue(Long merchantId, Pageable pageable);
-
-  // Find all available products
-  Page<Product> findByAvailableTrue(Pageable pageable);
-
-  // Search available products by name
-  @Query(
-      "SELECT p FROM Product p WHERE p.available = true AND LOWER(p.name) LIKE LOWER(CONCAT('%', :q, '%'))")
-  Page<Product> searchAvailableByName(@Param("q") String keyword, Pageable pageable);
-
-  // Find all alcoholic available products
-  @Query("SELECT p FROM Product p WHERE p.isAlcohol = true AND p.available = true")
-  Page<Product> findAllAlcoholicAvailable(Pageable pageable);
-
-  // Find product by ID and merchant ID
-  Optional<Product> findByIdAndMerchant_Id(Long id, Long merchantId);
-
-  // Price range filter for available products
-  Page<Product> findByAvailableTrueAndPriceBetween(
-      BigDecimal min, BigDecimal max, Pageable pageable);
-
-  // Find products by category
-  Page<Product> findByCategory_IdAndAvailableTrue(Long categoryId, Pageable pageable);
-
-  // Find products by alcohol status
-  Page<Product> findByIsAlcoholAndAvailableTrue(boolean isAlcohol, Pageable pageable);
-
-  // Find all available products (non-paged)
+  /** Find all available products. */
   List<Product> findByAvailableTrue();
 
-  // Find available products by merchant (non-paged)
-  List<Product> findByMerchant_IdAndAvailableTrue(Long merchantId);
+  /** Find all products for a specific merchant. */
+  List<Product> findByMerchantId(Long merchantId);
 
-  // Search products by name or category name (non-paged)
+  /** Find available products for a specific merchant. */
+  List<Product> findByMerchantIdAndAvailableTrue(Long merchantId);
+
+  /** Find products by category. */
+  List<Product> findByCategoryId(Long categoryId);
+
+  /** Find available products by category. */
+  List<Product> findByCategoryIdAndAvailableTrue(Long categoryId);
+
+  /** Search products by keyword (searches name, description). Only returns available products. */
   @Query(
-      "SELECT p FROM Product p WHERE "
+      "SELECT p FROM Product p WHERE p.available = true AND "
           + "(LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR "
-          + "LOWER(p.category.name) LIKE LOWER(CONCAT('%', :keyword, '%'))) AND "
-          + "p.available = true")
-  List<Product> searchAvailableProducts(@Param("keyword") String keyword);
+          + "LOWER(p.description) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+  List<Product> searchByKeyword(@Param("keyword") String keyword);
 
-  // Count available products by merchant
-  long countByMerchant_IdAndAvailableTrue(Long merchantId);
+  /** Find products by price range. */
+  @Query(
+      "SELECT p FROM Product p WHERE p.available = true AND p.price BETWEEN :minPrice AND :maxPrice")
+  List<Product> findByPriceRange(
+      @Param("minPrice") Double minPrice, @Param("maxPrice") Double maxPrice);
 
-  // Count all available products
-  long countByAvailableTrue();
+  /** Find products by alcohol content range (for beer types). */
+  @Query(
+      "SELECT p FROM Product p WHERE p.available = true AND "
+          + "p.alcoholContent BETWEEN :minAlcohol AND :maxAlcohol")
+  List<Product> findByAlcoholContentRange(
+      @Param("minAlcohol") Double minAlcohol, @Param("maxAlcohol") Double maxAlcohol);
+
+  /**
+   * Find top-selling products (you'll need an OrderItem entity to fully implement this). This is a
+   * placeholder for future implementation.
+   */
+  @Query(
+      value =
+          "SELECT p.* FROM products p "
+              + "LEFT JOIN order_items oi ON p.id = oi.product_id "
+              + "WHERE p.available = true "
+              + "GROUP BY p.id "
+              + "ORDER BY COUNT(oi.id) DESC "
+              + "LIMIT :limit",
+      nativeQuery = true)
+  List<Product> findTopSellingProducts(@Param("limit") int limit);
+
+  /** Count available products for a merchant. */
+  @Query("SELECT COUNT(p) FROM Product p WHERE p.merchant.id = :merchantId AND p.available = true")
+  Long countAvailableProductsByMerchant(@Param("merchantId") Long merchantId);
 }

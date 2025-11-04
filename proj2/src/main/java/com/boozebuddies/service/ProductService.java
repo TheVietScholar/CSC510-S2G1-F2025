@@ -3,83 +3,44 @@ package com.boozebuddies.service;
 import com.boozebuddies.entity.Product;
 import java.util.List;
 
+/** Service interface for managing products. */
 public interface ProductService {
 
-  /**
-   * Retrieves a list of all available products.
-   *
-   * @return A list of all products.
-   */
+  /** Get all products in the system (including unavailable). Admin use only. */
   List<Product> getAllProducts();
 
-  /**
-   * Retrieves a product by its unique ID.
-   *
-   * @param productId The ID of the product.
-   * @return The product if found, otherwise null.
-   */
-  Product getProductById(Long productId);
-
-  /**
-   * Adds a new product to the system.
-   *
-   * @param product The product to add.
-   * @return The added product with its generated ID.
-   */
-  Product addProduct(Product product);
-
-  /**
-   * Updates an existing product's information.
-   *
-   * @param productId The ID of the product to update.
-   * @param product The product object with updated information.
-   * @return The updated product.
-   */
-  Product updateProduct(Long productId, Product product);
-
-  /**
-   * Deletes a product from the system.
-   *
-   * @param productId The ID of the product to delete.
-   */
-  void deleteProduct(Long productId);
-
-  /**
-   * Searches for products by name, type, or other criteria.
-   *
-   * @param keyword The search keyword.
-   * @return A list of products matching the search criteria.
-   */
-  List<Product> searchProducts(String keyword);
-
-  /**
-   * Checks if a product is available for ordering.
-   *
-   * @param productId The ID of the product.
-   * @return True if the product is available, false otherwise.
-   */
-  boolean isProductAvailable(Long productId);
-
-  /**
-   * Retrieves all available products.
-   *
-   * @return A list of available products.
-   */
+  /** Get only available products (available = true). Public endpoint for customers to browse. */
   List<Product> getAvailableProducts();
 
-  /**
-   * Retrieves all products for a specific merchant.
-   *
-   * @param merchantId The ID of the merchant.
-   * @return A list of products for the merchant.
-   */
+  /** Find a product by its ID. */
+  Product getProductById(Long id);
+
+  /** Search products by keyword (searches name, description, etc.). */
+  List<Product> searchProducts(String keyword);
+
+  /** Get all products for a specific merchant (including unavailable). */
   List<Product> getProductsByMerchant(Long merchantId);
 
-  /**
-   * Retrieves available products for a specific merchant.
-   *
-   * @param merchantId The ID of the merchant.
-   * @return A list of available products for the merchant.
-   */
+  /** Get only available products for a specific merchant. */
   List<Product> getAvailableProductsByMerchant(Long merchantId);
+
+  /** Check if a product is available for purchase. */
+  boolean isProductAvailable(Long id);
+
+  /** Add a new product to the system. */
+  Product addProduct(Product product);
+
+  /** Update an existing product. */
+  Product updateProduct(Long id, Product product);
+
+  /** Delete a product. */
+  void deleteProduct(Long id);
+
+  /**
+   * Get products by category. (You mentioned working on category if needed - this will be useful)
+   */
+  List<Product> getProductsByCategory(Long categoryId);
+
+  /** Get available products by category. */
+  List<Product> getAvailableProductsByCategory(Long categoryId);
 }

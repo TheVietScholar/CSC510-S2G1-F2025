@@ -52,6 +52,12 @@ public class Merchant {
   @Column(name = "image_url")
   private String imageUrl;
 
+  @Column(name = "latitude")
+  private Double latitude;
+
+  @Column(name = "longitude")
+  private Double longitude;
+
   @OneToMany(mappedBy = "merchant", cascade = CascadeType.ALL)
   @Builder.Default
   private List<Product> products = new ArrayList<>();

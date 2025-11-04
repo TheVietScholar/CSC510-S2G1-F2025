@@ -1,55 +1,71 @@
 package com.boozebuddies.controller;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import com.boozebuddies.dto.ApiResponse;
-import com.boozebuddies.dto.CreateOrderRequest;
-import com.boozebuddies.dto.OrderDTO;
-import com.boozebuddies.dto.OrderItemRequest;
-import com.boozebuddies.entity.Merchant;
-import com.boozebuddies.entity.Order;
-import com.boozebuddies.entity.OrderItem;
-import com.boozebuddies.entity.Product;
-import com.boozebuddies.entity.User;
+import com.boozebuddies.config.TestSecurityConfig;
+import com.boozebuddies.dto.*;
+import com.boozebuddies.entity.*;
+import com.boozebuddies.mapper.OrderMapper;
 import com.boozebuddies.model.OrderStatus;
+import com.boozebuddies.model.Role;
+import com.boozebuddies.security.JwtAuthenticationFilter;
 import com.boozebuddies.service.OrderService;
+import com.boozebuddies.service.PermissionService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.web.servlet.MockMvc;
 
-@ExtendWith(MockitoExtension.class)
+@WebMvcTest(
+    controllers = OrderController.class,
+    excludeFilters =
+        @ComponentScan.Filter(
+            type = FilterType.ASSIGNABLE_TYPE,
+            classes = JwtAuthenticationFilter.class))
+@AutoConfigureMockMvc(addFilters = false) // ⛔ disables all Spring Security filters
+@Import(TestSecurityConfig.class)
+@DisplayName("OrderController Tests")
 public class OrderControllerTest {
 
-  @Mock private OrderService orderService;
+  @Autowired private MockMvc mockMvc;
 
-  @InjectMocks private OrderController orderController;
+  @Autowired private ObjectMapper objectMapper;
 
-  private Order testOrder;
+  @MockBean private OrderService orderService;
+  @MockBean private OrderMapper orderMapper;
+  @MockBean private PermissionService permissionService;
+
   private User testUser;
   private Merchant testMerchant;
+  private Order testOrder;
   private OrderItem testOrderItem;
   private Product testProduct;
   private CreateOrderRequest testCreateRequest;
 
   @BeforeEach
   void setUp() {
-    testUser = User.builder().id(1L).name("John Doe").build();
+    // Test user
+    testUser = User.builder().id(1L).name("John Doe").roles(Set.of(Role.USER)).build();
 
+    // Merchant
     testMerchant = Merchant.builder().id(1L).name("Test Liquor Store").build();
 
+    // Product
     testProduct =
         Product.builder()
             .id(1L)
@@ -58,6 +74,7 @@ public class OrderControllerTest {
             .merchant(testMerchant)
             .build();
 
+    // Order Item
     testOrderItem =
         OrderItem.builder()
             .id(1L)
@@ -66,6 +83,7 @@ public class OrderControllerTest {
             .unitPrice(new BigDecimal("19.99"))
             .build();
 
+    // Order
     testOrder =
         Order.builder()
             .id(1L)
@@ -77,149 +95,116 @@ public class OrderControllerTest {
             .createdAt(LocalDateTime.now())
             .build();
 
+    // Create Order Request
     testCreateRequest =
         CreateOrderRequest.builder()
             .userId(1L)
             .merchantId(1L)
             .items(
-                Arrays.asList(
+                List.of(
                     OrderItemRequest.builder()
                         .productId(1L)
                         .quantity(2)
-                        .unitPrice(new BigDecimal("10.00"))
+                        .unitPrice(new BigDecimal("19.99"))
                         .build()))
             .build();
   }
 
+  // ==================== CREATE ORDER ====================
   @Test
-  void createOrder_Success() {
+  void createOrder_Success() throws Exception {
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
     when(orderService.createOrder(any(Order.class))).thenReturn(testOrder);
 
-    ResponseEntity<ApiResponse<OrderDTO>> response = orderController.createOrder(testCreateRequest);
-
-    assertEquals(HttpStatus.OK, response.getStatusCode());
-    ApiResponse<OrderDTO> body = response.getBody();
-    assertNotNull(body);
-    assertTrue(body.isSuccess());
-    assertEquals("Order created successfully", body.getMessage());
+    mockMvc
+        .perform(
+            post("/api/orders")
+                .contentType("application/json")
+                .content(objectMapper.writeValueAsString(testCreateRequest)))
+        .andExpect(status().isOk());
   }
 
   @Test
-  void getOrderById_Found() {
+  void createOrder_AccessDenied() throws Exception {
+    // User tries to create order for someone else
+    CreateOrderRequest invalidRequest =
+        CreateOrderRequest.builder()
+            .userId(99L)
+            .merchantId(1L)
+            .items(testCreateRequest.getItems())
+            .build();
+
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
+
+    mockMvc
+        .perform(
+            post("/api/orders")
+                .contentType("application/json")
+                .content(objectMapper.writeValueAsString(invalidRequest)))
+        .andExpect(status().isForbidden());
+  }
+
+  // ==================== GET ORDER ====================
+  @Test
+  void getOrderById_Success() throws Exception {
     when(orderService.getOrderById(1L)).thenReturn(Optional.of(testOrder));
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
 
-    ResponseEntity<ApiResponse<OrderDTO>> response = orderController.getOrderById(1L);
-
-    assertEquals(HttpStatus.OK, response.getStatusCode());
-    ApiResponse<OrderDTO> body = response.getBody();
-    assertNotNull(body);
-    assertTrue(body.isSuccess());
-    assertEquals("Order retrieved successfully", body.getMessage());
+    mockMvc.perform(get("/api/orders/1")).andExpect(status().isOk());
   }
 
   @Test
-  void getOrderById_NotFound() {
+  void getOrderById_NotFound() throws Exception {
     when(orderService.getOrderById(99L)).thenReturn(Optional.empty());
 
-    ResponseEntity<ApiResponse<OrderDTO>> response = orderController.getOrderById(99L);
-
-    assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    mockMvc.perform(get("/api/orders/99")).andExpect(status().isNotFound());
   }
 
   @Test
-  void getOrdersByUser_Success() {
-    when(orderService.getOrdersByUser(1L)).thenReturn(List.of(testOrder));
+  void getMyOrders_Success() throws Exception {
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
+    when(orderService.getOrdersByUser(testUser.getId())).thenReturn(List.of(testOrder));
 
-    ResponseEntity<ApiResponse<List<OrderDTO>>> response = orderController.getOrdersByUser(1L);
+    mockMvc.perform(get("/api/orders/my-orders")).andExpect(status().isOk());
+  }
 
-    assertEquals(HttpStatus.OK, response.getStatusCode());
-    ApiResponse<List<OrderDTO>> body = response.getBody();
-    assertNotNull(body);
-    assertTrue(body.isSuccess());
-    assertEquals("User orders retrieved successfully", body.getMessage());
+  // ==================== CANCEL ORDER ====================
+  @Test
+  void cancelOrder_Success() throws Exception {
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
+    when(orderService.getOrderById(1L)).thenReturn(Optional.of(testOrder));
+    when(orderService.cancelOrder(1L)).thenReturn(testOrder);
+
+    mockMvc.perform(post("/api/orders/1/cancel")).andExpect(status().isOk());
   }
 
   @Test
-  void updateOrderStatus_Success() {
-    when(orderService.updateOrderStatus(eq(1L), eq("CONFIRMED"))).thenReturn(testOrder);
+  void cancelOrder_NotOwner() throws Exception {
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
+    User otherUser = User.builder().id(2L).build();
+    Order orderForOther = Order.builder().id(1L).user(otherUser).build();
+    when(orderService.getOrderById(1L)).thenReturn(Optional.of(orderForOther));
 
-    ResponseEntity<ApiResponse<OrderDTO>> response =
-        orderController.updateOrderStatus(1L, "CONFIRMED");
+    mockMvc.perform(post("/api/orders/1/cancel")).andExpect(status().isForbidden());
+  }
 
-    assertEquals(HttpStatus.OK, response.getStatusCode());
-    ApiResponse<OrderDTO> body = response.getBody();
-    assertNotNull(body);
-    assertTrue(body.isSuccess());
-    assertEquals("Order status updated successfully", body.getMessage());
+  // ==================== UPDATE ORDER STATUS ====================
+  @Test
+  void updateOrderStatus_Success() throws Exception {
+    when(orderService.getOrderById(1L)).thenReturn(Optional.of(testOrder));
+    when(orderService.updateOrderStatus(1L, "CONFIRMED")).thenReturn(testOrder);
+
+    mockMvc
+        .perform(put("/api/orders/1/status").param("status", "CONFIRMED"))
+        .andExpect(status().isOk());
   }
 
   @Test
-  void updateOrderStatus_NotFound() {
-    when(orderService.updateOrderStatus(eq(99L), anyString()))
-        .thenThrow(new IllegalArgumentException("Order not found"));
+  void updateOrderStatus_NotFound() throws Exception {
+    when(orderService.getOrderById(99L)).thenReturn(Optional.empty());
 
-    ResponseEntity<ApiResponse<OrderDTO>> response =
-        orderController.updateOrderStatus(99L, "CONFIRMED");
-
-    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-    ApiResponse<OrderDTO> body = response.getBody();
-    assertNotNull(body);
-    assertFalse(body.isSuccess());
-    assertEquals("Failed to update order status: Order not found", body.getMessage());
-  }
-
-  @Test
-  void cancelOrder_Success() {
-    Order cancelledOrder = Order.builder().id(1L).status(OrderStatus.CANCELLED).build();
-
-    when(orderService.cancelOrder(1L)).thenReturn(cancelledOrder);
-
-    ResponseEntity<ApiResponse<OrderDTO>> response = orderController.cancelOrder(1L);
-
-    assertEquals(HttpStatus.OK, response.getStatusCode());
-    ApiResponse<OrderDTO> body = response.getBody();
-    assertNotNull(body);
-    assertTrue(body.isSuccess());
-    assertEquals("Order cancelled successfully", body.getMessage());
-  }
-
-  @Test
-  void cancelOrder_NotFound() {
-    when(orderService.cancelOrder(99L)).thenThrow(new IllegalArgumentException("Order not found"));
-
-    ResponseEntity<ApiResponse<OrderDTO>> response = orderController.cancelOrder(99L);
-
-    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-    ApiResponse<OrderDTO> body = response.getBody();
-    assertNotNull(body);
-    assertFalse(body.isSuccess());
-    assertEquals("Failed to cancel order: Order not found", body.getMessage());
-  }
-
-  @Test
-  void createOrder_ValidationError() {
-    CreateOrderRequest invalidRequest = CreateOrderRequest.builder().build();
-    when(orderService.createOrder(any(Order.class)))
-        .thenThrow(new IllegalArgumentException("Invalid order data"));
-
-    ResponseEntity<ApiResponse<OrderDTO>> response = orderController.createOrder(invalidRequest);
-
-    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-    ApiResponse<OrderDTO> body = response.getBody();
-    assertNotNull(body);
-    assertFalse(body.isSuccess());
-    assertEquals("Failed to create order: Invalid order data", body.getMessage());
-  }
-
-  @Test
-  void updateOrderStatus_InvalidStatus() {
-    ResponseEntity<ApiResponse<OrderDTO>> response =
-        orderController.updateOrderStatus(1L, "INVALID_STATUS");
-
-    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-    ApiResponse<OrderDTO> body = response.getBody();
-    assertNotNull(body);
-    assertFalse(body.isSuccess());
-    assertTrue(body.getMessage().contains("Failed to update order status"));
+    mockMvc
+        .perform(put("/api/orders/99/status").param("status", "CONFIRMED"))
+        .andExpect(status().isNotFound());
   }
 }

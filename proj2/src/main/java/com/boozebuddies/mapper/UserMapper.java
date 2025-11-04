@@ -26,6 +26,8 @@ public class UserMapper {
         .lastLoginAt(user.getLastLoginAt())
         .createdAt(user.getCreatedAt())
         .updatedAt(user.getUpdatedAt())
+        .latitude(user.getLatitude())
+        .longitude(user.getLongitude())
         .build();
   }
 
@@ -46,13 +48,15 @@ public class UserMapper {
         .lastLoginAt(userDTO.getLastLoginAt())
         .createdAt(userDTO.getCreatedAt())
         .updatedAt(userDTO.getUpdatedAt())
+        .latitude(userDTO.getLatitude())
+        .longitude(userDTO.getLongitude())
         .build();
   }
 
   /** Converts RegisterUserRequest to User entity. Sets default values for new users. */
   public User toEntity(RegisterUserRequest request) {
     if (request == null) return null;
-    
+
     return User.builder()
         .name(request.getName())
         .email(request.getEmail())

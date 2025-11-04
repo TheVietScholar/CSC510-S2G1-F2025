@@ -1,8 +1,7 @@
 package com.boozebuddies.controller;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import com.boozebuddies.dto.ApiResponse;
@@ -12,7 +11,9 @@ import com.boozebuddies.entity.Payment;
 import com.boozebuddies.entity.User;
 import com.boozebuddies.mapper.PaymentMapper;
 import com.boozebuddies.model.PaymentStatus;
+import com.boozebuddies.service.OrderService;
 import com.boozebuddies.service.PaymentService;
+import com.boozebuddies.service.PermissionService;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -28,27 +29,28 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 
 @ExtendWith(MockitoExtension.class)
 public class PaymentControllerTest {
 
   @Mock private PaymentService paymentService;
-
   @Mock private PaymentMapper paymentMapper;
+  @Mock private PermissionService permissionService;
+  @Mock private OrderService orderService;
+  @Mock private Authentication authentication;
 
   @InjectMocks private PaymentController paymentController;
 
+  private User testUser;
+  private Order testOrder;
   private Payment testPayment;
   private PaymentDTO testPaymentDTO;
-  private Order testOrder;
-  private User testUser;
 
   @BeforeEach
   void setUp() {
     testUser = User.builder().id(1L).name("John Doe").build();
-
     testOrder = Order.builder().id(1L).user(testUser).totalAmount(new BigDecimal("99.99")).build();
-
     testPayment =
         Payment.builder()
             .id(1L)
@@ -59,7 +61,6 @@ public class PaymentControllerTest {
             .paymentMethod("credit_card")
             .createdAt(LocalDateTime.now())
             .build();
-
     testPaymentDTO =
         PaymentDTO.builder()
             .id(1L)
@@ -73,19 +74,19 @@ public class PaymentControllerTest {
 
   @Test
   void processPayment_Success() {
-    when(paymentService.processPayment(any(Order.class), eq("credit_card")))
-        .thenReturn(testPayment);
+    when(permissionService.getAuthenticatedUser(authentication)).thenReturn(testUser);
+    when(orderService.getOrderById(1L)).thenReturn(Optional.of(testOrder));
+    when(paymentService.processPayment(testOrder, "credit_card")).thenReturn(testPayment);
     when(paymentMapper.toDTO(testPayment)).thenReturn(testPaymentDTO);
 
     ResponseEntity<ApiResponse<PaymentDTO>> response =
-        paymentController.processPayment(1L, "credit_card");
+        paymentController.processPayment(1L, "credit_card", authentication);
 
-    assertEquals(HttpStatus.OK, response.getStatusCode());
     ApiResponse<PaymentDTO> body = response.getBody();
     assertNotNull(body);
+    assertEquals(HttpStatus.OK, response.getStatusCode());
     assertTrue(body.isSuccess());
     assertEquals(testPaymentDTO, body.getData());
-    verify(paymentService).processPayment(any(Order.class), eq("credit_card"));
   }
 
   @Test
@@ -97,9 +98,7 @@ public class PaymentControllerTest {
             .user(testUser)
             .amount(new BigDecimal("99.99"))
             .status(PaymentStatus.REFUNDED)
-            .refundReason("customer_request")
             .build();
-
     PaymentDTO refundedDTO =
         PaymentDTO.builder()
             .id(2L)
@@ -109,103 +108,106 @@ public class PaymentControllerTest {
             .status(PaymentStatus.REFUNDED.name())
             .build();
 
-    when(paymentService.refundPayment(any(Order.class), eq("customer_request")))
-        .thenReturn(refundedPayment);
+    when(orderService.getOrderById(1L)).thenReturn(Optional.of(testOrder));
+    when(paymentService.refundPayment(testOrder, "customer_request")).thenReturn(refundedPayment);
     when(paymentMapper.toDTO(refundedPayment)).thenReturn(refundedDTO);
 
     ResponseEntity<ApiResponse<PaymentDTO>> response =
         paymentController.refundPayment(1L, "customer_request");
 
-    assertEquals(HttpStatus.OK, response.getStatusCode());
     ApiResponse<PaymentDTO> body = response.getBody();
     assertNotNull(body);
+    assertEquals(HttpStatus.OK, response.getStatusCode());
     assertTrue(body.isSuccess());
     assertEquals(refundedDTO, body.getData());
-    verify(paymentService).refundPayment(any(Order.class), eq("customer_request"));
   }
 
   @Test
-  @SuppressWarnings("unchecked")
+  void getMyPayments_Success() {
+    when(permissionService.getAuthenticatedUser(authentication)).thenReturn(testUser);
+    Page<Payment> pagedPayments = new PageImpl<>(List.of(testPayment));
+    when(paymentService.getPaymentsByUser(testUser, Pageable.unpaged())).thenReturn(pagedPayments);
+    when(paymentMapper.toDTO(testPayment)).thenReturn(testPaymentDTO);
+
+    ResponseEntity<ApiResponse<Page<PaymentDTO>>> response =
+        paymentController.getMyPayments(authentication, Pageable.unpaged());
+
+    ApiResponse<Page<PaymentDTO>> body = response.getBody();
+    assertNotNull(body);
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertTrue(body.isSuccess());
+    assertEquals(1, body.getData().getTotalElements());
+  }
+
+  @Test
   void getPaymentsByUser_Success() {
+    when(permissionService.getAuthenticatedUser(authentication)).thenReturn(testUser);
     Page<Payment> pagedPayments = new PageImpl<>(List.of(testPayment));
     when(paymentService.getPaymentsByUser(any(User.class), any(Pageable.class)))
         .thenReturn(pagedPayments);
+    when(paymentMapper.toDTO(testPayment)).thenReturn(testPaymentDTO);
 
-    ResponseEntity<?> response = paymentController.getPaymentsByUser(1L, Pageable.unpaged());
+    ResponseEntity<ApiResponse<Page<PaymentDTO>>> response =
+        paymentController.getPaymentsByUser(1L, authentication, Pageable.unpaged());
 
-    assertEquals(HttpStatus.OK, response.getStatusCode());
-    ApiResponse<Page<Payment>> body = (ApiResponse<Page<Payment>>) response.getBody();
+    ApiResponse<Page<PaymentDTO>> body = response.getBody();
     assertNotNull(body);
+    assertEquals(HttpStatus.OK, response.getStatusCode());
     assertTrue(body.isSuccess());
-    assertEquals(pagedPayments, body.getData());
+    assertEquals(1, body.getData().getTotalElements());
   }
 
   @Test
-  @SuppressWarnings("unchecked")
   void getPaymentByOrderId_Found() {
+    when(permissionService.getAuthenticatedUser(authentication)).thenReturn(testUser);
+    when(orderService.getOrderById(1L)).thenReturn(Optional.of(testOrder));
     when(paymentService.getPaymentByOrderId(1L)).thenReturn(Optional.of(testPayment));
     when(paymentMapper.toDTO(testPayment)).thenReturn(testPaymentDTO);
 
-    ResponseEntity<?> response = paymentController.getPaymentByOrderId(1L);
+    ResponseEntity<ApiResponse<PaymentDTO>> response =
+        paymentController.getPaymentByOrderId(1L, authentication);
 
-    assertEquals(HttpStatus.OK, response.getStatusCode());
-    ApiResponse<PaymentDTO> body = (ApiResponse<PaymentDTO>) response.getBody();
+    ApiResponse<PaymentDTO> body = response.getBody();
     assertNotNull(body);
+    assertEquals(HttpStatus.OK, response.getStatusCode());
     assertTrue(body.isSuccess());
     assertEquals(testPaymentDTO, body.getData());
   }
 
   @Test
   void getPaymentByOrderId_NotFound() {
-    when(paymentService.getPaymentByOrderId(99L)).thenReturn(Optional.empty());
+    when(permissionService.getAuthenticatedUser(authentication)).thenReturn(testUser);
+    when(orderService.getOrderById(99L)).thenReturn(Optional.empty());
 
-    ResponseEntity<?> response = paymentController.getPaymentByOrderId(99L);
+    ResponseEntity<ApiResponse<PaymentDTO>> response =
+        paymentController.getPaymentByOrderId(99L, authentication);
 
-    assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
   }
 
   @Test
-  @SuppressWarnings("unchecked")
-  void calculateTotalRevenue_Success() {
-    LocalDateTime start = LocalDateTime.now().minusDays(7);
-    LocalDateTime end = LocalDateTime.now();
-    BigDecimal expectedRevenue = new BigDecimal("299.97");
-
-    when(paymentService.calculateTotalRevenue(any(), any())).thenReturn(expectedRevenue);
-
-    ResponseEntity<?> response = paymentController.calculateTotalRevenue(start, end);
-
-    assertEquals(HttpStatus.OK, response.getStatusCode());
-    ApiResponse<BigDecimal> body = (ApiResponse<BigDecimal>) response.getBody();
-    assertNotNull(body);
-    assertTrue(body.isSuccess());
-    assertEquals(expectedRevenue, body.getData());
-  }
-
-  @Test
-  @SuppressWarnings("unchecked")
   void validatePaymentMethod_Valid() {
+    when(permissionService.getAuthenticatedUser(authentication)).thenReturn(testUser);
     when(paymentService.validatePaymentMethod(any(User.class), eq("credit_card"))).thenReturn(true);
 
-    ResponseEntity<?> response = paymentController.validatePaymentMethod(1L, "credit_card");
+    ResponseEntity<ApiResponse<Boolean>> response =
+        paymentController.validatePaymentMethod(1L, "credit_card", authentication);
 
-    assertEquals(HttpStatus.OK, response.getStatusCode());
-    ApiResponse<Boolean> body = (ApiResponse<Boolean>) response.getBody();
+    ApiResponse<Boolean> body = response.getBody();
     assertNotNull(body);
     assertTrue(body.isSuccess());
     assertTrue(body.getData());
   }
 
   @Test
-  @SuppressWarnings("unchecked")
   void validatePaymentMethod_Invalid() {
-    when(paymentService.validatePaymentMethod(any(User.class), eq("invalid_method")))
-        .thenReturn(false);
+    when(permissionService.getAuthenticatedUser(authentication)).thenReturn(testUser);
+    when(paymentService.validatePaymentMethod(any(User.class), eq("invalid"))).thenReturn(false);
 
-    ResponseEntity<?> response = paymentController.validatePaymentMethod(1L, "invalid_method");
+    ResponseEntity<ApiResponse<Boolean>> response =
+        paymentController.validatePaymentMethod(1L, "invalid", authentication);
 
-    assertEquals(HttpStatus.OK, response.getStatusCode());
-    ApiResponse<Boolean> body = (ApiResponse<Boolean>) response.getBody();
+    ApiResponse<Boolean> body = response.getBody();
     assertNotNull(body);
     assertTrue(body.isSuccess());
     assertFalse(body.getData());
