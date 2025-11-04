@@ -7,11 +7,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.boozebuddies.config.TestSecurityConfig;
 import com.boozebuddies.dto.DriverDTO;
 import com.boozebuddies.entity.Driver;
+import com.boozebuddies.entity.User;
+import com.boozebuddies.exception.DriverNotFoundException;
 import com.boozebuddies.mapper.DriverMapper;
 import com.boozebuddies.model.CertificationStatus;
+import com.boozebuddies.model.Role;
 import com.boozebuddies.security.JwtAuthenticationFilter;
 import com.boozebuddies.service.DriverService;
+import com.boozebuddies.service.PermissionService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -47,7 +52,10 @@ public class DriverControllerTest {
 
   @MockBean private DriverMapper driverMapper;
 
+  @MockBean private PermissionService permissionService;
+
   private Driver testDriver;
+  private User testDriverUser;
   private DriverDTO testDriverDTO;
 
   @BeforeEach
@@ -61,6 +69,18 @@ public class DriverControllerTest {
             .vehicleType("Car")
             .licensePlate("ABC123")
             .build();
+
+    testDriverUser =
+        User.builder()
+            .id(10L)
+            .name("John Doe")
+            .email("john@example.com")
+            .phone("1234567890")
+            .build();
+
+    testDriver.setUser(testDriverUser);
+    testDriverUser.setDriver(testDriver);
+    testDriverUser.addRole(Role.DRIVER);
 
     testDriverDTO =
         DriverDTO.builder()
@@ -85,7 +105,7 @@ public class DriverControllerTest {
             post("/api/drivers/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(testDriverDTO)))
-        .andExpect(status().isOk())
+        .andExpect(status().isCreated())
         .andExpect(jsonPath("$.success").value(true))
         .andExpect(jsonPath("$.message").value("Driver registered successfully"))
         .andExpect(jsonPath("$.data.id").value(1));
@@ -106,7 +126,7 @@ public class DriverControllerTest {
         .andExpect(jsonPath("$.success").value(false))
         .andExpect(
             jsonPath("$.message")
-                .value(org.hamcrest.Matchers.startsWith("Failed to register driver:")));
+                .value(org.hamcrest.Matchers.startsWith("Driver registration failed: boom")));
   }
 
   @Test
@@ -129,7 +149,7 @@ public class DriverControllerTest {
   @DisplayName("PUT /api/drivers/{id}/certification returns 404 when not found")
   void updateCertificationStatus_notFound() throws Exception {
     when(driverService.updateCertificationStatus(999L, CertificationStatus.REVOKED))
-        .thenReturn(null);
+        .thenThrow(DriverNotFoundException.class);
 
     mockMvc
         .perform(put("/api/drivers/999/certification?status=REVOKED"))
@@ -139,6 +159,7 @@ public class DriverControllerTest {
   @Test
   @DisplayName("PUT /api/drivers/{id}/certification returns 400 on exception")
   void updateCertificationStatus_exception_returnsBadRequest() throws Exception {
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(testDriver.getUser()); // Mock auth user
     when(driverService.updateCertificationStatus(1L, CertificationStatus.PENDING))
         .thenThrow(new RuntimeException("error"));
 
@@ -152,37 +173,39 @@ public class DriverControllerTest {
   }
 
   @Test
-  @DisplayName("PUT /api/drivers/{id}/availability returns 200 on success")
+  @DisplayName("PUT /api/drivers/my-profile/availability returns 200 on success")
   void updateAvailability_success() throws Exception {
     testDriver.setAvailable(false);
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(testDriver.getUser()); // Mock auth user
     when(driverService.updateAvailability(1L, false)).thenReturn(testDriver);
     when(driverMapper.toDTO(testDriver)).thenReturn(testDriverDTO);
 
     mockMvc
-        .perform(put("/api/drivers/1/availability?available=false"))
+        .perform(put("/api/drivers/my-profile/availability?available=false"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.success").value(true))
-        .andExpect(jsonPath("$.message").value("Availability updated successfully"))
+        .andExpect(jsonPath("$.message").value("You are now unavailable for deliveries"))
         .andExpect(jsonPath("$.data.id").value(1));
   }
 
   @Test
-  @DisplayName("PUT /api/drivers/{id}/availability returns 404 when not found")
+  @DisplayName("PUT /api/drivers/my-profile/availability returns 404 when not found")
   void updateAvailability_notFound() throws Exception {
-    when(driverService.updateAvailability(999L, true)).thenReturn(null);
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(testDriver.getUser()); // Mock auth user
+    when(driverService.updateAvailability(anyLong(), anyBoolean())).thenThrow(DriverNotFoundException.class);
 
     mockMvc
-        .perform(put("/api/drivers/999/availability?available=true"))
+        .perform(put("/api/drivers/my-profile/availability?available=true"))
         .andExpect(status().isNotFound());
   }
 
   @Test
-  @DisplayName("PUT /api/drivers/{id}/availability returns 400 on exception")
+  @DisplayName("PUT /api/drivers/my-profile/availability returns 400 on exception")
   void updateAvailability_exception_returnsBadRequest() throws Exception {
     when(driverService.updateAvailability(1L, true)).thenThrow(new RuntimeException("x"));
 
     mockMvc
-        .perform(put("/api/drivers/1/availability?available=true"))
+        .perform(put("/api/drivers/my-profile/availability?available=true"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.success").value(false))
         .andExpect(
@@ -223,7 +246,7 @@ public class DriverControllerTest {
   @Test
   @DisplayName("GET /api/drivers/{id} returns 404 when not found")
   void getDriverById_notFound() throws Exception {
-    when(driverService.getDriverById(999L)).thenReturn(null);
+    when(driverService.getDriverById(999L)).thenThrow(DriverNotFoundException.class);
 
     mockMvc.perform(get("/api/drivers/999")).andExpect(status().isNotFound());
   }

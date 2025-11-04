@@ -2,6 +2,7 @@ package com.boozebuddies.service.implementation;
 
 import com.boozebuddies.entity.Driver;
 import com.boozebuddies.entity.User;
+import com.boozebuddies.exception.DriverNotFoundException;
 import com.boozebuddies.model.CertificationStatus;
 import com.boozebuddies.repository.DriverRepository;
 import com.boozebuddies.service.DriverService;
@@ -22,6 +23,9 @@ public class DriverServiceImpl implements DriverService {
   /** Registers a new driver in the system. */
   @Override
   public Driver registerDriver(Driver driver) {
+    if(driver == null) {
+      throw new IllegalArgumentException("Driver cannot be null");
+    } 
     driver.setCertificationStatus(CertificationStatus.PENDING);
     driver.setAvailable(false);
     return driverRepository.save(driver);
@@ -32,7 +36,7 @@ public class DriverServiceImpl implements DriverService {
   public Driver updateCertificationStatus(Long driverId, CertificationStatus status) {
     Optional<Driver> driverOpt = driverRepository.findById(driverId);
     if (driverOpt.isEmpty()) {
-      return null;
+      throw new DriverNotFoundException("Driver not found with ID: " + driverId);
     }
     Driver driver = driverOpt.get();
     driver.setCertificationStatus(status);
