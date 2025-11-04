@@ -5,16 +5,15 @@ import com.boozebuddies.entity.User;
 import com.boozebuddies.exception.UnauthorizedException;
 import com.boozebuddies.exception.ValidationException;
 import com.boozebuddies.model.Role;
+import com.boozebuddies.service.MerchantService;
+import com.boozebuddies.service.RoleService;
+import com.boozebuddies.service.UserService;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.boozebuddies.service.RoleService;
-import com.boozebuddies.service.UserService;
-import com.boozebuddies.service.MerchantService;
-/**
- * Implementation of role management service.
- */
+
+/** Implementation of role management service. */
 @Service
 @RequiredArgsConstructor
 public class RoleServiceImpl implements RoleService {
@@ -26,10 +25,10 @@ public class RoleServiceImpl implements RoleService {
   @Transactional
   public User assignRole(Long userId, Role role) {
     User user = userService.findById(userId);
-    
+
     // Validate role assignment
     validateRoleAssignment(user, role);
-    
+
     user.addRole(role);
     return userService.updateUser(userId, user);
   }
@@ -38,17 +37,17 @@ public class RoleServiceImpl implements RoleService {
   @Transactional
   public User assignRoleWithMerchant(Long userId, Role role, Long merchantId) {
     User user = userService.findById(userId);
-    
+
     if (role == Role.MERCHANT_ADMIN) {
       if (merchantId == null) {
         throw new ValidationException("Merchant ID is required for MERCHANT_ADMIN role");
       }
       user.setMerchantId(merchantId);
     }
-    
+
     // Validate role assignment
     validateRoleAssignment(user, role);
-    
+
     user.addRole(role);
     return userService.updateUser(userId, user);
   }
@@ -57,20 +56,20 @@ public class RoleServiceImpl implements RoleService {
   @Transactional
   public User removeRole(Long userId, Role role) {
     User user = userService.findById(userId);
-    
+
     // Don't allow removing the last role
     if (user.getRoles().size() == 1 && user.hasRole(role)) {
       throw new ValidationException("Cannot remove the last role from a user");
     }
-    
+
     user.removeRole(role);
-    
+
     // Clean up role-specific data
     if (role == Role.MERCHANT_ADMIN) {
       user.setMerchantId(null);
     }
     // Note: Driver entity cleanup should be handled separately if needed
-    
+
     return userService.updateUser(userId, user);
   }
 
@@ -80,15 +79,15 @@ public class RoleServiceImpl implements RoleService {
     if (roles == null || roles.isEmpty()) {
       throw new ValidationException("User must have at least one role");
     }
-    
+
     User user = userService.findById(userId);
     user.setRoles(roles);
-    
+
     // If MERCHANT_ADMIN is not in the new roles, clear merchantId
     if (!roles.contains(Role.MERCHANT_ADMIN)) {
       user.setMerchantId(null);
     }
-    
+
     return userService.updateUser(userId, user);
   }
 
@@ -96,25 +95,25 @@ public class RoleServiceImpl implements RoleService {
   @Transactional
   public User assignMerchantToUser(Long userId, Long merchantId) {
     User user = userService.findById(userId);
-    
+
     if (!user.hasRole(Role.MERCHANT_ADMIN)) {
-      throw new UnauthorizedException("User must have MERCHANT_ADMIN role to be assigned a merchant");
+      throw new UnauthorizedException(
+          "User must have MERCHANT_ADMIN role to be assigned a merchant");
     }
-    
+
     if (merchantId == null) {
       throw new ValidationException("Merchant ID cannot be null");
     }
-    
+
     // Validate that merchant exists
     Merchant merchant = merchantService.getMerchantById(merchantId);
     if (merchant == null) {
       throw new ValidationException("Merchant not found with ID: " + merchantId);
     }
-    
+
     user.setMerchantId(merchantId);
     return userService.updateUser(userId, user);
   }
-
 
   @Override
   @Transactional
@@ -129,11 +128,11 @@ public class RoleServiceImpl implements RoleService {
     if (user.hasRole(Role.ADMIN)) {
       return true; // Admins can access all merchants
     }
-    
+
     if (user.hasRole(Role.MERCHANT_ADMIN)) {
       return user.ownsMerchant(merchantId);
     }
-    
+
     return false;
   }
 
@@ -151,21 +150,19 @@ public class RoleServiceImpl implements RoleService {
     return Role.USER;
   }
 
-  /**
-   * Validate role assignment rules.
-   */
+  /** Validate role assignment rules. */
   private void validateRoleAssignment(User user, Role role) {
     // Add business rules for role assignment
     // For example: a user can't be both DRIVER and MERCHANT_ADMIN
-    
+
     if (role == Role.MERCHANT_ADMIN && user.hasRole(Role.DRIVER)) {
       throw new ValidationException("A driver cannot also be a merchant admin");
     }
-    
+
     if (role == Role.DRIVER && user.hasRole(Role.MERCHANT_ADMIN)) {
       throw new ValidationException("A merchant admin cannot also be a driver");
     }
-    
+
     // Ensure age verification for certain roles
     if (role == Role.DRIVER && !user.isAgeVerified()) {
       throw new ValidationException("User must be age verified to become a driver");

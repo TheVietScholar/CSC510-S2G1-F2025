@@ -1,5 +1,3 @@
 package com.boozebuddies.mapper;
 
-public class ProductMapperTest {
-    
-}
+public class ProductMapperTest {}

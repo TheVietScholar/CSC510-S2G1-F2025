@@ -11,9 +11,9 @@ import com.boozebuddies.model.DeliveryStatus;
 import com.boozebuddies.model.Role;
 import com.boozebuddies.security.annotation.RoleAnnotations.*;
 import com.boozebuddies.service.DeliveryService;
+import com.boozebuddies.service.DriverService;
 import com.boozebuddies.service.OrderService;
 import com.boozebuddies.service.PermissionService;
-import com.boozebuddies.service.DriverService;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +22,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-
 
 @RestController
 @RequestMapping("/api/deliveries")
@@ -37,19 +36,17 @@ public class DeliveryController {
 
   // ==================== ADMIN ENDPOINTS ====================
 
-  /**
-   * Assign a driver to an order and create delivery record.
-   * Admin only.
-   */
+  /** Assign a driver to an order and create delivery record. Admin only. */
   @PostMapping("/assign")
   @IsAdmin
   public ResponseEntity<ApiResponse<DeliveryDTO>> assignDriverToOrder(
-      @RequestParam Long orderId,
-      @RequestParam Long driverId) {
+      @RequestParam Long orderId, @RequestParam Long driverId) {
     try {
       // Fetch actual entities
-      Order order = orderService.getOrderById(orderId)
-          .orElseThrow(() -> new RuntimeException("Order not found"));
+      Order order =
+          orderService
+              .getOrderById(orderId)
+              .orElseThrow(() -> new RuntimeException("Order not found"));
 
       Driver driver = driverService.getDriverById(driverId); // ← FIXED
       if (driver == null) {
@@ -66,10 +63,7 @@ public class DeliveryController {
     }
   }
 
-  /**
-   * Get all active deliveries.
-   * Admin only.
-   */
+  /** Get all active deliveries. Admin only. */
   @GetMapping("/active")
   @IsAdmin
   public ResponseEntity<ApiResponse<List<DeliveryDTO>>> getActiveDeliveries() {
@@ -85,10 +79,7 @@ public class DeliveryController {
     }
   }
 
-  /**
-   * Get all deliveries in the system.
-   * Admin only.
-   */
+  /** Get all deliveries in the system. Admin only. */
   @GetMapping
   @IsAdmin
   public ResponseEntity<ApiResponse<List<DeliveryDTO>>> getAllDeliveries() {
@@ -104,10 +95,7 @@ public class DeliveryController {
     }
   }
 
-  /**
-   * Get deliveries by driver ID.
-   * Admin can view any driver's deliveries.
-   */
+  /** Get deliveries by driver ID. Admin can view any driver's deliveries. */
   @GetMapping("/driver/{driverId}")
   @IsAdmin
   public ResponseEntity<ApiResponse<List<DeliveryDTO>>> getDeliveriesByDriver(
@@ -124,29 +112,30 @@ public class DeliveryController {
     }
   }
 
-  /**
-   * Get delivery by ID.
-   * Drivers can view their own deliveries, admins can view all.
-   */
+  /** Get delivery by ID. Drivers can view their own deliveries, admins can view all. */
   @GetMapping("/{deliveryId}")
   @IsAuthenticated
   public ResponseEntity<ApiResponse<DeliveryDTO>> getDeliveryById(
-      @PathVariable Long deliveryId,
-      Authentication authentication) {
+      @PathVariable Long deliveryId, Authentication authentication) {
     try {
       User user = permissionService.getAuthenticatedUser(authentication);
       Delivery delivery = deliveryService.getDeliveryById(deliveryId);
-      
+
       if (delivery == null) {
         return ResponseEntity.notFound().build();
       }
 
       // Check if user can access this delivery
-      boolean canAccess = user.hasRole(Role.ADMIN) || // Admins can see all
-          (user.hasRole(Role.DRIVER) && 
-           user.getDriver() != null && 
-           delivery.getDriver() != null &&
-           delivery.getDriver().getId().equals(user.getDriver().getId())); // Driver's own delivery
+      boolean canAccess =
+          user.hasRole(Role.ADMIN)
+              || // Admins can see all
+              (user.hasRole(Role.DRIVER)
+                  && user.getDriver() != null
+                  && delivery.getDriver() != null
+                  && delivery
+                      .getDriver()
+                      .getId()
+                      .equals(user.getDriver().getId())); // Driver's own delivery
 
       if (!canAccess) {
         throw new AccessDeniedException("You don't have permission to view this delivery");
@@ -155,8 +144,7 @@ public class DeliveryController {
       DeliveryDTO deliveryDTO = deliveryMapper.toDTO(delivery);
       return ResponseEntity.ok(ApiResponse.success(deliveryDTO, "Delivery retrieved successfully"));
     } catch (AccessDeniedException e) {
-      return ResponseEntity.status(HttpStatus.FORBIDDEN)
-          .body(ApiResponse.error(e.getMessage()));
+      return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error(e.getMessage()));
     } catch (Exception e) {
       return ResponseEntity.badRequest()
           .body(ApiResponse.error("Failed to retrieve delivery: " + e.getMessage()));
@@ -165,10 +153,7 @@ public class DeliveryController {
 
   // ==================== DRIVER ENDPOINTS ====================
 
-  /**
-   * Get all deliveries for the authenticated driver.
-   * Driver can only view their own deliveries.
-   */
+  /** Get all deliveries for the authenticated driver. Driver can only view their own deliveries. */
   @GetMapping("/driver/my-deliveries")
   @IsDriver
   public ResponseEntity<ApiResponse<List<DeliveryDTO>>> getMyDeliveries(
@@ -192,10 +177,7 @@ public class DeliveryController {
     }
   }
 
-  /**
-   * Update delivery status.
-   * Driver can update their own deliveries, admin can update any.
-   */
+  /** Update delivery status. Driver can update their own deliveries, admin can update any. */
   @PutMapping("/{deliveryId}/status")
   @IsAuthenticated
   public ResponseEntity<ApiResponse<DeliveryDTO>> updateDeliveryStatus(
@@ -205,16 +187,16 @@ public class DeliveryController {
     try {
       User user = permissionService.getAuthenticatedUser(authentication);
       Delivery delivery = deliveryService.getDeliveryById(deliveryId);
-      
+
       if (delivery == null) {
         return ResponseEntity.notFound().build();
       }
 
       // Check ownership for non-admins
       if (!user.hasRole(Role.ADMIN)) {
-        if (user.getDriver() == null || 
-            delivery.getDriver() == null ||
-            !delivery.getDriver().getId().equals(user.getDriver().getId())) {
+        if (user.getDriver() == null
+            || delivery.getDriver() == null
+            || !delivery.getDriver().getId().equals(user.getDriver().getId())) {
           throw new AccessDeniedException("You can only update your own deliveries");
         }
       }
@@ -224,8 +206,7 @@ public class DeliveryController {
       return ResponseEntity.ok(
           ApiResponse.success(deliveryDTO, "Delivery status updated successfully"));
     } catch (AccessDeniedException e) {
-      return ResponseEntity.status(HttpStatus.FORBIDDEN)
-          .body(ApiResponse.error(e.getMessage()));
+      return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error(e.getMessage()));
     } catch (Exception e) {
       return ResponseEntity.badRequest()
           .body(ApiResponse.error("Failed to update delivery status: " + e.getMessage()));
@@ -233,14 +214,13 @@ public class DeliveryController {
   }
 
   /**
-   * Mark delivery as picked up.
-   * Driver can pickup their own deliveries, admin can mark any as picked up.
+   * Mark delivery as picked up. Driver can pickup their own deliveries, admin can mark any as
+   * picked up.
    */
   @PostMapping("/{deliveryId}/pickup")
   @IsDriver
   public ResponseEntity<ApiResponse<DeliveryDTO>> markAsPickedUp(
-      @PathVariable Long deliveryId,
-      Authentication authentication) {
+      @PathVariable Long deliveryId, Authentication authentication) {
     try {
       User user = permissionService.getAuthenticatedUser(authentication);
 
@@ -255,8 +235,8 @@ public class DeliveryController {
       }
 
       // Verify ownership
-      if (delivery.getDriver() == null || 
-          !delivery.getDriver().getId().equals(user.getDriver().getId())) {
+      if (delivery.getDriver() == null
+          || !delivery.getDriver().getId().equals(user.getDriver().getId())) {
         throw new AccessDeniedException("You can only pickup your own deliveries");
       }
 
@@ -266,8 +246,7 @@ public class DeliveryController {
       return ResponseEntity.ok(
           ApiResponse.success(deliveryDTO, "Order marked as picked up successfully"));
     } catch (AccessDeniedException e) {
-      return ResponseEntity.status(HttpStatus.FORBIDDEN)
-          .body(ApiResponse.error(e.getMessage()));
+      return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error(e.getMessage()));
     } catch (Exception e) {
       return ResponseEntity.badRequest()
           .body(ApiResponse.error("Failed to mark as picked up: " + e.getMessage()));
@@ -275,14 +254,13 @@ public class DeliveryController {
   }
 
   /**
-   * Mark delivery as delivered.
-   * Driver can deliver their own deliveries, admin can mark any as delivered.
+   * Mark delivery as delivered. Driver can deliver their own deliveries, admin can mark any as
+   * delivered.
    */
   @PostMapping("/{deliveryId}/deliver")
   @IsDriver
   public ResponseEntity<ApiResponse<DeliveryDTO>> markAsDelivered(
-      @PathVariable Long deliveryId,
-      Authentication authentication) {
+      @PathVariable Long deliveryId, Authentication authentication) {
     try {
       User user = permissionService.getAuthenticatedUser(authentication);
 
@@ -297,8 +275,8 @@ public class DeliveryController {
       }
 
       // Verify ownership
-      if (delivery.getDriver() == null || 
-          !delivery.getDriver().getId().equals(user.getDriver().getId())) {
+      if (delivery.getDriver() == null
+          || !delivery.getDriver().getId().equals(user.getDriver().getId())) {
         throw new AccessDeniedException("You can only deliver your own orders");
       }
 
@@ -308,18 +286,14 @@ public class DeliveryController {
       return ResponseEntity.ok(
           ApiResponse.success(deliveryDTO, "Order marked as delivered successfully"));
     } catch (AccessDeniedException e) {
-      return ResponseEntity.status(HttpStatus.FORBIDDEN)
-          .body(ApiResponse.error(e.getMessage()));
+      return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error(e.getMessage()));
     } catch (Exception e) {
       return ResponseEntity.badRequest()
           .body(ApiResponse.error("Failed to mark as delivered: " + e.getMessage()));
     }
   }
 
-  /**
-   * Verify customer age at delivery.
-   * Driver only - critical for alcohol delivery compliance.
-   */
+  /** Verify customer age at delivery. Driver only - critical for alcohol delivery compliance. */
   @PostMapping("/{deliveryId}/verify-age")
   @IsDriver
   public ResponseEntity<ApiResponse<DeliveryDTO>> verifyCustomerAge(
@@ -342,8 +316,8 @@ public class DeliveryController {
       }
 
       // Verify ownership
-      if (delivery.getDriver() == null || 
-          !delivery.getDriver().getId().equals(user.getDriver().getId())) {
+      if (delivery.getDriver() == null
+          || !delivery.getDriver().getId().equals(user.getDriver().getId())) {
         throw new AccessDeniedException("You can only verify age for your own deliveries");
       }
 
@@ -353,35 +327,31 @@ public class DeliveryController {
         delivery.setIdType(idType);
         delivery.setIdNumber(idNumber); // Store last 4 digits only in production!
       }
-      
-      Delivery updatedDelivery = deliveryService.updateDeliveryWithAgeVerification(
-          deliveryId, ageVerified, idType, idNumber);
-      
-      String message = ageVerified
-          ? "Customer age verified successfully"
-          : "Customer age verification failed - delivery cannot be completed";
+
+      Delivery updatedDelivery =
+          deliveryService.updateDeliveryWithAgeVerification(
+              deliveryId, ageVerified, idType, idNumber);
+
+      String message =
+          ageVerified
+              ? "Customer age verified successfully"
+              : "Customer age verification failed - delivery cannot be completed";
 
       DeliveryDTO deliveryDTO = deliveryMapper.toDTO(updatedDelivery);
       return ResponseEntity.ok(ApiResponse.success(deliveryDTO, message));
     } catch (AccessDeniedException e) {
-      return ResponseEntity.status(HttpStatus.FORBIDDEN)
-          .body(ApiResponse.error(e.getMessage()));
+      return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error(e.getMessage()));
     } catch (Exception e) {
       return ResponseEntity.badRequest()
           .body(ApiResponse.error("Failed to verify age: " + e.getMessage()));
     }
   }
 
-  /**
-   * Cancel a delivery with reason.
-   * Driver can cancel their own deliveries with reason.
-   */
+  /** Cancel a delivery with reason. Driver can cancel their own deliveries with reason. */
   @PostMapping("/{deliveryId}/cancel")
   @IsDriver
   public ResponseEntity<ApiResponse<DeliveryDTO>> cancelDelivery(
-      @PathVariable Long deliveryId,
-      @RequestParam String reason,
-      Authentication authentication) {
+      @PathVariable Long deliveryId, @RequestParam String reason, Authentication authentication) {
     try {
       User user = permissionService.getAuthenticatedUser(authentication);
 
@@ -396,8 +366,8 @@ public class DeliveryController {
       }
 
       // Verify ownership
-      if (delivery.getDriver() == null || 
-          !delivery.getDriver().getId().equals(user.getDriver().getId())) {
+      if (delivery.getDriver() == null
+          || !delivery.getDriver().getId().equals(user.getDriver().getId())) {
         throw new AccessDeniedException("You can only cancel your own deliveries");
       }
 
@@ -405,8 +375,7 @@ public class DeliveryController {
       DeliveryDTO deliveryDTO = deliveryMapper.toDTO(cancelledDelivery);
       return ResponseEntity.ok(ApiResponse.success(deliveryDTO, "Delivery cancelled successfully"));
     } catch (AccessDeniedException e) {
-      return ResponseEntity.status(HttpStatus.FORBIDDEN)
-          .body(ApiResponse.error(e.getMessage()));
+      return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error(e.getMessage()));
     } catch (Exception e) {
       return ResponseEntity.badRequest()
           .body(ApiResponse.error("Failed to cancel delivery: " + e.getMessage()));
@@ -414,8 +383,8 @@ public class DeliveryController {
   }
 
   /**
-   * Update delivery location (for real-time tracking).
-   * Driver updates their current location while delivering.
+   * Update delivery location (for real-time tracking). Driver updates their current location while
+   * delivering.
    */
   @PutMapping("/{deliveryId}/location")
   @IsDriver
@@ -438,19 +407,17 @@ public class DeliveryController {
       }
 
       // Verify ownership
-      if (delivery.getDriver() == null || 
-          !delivery.getDriver().getId().equals(user.getDriver().getId())) {
+      if (delivery.getDriver() == null
+          || !delivery.getDriver().getId().equals(user.getDriver().getId())) {
         throw new AccessDeniedException("You can only update location for your own deliveries");
       }
 
       // Update location
       deliveryService.updateDeliveryLocation(deliveryId, latitude, longitude);
-      
-      return ResponseEntity.ok(
-          ApiResponse.success(null, "Location updated successfully"));
+
+      return ResponseEntity.ok(ApiResponse.success(null, "Location updated successfully"));
     } catch (AccessDeniedException e) {
-      return ResponseEntity.status(HttpStatus.FORBIDDEN)
-          .body(ApiResponse.error(e.getMessage()));
+      return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error(e.getMessage()));
     } catch (Exception e) {
       return ResponseEntity.badRequest()
           .body(ApiResponse.error("Failed to update location: " + e.getMessage()));

@@ -30,10 +30,7 @@ public class ProductController {
 
   // ==================== PUBLIC ENDPOINTS (No authentication required) ====================
 
-  /**
-   * Get all available products.
-   * Public endpoint - anyone can browse available products.
-   */
+  /** Get all available products. Public endpoint - anyone can browse available products. */
   @GetMapping
   public ResponseEntity<ApiResponse<List<ProductDTO>>> getAllAvailableProducts() {
     try {
@@ -48,10 +45,7 @@ public class ProductController {
     }
   }
 
-  /**
-   * Get a product by ID.
-   * Public endpoint - anyone can view product details.
-   */
+  /** Get a product by ID. Public endpoint - anyone can view product details. */
   @GetMapping("/{id}")
   public ResponseEntity<ApiResponse<ProductDTO>> getProductById(@PathVariable Long id) {
     try {
@@ -70,10 +64,7 @@ public class ProductController {
     }
   }
 
-  /**
-   * Search for products by keyword.
-   * Public endpoint - anyone can search products.
-   */
+  /** Search for products by keyword. Public endpoint - anyone can search products. */
   @GetMapping("/search")
   public ResponseEntity<ApiResponse<List<ProductDTO>>> searchProducts(
       @RequestParam String keyword) {
@@ -81,18 +72,14 @@ public class ProductController {
       List<Product> products = productService.searchProducts(keyword);
       List<ProductDTO> productDTOs =
           products.stream().map(productMapper::toDTO).collect(Collectors.toList());
-      return ResponseEntity.ok(
-          ApiResponse.success(productDTOs, "Products found successfully"));
+      return ResponseEntity.ok(ApiResponse.success(productDTOs, "Products found successfully"));
     } catch (Exception e) {
       return ResponseEntity.badRequest()
           .body(ApiResponse.error("Failed to search products: " + e.getMessage()));
     }
   }
 
-  /**
-   * Get products by merchant.
-   * Public endpoint - anyone can browse a merchant's products.
-   */
+  /** Get products by merchant. Public endpoint - anyone can browse a merchant's products. */
   @GetMapping("/merchant/{merchantId}")
   public ResponseEntity<ApiResponse<List<ProductDTO>>> getProductsByMerchant(
       @PathVariable Long merchantId) {
@@ -108,12 +95,7 @@ public class ProductController {
     }
   }
 
-
-
-  /**
-   * Check if a product is available.
-   * Public endpoint - anyone can check availability.
-   */
+  /** Check if a product is available. Public endpoint - anyone can check availability. */
   @GetMapping("/{id}/available")
   public ResponseEntity<ApiResponse<Boolean>> isProductAvailable(@PathVariable Long id) {
     try {
@@ -128,10 +110,7 @@ public class ProductController {
 
   // ==================== ADMIN ENDPOINTS ====================
 
-  /**
-   * Get ALL products (including unavailable ones).
-   * Admin only - for management purposes.
-   */
+  /** Get ALL products (including unavailable ones). Admin only - for management purposes. */
   @GetMapping("/all")
   @IsAdmin
   public ResponseEntity<ApiResponse<List<ProductDTO>>> getAllProducts() {
@@ -148,8 +127,8 @@ public class ProductController {
   }
 
   /**
-   * Get all products by merchant (including unavailable ones).
-   * Admin can see all, merchant admin can only see their own.
+   * Get all products by merchant (including unavailable ones). Admin can see all, merchant admin
+   * can only see their own.
    */
   @GetMapping("/merchant/{merchantId}/all")
   @IsAdminOrMerchantAdmin
@@ -161,8 +140,7 @@ public class ProductController {
       // Check permission for merchant admin
       if (user != null && user.hasRole(Role.MERCHANT_ADMIN)) {
         if (!user.ownsMerchant(merchantId)) {
-          throw new AccessDeniedException(
-              "You can only view products for your own merchant");
+          throw new AccessDeniedException("You can only view products for your own merchant");
         }
       }
 
@@ -172,8 +150,7 @@ public class ProductController {
       return ResponseEntity.ok(
           ApiResponse.success(productDTOs, "Merchant products retrieved successfully"));
     } catch (AccessDeniedException e) {
-      return ResponseEntity.status(HttpStatus.FORBIDDEN)
-          .body(ApiResponse.error(e.getMessage()));
+      return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error(e.getMessage()));
     } catch (Exception e) {
       return ResponseEntity.badRequest()
           .body(ApiResponse.error("Failed to retrieve products: " + e.getMessage()));
@@ -183,8 +160,8 @@ public class ProductController {
   // ==================== ADMIN & MERCHANT_ADMIN ENDPOINTS ====================
 
   /**
-   * Add a new product.
-   * Admin can add for any merchant, merchant admin can only add for their own merchant.
+   * Add a new product. Admin can add for any merchant, merchant admin can only add for their own
+   * merchant.
    */
   @PostMapping
   @IsAdminOrMerchantAdmin
@@ -199,18 +176,16 @@ public class ProductController {
         if (product.getMerchant() == null
             || product.getMerchant().getId() == null
             || !user.ownsMerchant(product.getMerchant().getId())) {
-          throw new AccessDeniedException(
-              "You can only add products for your own merchant");
+          throw new AccessDeniedException("You can only add products for your own merchant");
         }
       }
 
       Product savedProduct = productService.addProduct(product);
       return ResponseEntity.status(HttpStatus.CREATED)
-          .body(ApiResponse.success(
-              productMapper.toDTO(savedProduct), "Product added successfully"));
+          .body(
+              ApiResponse.success(productMapper.toDTO(savedProduct), "Product added successfully"));
     } catch (AccessDeniedException e) {
-      return ResponseEntity.status(HttpStatus.FORBIDDEN)
-          .body(ApiResponse.error(e.getMessage()));
+      return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error(e.getMessage()));
     } catch (Exception e) {
       return ResponseEntity.badRequest()
           .body(ApiResponse.error("Failed to add product: " + e.getMessage()));
@@ -218,8 +193,8 @@ public class ProductController {
   }
 
   /**
-   * Update an existing product.
-   * Admin can update any product, merchant admin can only update their own products.
+   * Update an existing product. Admin can update any product, merchant admin can only update their
+   * own products.
    */
   @PutMapping("/{id}")
   @IsAdminOrMerchantAdmin
@@ -236,10 +211,8 @@ public class ProductController {
 
       // Check permission for merchant admin
       if (user != null && user.hasRole(Role.MERCHANT_ADMIN)) {
-        if (existing.getMerchant() == null
-            || !user.ownsMerchant(existing.getMerchant().getId())) {
-          throw new AccessDeniedException(
-              "You can only update products for your own merchant");
+        if (existing.getMerchant() == null || !user.ownsMerchant(existing.getMerchant().getId())) {
+          throw new AccessDeniedException("You can only update products for your own merchant");
         }
       }
 
@@ -254,8 +227,7 @@ public class ProductController {
       return ResponseEntity.ok(
           ApiResponse.success(productMapper.toDTO(updatedProduct), "Product updated successfully"));
     } catch (AccessDeniedException e) {
-      return ResponseEntity.status(HttpStatus.FORBIDDEN)
-          .body(ApiResponse.error(e.getMessage()));
+      return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error(e.getMessage()));
     } catch (Exception e) {
       return ResponseEntity.badRequest()
           .body(ApiResponse.error("Failed to update product: " + e.getMessage()));
@@ -263,8 +235,8 @@ public class ProductController {
   }
 
   /**
-   * Delete a product.
-   * Admin can delete any product, merchant admin can only delete their own products.
+   * Delete a product. Admin can delete any product, merchant admin can only delete their own
+   * products.
    */
   @DeleteMapping("/{id}")
   @IsAdminOrMerchantAdmin
@@ -281,18 +253,15 @@ public class ProductController {
 
       // Check permission for merchant admin
       if (user != null && user.hasRole(Role.MERCHANT_ADMIN)) {
-        if (existing.getMerchant() == null
-            || !user.ownsMerchant(existing.getMerchant().getId())) {
-          throw new AccessDeniedException(
-              "You can only delete products for your own merchant");
+        if (existing.getMerchant() == null || !user.ownsMerchant(existing.getMerchant().getId())) {
+          throw new AccessDeniedException("You can only delete products for your own merchant");
         }
       }
 
       productService.deleteProduct(id);
       return ResponseEntity.ok(ApiResponse.success(null, "Product deleted successfully"));
     } catch (AccessDeniedException e) {
-      return ResponseEntity.status(HttpStatus.FORBIDDEN)
-          .body(ApiResponse.error(e.getMessage()));
+      return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error(e.getMessage()));
     } catch (Exception e) {
       return ResponseEntity.badRequest()
           .body(ApiResponse.error("Failed to delete product: " + e.getMessage()));

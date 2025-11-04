@@ -8,9 +8,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class ProductMapper {
 
-  /**
-   * Convert a Product entity to a ProductDTO for API responses.
-   */
+  /** Convert a Product entity to a ProductDTO for API responses. */
   public ProductDTO toDTO(Product product) {
     if (product == null) return null;
 
@@ -30,8 +28,8 @@ public class ProductMapper {
   }
 
   /**
-   * Convert a ProductDTO to a Product entity.
-   * (Relationships like category/merchant should be set in the service layer.)
+   * Convert a ProductDTO to a Product entity. (Relationships like category/merchant should be set
+   * in the service layer.)
    */
   public Product toEntity(ProductDTO dto) {
     if (dto == null) return null;
@@ -49,8 +47,7 @@ public class ProductMapper {
   }
 
   /**
-   * Convert a CreateProductRequest to a Product entity.
-   * (Used for creating new products via API.)
+   * Convert a CreateProductRequest to a Product entity. (Used for creating new products via API.)
    */
   public Product toEntity(CreateProductRequest request) {
     if (request == null) return null;

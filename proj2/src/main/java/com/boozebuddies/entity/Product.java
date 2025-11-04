@@ -61,7 +61,6 @@ public class Product {
   @Column(name = "volume_ml")
   private Integer volume; // in milliliters
 
-
   public boolean isAvailable() {
     return available;
   }

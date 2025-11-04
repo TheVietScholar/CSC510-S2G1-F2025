@@ -61,7 +61,8 @@ class DeliveryServiceImplTest {
     Delivery updated = service.updateDeliveryStatus(1L, DeliveryStatus.IN_TRANSIT);
     assertNotNull(updated);
     assertEquals(DeliveryStatus.IN_TRANSIT, updated.getStatus());
-    assertThrows(RuntimeException.class, () -> service.updateDeliveryStatus(999L, DeliveryStatus.DELIVERED));
+    assertThrows(
+        RuntimeException.class, () -> service.updateDeliveryStatus(999L, DeliveryStatus.DELIVERED));
   }
 
   @Test

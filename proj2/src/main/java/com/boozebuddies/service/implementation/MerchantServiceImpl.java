@@ -8,7 +8,6 @@ import com.boozebuddies.service.MerchantService;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -118,7 +117,6 @@ public class MerchantServiceImpl implements MerchantService {
     return merchantRepository.findByName(name).orElse(null);
   }
 
-
   @Override
   public List<Merchant> getMerchantsSortedByDistance(Double latitude, Double longitude) {
     if (latitude == null || longitude == null) {
@@ -129,18 +127,19 @@ public class MerchantServiceImpl implements MerchantService {
 
     return allMerchants.stream()
         .filter(m -> m.getLatitude() != null && m.getLongitude() != null)
-        .sorted((m1, m2) -> {
-          double dist1 = calculateDistance(latitude, longitude, m1.getLatitude(), m1.getLongitude());
-          double dist2 = calculateDistance(latitude, longitude, m2.getLatitude(), m2.getLongitude());
-          return Double.compare(dist1, dist2);
-        })
+        .sorted(
+            (m1, m2) -> {
+              double dist1 =
+                  calculateDistance(latitude, longitude, m1.getLatitude(), m1.getLongitude());
+              double dist2 =
+                  calculateDistance(latitude, longitude, m2.getLatitude(), m2.getLongitude());
+              return Double.compare(dist1, dist2);
+            })
         .collect(Collectors.toList());
   }
 
-
   /**
-   * Calculate distance between two points using Haversine formula.
-   * Returns distance in kilometers.
+   * Calculate distance between two points using Haversine formula. Returns distance in kilometers.
    */
   private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
     final int EARTH_RADIUS_KM = 6371;
@@ -159,6 +158,4 @@ public class MerchantServiceImpl implements MerchantService {
 
     return EARTH_RADIUS_KM * c;
   }
-
-
 }

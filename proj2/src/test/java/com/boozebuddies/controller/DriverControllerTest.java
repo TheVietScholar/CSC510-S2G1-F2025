@@ -16,7 +16,6 @@ import com.boozebuddies.security.JwtAuthenticationFilter;
 import com.boozebuddies.service.DriverService;
 import com.boozebuddies.service.PermissionService;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -159,7 +158,8 @@ public class DriverControllerTest {
   @Test
   @DisplayName("PUT /api/drivers/{id}/certification returns 400 on exception")
   void updateCertificationStatus_exception_returnsBadRequest() throws Exception {
-    when(permissionService.getAuthenticatedUser(any())).thenReturn(testDriver.getUser()); // Mock auth user
+    when(permissionService.getAuthenticatedUser(any()))
+        .thenReturn(testDriver.getUser()); // Mock auth user
     when(driverService.updateCertificationStatus(1L, CertificationStatus.PENDING))
         .thenThrow(new RuntimeException("error"));
 
@@ -176,7 +176,8 @@ public class DriverControllerTest {
   @DisplayName("PUT /api/drivers/my-profile/availability returns 200 on success")
   void updateAvailability_success() throws Exception {
     testDriver.setAvailable(false);
-    when(permissionService.getAuthenticatedUser(any())).thenReturn(testDriver.getUser()); // Mock auth user
+    when(permissionService.getAuthenticatedUser(any()))
+        .thenReturn(testDriver.getUser()); // Mock auth user
     when(driverService.updateAvailability(1L, false)).thenReturn(testDriver);
     when(driverMapper.toDTO(testDriver)).thenReturn(testDriverDTO);
 
@@ -191,8 +192,10 @@ public class DriverControllerTest {
   @Test
   @DisplayName("PUT /api/drivers/my-profile/availability returns 404 when not found")
   void updateAvailability_notFound() throws Exception {
-    when(permissionService.getAuthenticatedUser(any())).thenReturn(testDriver.getUser()); // Mock auth user
-    when(driverService.updateAvailability(anyLong(), anyBoolean())).thenThrow(DriverNotFoundException.class);
+    when(permissionService.getAuthenticatedUser(any()))
+        .thenReturn(testDriver.getUser()); // Mock auth user
+    when(driverService.updateAvailability(anyLong(), anyBoolean()))
+        .thenThrow(DriverNotFoundException.class);
 
     mockMvc
         .perform(put("/api/drivers/my-profile/availability?available=true"))

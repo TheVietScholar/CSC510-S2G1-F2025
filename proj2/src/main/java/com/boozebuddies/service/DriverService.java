@@ -67,6 +67,4 @@ public interface DriverService {
   List<Driver> getNearbyAvailableDrivers(Double latitude, Double longitude, Double radiusMeters);
 
   Driver updateDriverLocation(Long userId, Double latitude, Double longitude);
-
-
 }

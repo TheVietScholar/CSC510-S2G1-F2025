@@ -50,22 +50,22 @@ public class Delivery {
   private LocalDateTime estimatedDeliveryTime;
 
   // ==================== AGE VERIFICATION (CRITICAL FOR ALCOHOL DELIVERY) ====================
-  
+
   @Builder.Default
   @Column(name = "age_verified")
   private Boolean ageVerified = false;
 
   @Column(name = "id_type")
-  private String idType;  // e.g., "DRIVER_LICENSE", "PASSPORT", "STATE_ID"
+  private String idType; // e.g., "DRIVER_LICENSE", "PASSPORT", "STATE_ID"
 
   @Column(name = "id_number")
-  private String idNumber;  // Last 4 digits only! e.g., "1234"
+  private String idNumber; // Last 4 digits only! e.g., "1234"
 
   @Column(name = "age_verified_at")
   private LocalDateTime ageVerifiedAt;
 
   // ==================== REAL-TIME TRACKING ====================
-  
+
   // Current driver location (updates as driver moves)
   @Column(name = "current_latitude")
   private Double currentLatitude;
@@ -77,13 +77,13 @@ public class Delivery {
   private LocalDateTime lastLocationUpdate;
 
   // ==================== CANCELLATION ====================
-  
+
   @Builder.Default
   @Column(name = "cancellation_reason")
   private String cancellationReason = "";
 
   // ==================== AUDIT TIMESTAMPS ====================
-  
+
   @Builder.Default
   @Column(name = "created_at")
   private LocalDateTime createdAt = LocalDateTime.now();
