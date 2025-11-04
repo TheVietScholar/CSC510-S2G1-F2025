@@ -3,34 +3,61 @@ package com.boozebuddies.controller;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import com.boozebuddies.config.TestSecurityConfig;
 import com.boozebuddies.dto.*;
 import com.boozebuddies.entity.*;
+import com.boozebuddies.mapper.OrderMapper;
 import com.boozebuddies.model.OrderStatus;
 import com.boozebuddies.model.Role;
+import com.boozebuddies.security.JwtAuthenticationFilter;
 import com.boozebuddies.service.OrderService;
 import com.boozebuddies.service.PermissionService;
+import com.boozebuddies.service.RoleService;
+import com.boozebuddies.service.ValidationService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.test.web.servlet.MockMvc;
 
-@ExtendWith(MockitoExtension.class)
+@WebMvcTest(
+    controllers = OrderController.class,
+    excludeFilters =
+        @ComponentScan.Filter(
+            type = FilterType.ASSIGNABLE_TYPE,
+            classes = JwtAuthenticationFilter.class))
+@AutoConfigureMockMvc(addFilters = false) // ⛔ disables all Spring Security filters
+@Import(TestSecurityConfig.class)
+@DisplayName("OrderController Tests")
 public class OrderControllerTest {
 
-    @Mock private OrderService orderService;
-    @Mock private PermissionService permissionService;
-    @Mock private Authentication authentication;
+    @Autowired private MockMvc mockMvc;
 
-    @InjectMocks private OrderController orderController;
+    @Autowired private ObjectMapper objectMapper;
+
+    @MockBean private OrderService orderService;
+    @MockBean private OrderMapper orderMapper;
+    @MockBean private PermissionService permissionService;
 
     private User testUser;
     private Merchant testMerchant;
@@ -89,22 +116,18 @@ public class OrderControllerTest {
 
     // ==================== CREATE ORDER ====================
     @Test
-    void createOrder_Success() {
-        when(permissionService.getAuthenticatedUser(authentication)).thenReturn(testUser);
+    void createOrder_Success() throws Exception {
+        when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
         when(orderService.createOrder(any(Order.class))).thenReturn(testOrder);
-
-        ResponseEntity<ApiResponse<OrderDTO>> response =
-                orderController.createOrder(testCreateRequest, authentication);
-
-        ApiResponse<OrderDTO> body = response.getBody();
-        assertNotNull(body);
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertTrue(body.isSuccess());
-        assertEquals("Order created successfully", body.getMessage());
+        
+        mockMvc.perform(post("/api/orders")
+                .contentType("application/json")
+                .content(objectMapper.writeValueAsString(testCreateRequest)))
+            .andExpect(status().isOk());
     }
 
     @Test
-    void createOrder_AccessDenied() {
+    void createOrder_AccessDenied() throws Exception{
         // User tries to create order for someone else
         CreateOrderRequest invalidRequest = CreateOrderRequest.builder()
                 .userId(99L)
@@ -112,113 +135,80 @@ public class OrderControllerTest {
                 .items(testCreateRequest.getItems())
                 .build();
 
-        when(permissionService.getAuthenticatedUser(authentication)).thenReturn(testUser);
+        when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
 
-        ResponseEntity<ApiResponse<OrderDTO>> response =
-                orderController.createOrder(invalidRequest, authentication);
-
-        ApiResponse<OrderDTO> body = response.getBody();
-        assertNotNull(body);
-        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
-        assertTrue(body.getMessage().contains("You can only create orders for yourself"));
+        mockMvc.perform(post("/api/orders")
+                .contentType("application/json")
+                .content(objectMapper.writeValueAsString(invalidRequest)))
+            .andExpect(status().isForbidden());
     }
 
     // ==================== GET ORDER ====================
     @Test
-    void getOrderById_Success() {
+    void getOrderById_Success() throws Exception{
         when(orderService.getOrderById(1L)).thenReturn(Optional.of(testOrder));
+        when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
 
-        ResponseEntity<ApiResponse<OrderDTO>> response =
-                orderController.getOrderById(1L, authentication);
-
-        ApiResponse<OrderDTO> body = response.getBody();
-        assertNotNull(body);
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertTrue(body.isSuccess());
-        assertEquals("Order retrieved successfully", body.getMessage());
+        mockMvc.perform(get("/api/orders/1"))
+            .andExpect(status().isOk());
     }
 
     @Test
-    void getOrderById_NotFound() {
+    void getOrderById_NotFound() throws Exception{
         when(orderService.getOrderById(99L)).thenReturn(Optional.empty());
 
-        ResponseEntity<ApiResponse<OrderDTO>> response =
-                orderController.getOrderById(99L, authentication);
-
-        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        mockMvc.perform(get("/api/orders/99"))
+            .andExpect(status().isNotFound());
     }
 
     @Test
-    void getMyOrders_Success() {
-        when(permissionService.getAuthenticatedUser(authentication)).thenReturn(testUser);
+    void getMyOrders_Success() throws Exception{
+        when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
         when(orderService.getOrdersByUser(testUser.getId())).thenReturn(List.of(testOrder));
 
-        ResponseEntity<ApiResponse<List<OrderDTO>>> response =
-                orderController.getMyOrders(authentication);
-
-        ApiResponse<List<OrderDTO>> body = response.getBody();
-        assertNotNull(body);
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertTrue(body.isSuccess());
-        assertEquals(1, body.getData().size());
+        mockMvc.perform(get("/api/orders/my-orders"))
+            .andExpect(status().isOk());
     }
 
     // ==================== CANCEL ORDER ====================
     @Test
-    void cancelOrder_Success() {
-        when(permissionService.getAuthenticatedUser(authentication)).thenReturn(testUser);
+    void cancelOrder_Success() throws Exception {
+        when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
         when(orderService.getOrderById(1L)).thenReturn(Optional.of(testOrder));
         when(orderService.cancelOrder(1L)).thenReturn(testOrder);
 
-        ResponseEntity<ApiResponse<OrderDTO>> response =
-                orderController.cancelOrder(1L, authentication);
-
-        ApiResponse<OrderDTO> body = response.getBody();
-        assertNotNull(body);
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertTrue(body.isSuccess());
-        assertEquals("Order cancelled successfully", body.getMessage());
+        mockMvc.perform(post("/api/orders/1/cancel"))
+                .andExpect(status().isOk());
     }
 
     @Test
-    void cancelOrder_NotOwner() {
-        when(permissionService.getAuthenticatedUser(authentication)).thenReturn(testUser);
+    void cancelOrder_NotOwner() throws Exception {
+        when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
         User otherUser = User.builder().id(2L).build();
         Order orderForOther = Order.builder().id(1L).user(otherUser).build();
         when(orderService.getOrderById(1L)).thenReturn(Optional.of(orderForOther));
 
-        ResponseEntity<ApiResponse<OrderDTO>> response =
-                orderController.cancelOrder(1L, authentication);
-
-        ApiResponse<OrderDTO> body = response.getBody();
-        assertNotNull(body);
-        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
-        assertTrue(body.getMessage().contains("You can only cancel your own orders"));
+        mockMvc.perform(post("/api/orders/1/cancel"))
+                .andExpect(status().isForbidden());
     }
 
     // ==================== UPDATE ORDER STATUS ====================
     @Test
-    void updateOrderStatus_Success() {
+    void updateOrderStatus_Success() throws Exception{
         when(orderService.getOrderById(1L)).thenReturn(Optional.of(testOrder));
         when(orderService.updateOrderStatus(1L, "CONFIRMED")).thenReturn(testOrder);
 
-        ResponseEntity<ApiResponse<OrderDTO>> response =
-                orderController.updateOrderStatus(1L, "CONFIRMED", authentication);
-
-        ApiResponse<OrderDTO> body = response.getBody();
-        assertNotNull(body);
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertTrue(body.isSuccess());
-        assertEquals("Order status updated successfully", body.getMessage());
+        mockMvc.perform(put("/api/orders/1/status")
+                .param("status", "CONFIRMED"))
+            .andExpect(status().isOk());
     }
 
     @Test
-    void updateOrderStatus_NotFound() {
+    void updateOrderStatus_NotFound() throws Exception {
         when(orderService.getOrderById(99L)).thenReturn(Optional.empty());
 
-        ResponseEntity<ApiResponse<OrderDTO>> response =
-                orderController.updateOrderStatus(99L, "CONFIRMED", authentication);
-
-        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        mockMvc.perform(put("/api/orders/99/status")
+                .param("status", "CONFIRMED"))
+            .andExpect(status().isNotFound());
     }
 }

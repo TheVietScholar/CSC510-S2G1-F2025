@@ -19,14 +19,17 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import lombok.RequiredArgsConstructor;
+
 
 @RestController
 @RequestMapping("/api/orders")
+@RequiredArgsConstructor
 public class OrderController {
 
-  @Autowired private OrderService orderService;
-  @Autowired private PermissionService permissionService;
-  @Autowired private OrderMapper orderMapper;
+  private final OrderService orderService;
+  private final PermissionService permissionService;
+  private final OrderMapper orderMapper;
 
   // ==================== CREATE ORDER (USER ONLY) ====================
   
@@ -43,8 +46,8 @@ public class OrderController {
       User user = permissionService.getAuthenticatedUser(authentication);
       
       // Ensure the order is being created for the authenticated user
-      if (createOrderRequest.getUserId() != null 
-          && !createOrderRequest.getUserId().equals(user.getId())) {
+      if (createOrderRequest.getUserId() == null 
+          || !createOrderRequest.getUserId().equals(user.getId())) {
         throw new AccessDeniedException("You can only create orders for yourself");
       }
       
