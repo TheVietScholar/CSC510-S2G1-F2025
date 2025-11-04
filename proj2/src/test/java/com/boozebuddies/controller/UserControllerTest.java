@@ -10,10 +10,14 @@ import com.boozebuddies.dto.RegisterUserRequest;
 import com.boozebuddies.dto.UserDTO;
 import com.boozebuddies.entity.User;
 import com.boozebuddies.mapper.UserMapper;
+import com.boozebuddies.model.Role;
 import com.boozebuddies.security.JwtAuthenticationFilter;
+import com.boozebuddies.service.PermissionService;
+import com.boozebuddies.service.RoleService;
 import com.boozebuddies.service.UserService;
 import com.boozebuddies.service.ValidationService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.time.LocalDate;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -50,6 +54,10 @@ class UserControllerTest {
 
   @MockBean private UserMapper userMapper;
 
+  @MockBean private PermissionService permissionService;
+
+  @MockBean private RoleService roleService;
+
   private User testUser;
   private UserDTO testUserDTO;
   private RegisterUserRequest registerRequest;
@@ -83,6 +91,7 @@ class UserControllerTest {
   @Test
   @DisplayName("GET /api/users/{id} should return 200 with user data")
   void testGetUserByIdSuccess() throws Exception {
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
     when(userService.getUserById(1L)).thenReturn(java.util.Optional.of(testUser));
     when(userMapper.toDTO(testUser)).thenReturn(testUserDTO);
 
@@ -100,6 +109,9 @@ class UserControllerTest {
   @Test
   @DisplayName("GET /api/users/{id} should return 404 when user not found")
   void testGetUserByIdNotFound() throws Exception {
+    testUser.addRole(Role.ADMIN);
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
+
     when(userService.getUserById(999L)).thenReturn(java.util.Optional.empty());
 
     mockMvc.perform(get("/api/users/999")).andExpect(status().isNotFound());
@@ -204,6 +216,7 @@ class UserControllerTest {
   void testUpdateUserSuccess() throws Exception {
     UserDTO updateDTO = new UserDTO();
     updateDTO.setEmail("newemail@example.com");
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
 
     User updatedUser = User.builder().id(1L).email("newemail@example.com").build();
 
@@ -234,6 +247,8 @@ class UserControllerTest {
   void testUpdateUserNotFound() throws Exception {
     UserDTO updateDTO = new UserDTO();
     updateDTO.setEmail("newemail@example.com");
+    testUser.addRole(Role.ADMIN);
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
 
     when(userMapper.toEntity(updateDTO)).thenReturn(testUser);
     when(userService.updateUser(999L, testUser)).thenReturn(null);
@@ -271,6 +286,8 @@ class UserControllerTest {
   void testUpdateUserIllegalArgumentException() throws Exception {
     UserDTO updateDTO = new UserDTO();
     updateDTO.setEmail("invalid-email");
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
+
 
     when(userMapper.toEntity(updateDTO)).thenReturn(testUser);
     when(userService.updateUser(1L, testUser))
@@ -310,6 +327,7 @@ class UserControllerTest {
   @Test
   @DisplayName("POST /api/users/{id}/verify-age should return 200 when user is of legal age")
   void testVerifyAgeSuccess() throws Exception {
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
     when(userService.getUserById(1L)).thenReturn(java.util.Optional.of(testUser));
     when(validationService.validateAge(testUser)).thenReturn(true);
     when(userService.updateUser(1L, testUser)).thenReturn(testUser);
@@ -328,6 +346,8 @@ class UserControllerTest {
   @Test
   @DisplayName("POST /api/users/{id}/verify-age should return 200 and set ageVerified to true")
   void testVerifyAgeSetsFlagSuccess() throws Exception {
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
+
     User unverifiedUser =
         User.builder().id(1L).dateOfBirth(LocalDate.of(1990, 1, 1)).ageVerified(false).build();
 
@@ -348,6 +368,7 @@ class UserControllerTest {
   @DisplayName("POST /api/users/{id}/verify-age should return 400 when user is too young")
   void testVerifyAgeFailed() throws Exception {
     User youngUser = User.builder().id(1L).dateOfBirth(LocalDate.of(2015, 1, 1)).build();
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
 
     when(userService.getUserById(1L)).thenReturn(java.util.Optional.of(youngUser));
     when(validationService.validateAge(youngUser)).thenReturn(false);
@@ -366,6 +387,8 @@ class UserControllerTest {
   @DisplayName("POST /api/users/{id}/verify-age should return 400 when user not found")
   void testVerifyAgeUserNotFound() throws Exception {
     when(userService.getUserById(999L)).thenReturn(java.util.Optional.empty());
+    testUser.addRole(Role.ADMIN);
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
 
     mockMvc
         .perform(post("/api/users/999/verify-age"))
