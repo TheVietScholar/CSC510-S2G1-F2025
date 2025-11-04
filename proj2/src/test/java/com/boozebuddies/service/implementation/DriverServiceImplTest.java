@@ -109,7 +109,6 @@ class DriverServiceImplTest {
     verify(repository).findAll();
   }
 
-
   @Test
   @DisplayName("registerDriver throws exception when driver is null")
   void registerDriver_throwsWhenNull() {
@@ -146,8 +145,8 @@ class DriverServiceImplTest {
   @DisplayName("updateDriverLocation throws when driver not found")
   void updateDriverLocation_notFoundThrows() {
     when(repository.findById(404L)).thenReturn(Optional.empty());
-    assertThrows(IllegalArgumentException.class,
-        () -> service.updateDriverLocation(404L, 0.0, 0.0));
+    assertThrows(
+        IllegalArgumentException.class, () -> service.updateDriverLocation(404L, 0.0, 0.0));
   }
 
   @Test
@@ -187,5 +186,4 @@ class DriverServiceImplTest {
     assertEquals(d.getId(), result.get(0).getId());
     verify(repository).findNearbyAvailableDrivers(10.0, 20.0, 5000.0);
   }
-
 }

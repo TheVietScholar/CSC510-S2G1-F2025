@@ -140,7 +140,9 @@ public class ProductControllerTest {
         .perform(get("/api/products"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Failed to retrieve products")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("Failed to retrieve products")));
   }
 
   // ==================== GET PRODUCT BY ID TESTS ====================
@@ -181,7 +183,9 @@ public class ProductControllerTest {
         .perform(get("/api/products/1"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Failed to retrieve product")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("Failed to retrieve product")));
   }
 
   // ==================== SEARCH PRODUCTS TESTS ====================
@@ -223,7 +227,9 @@ public class ProductControllerTest {
         .perform(get("/api/products/search?keyword=beer"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Failed to search products")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("Failed to search products")));
   }
 
   // ==================== GET PRODUCTS BY MERCHANT TESTS ====================
@@ -266,7 +272,10 @@ public class ProductControllerTest {
         .perform(get("/api/products/merchant/1"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Failed to retrieve merchant products")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(
+                    org.hamcrest.Matchers.containsString("Failed to retrieve merchant products")));
   }
 
   // ==================== CHECK PRODUCT AVAILABILITY TESTS ====================
@@ -305,7 +314,9 @@ public class ProductControllerTest {
         .perform(get("/api/products/1/available"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Failed to check availability")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("Failed to check availability")));
   }
 
   // ==================== GET ALL PRODUCTS (ADMIN) TESTS ====================
@@ -313,8 +324,10 @@ public class ProductControllerTest {
   @Test
   @DisplayName("GET /api/products/all should return 200 with all products")
   void getAllProducts_Success() throws Exception {
-    Product unavailableProduct = Product.builder().id(2L).name("Unavailable Beer").available(false).build();
-    ProductDTO unavailableDTO = ProductDTO.builder().id(2L).name("Unavailable Beer").available(false).build();
+    Product unavailableProduct =
+        Product.builder().id(2L).name("Unavailable Beer").available(false).build();
+    ProductDTO unavailableDTO =
+        ProductDTO.builder().id(2L).name("Unavailable Beer").available(false).build();
 
     when(productService.getAllProducts()).thenReturn(List.of(testProduct, unavailableProduct));
     when(productMapper.toDTO(testProduct)).thenReturn(testProductDTO);
@@ -338,7 +351,9 @@ public class ProductControllerTest {
         .perform(get("/api/products/all"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Failed to retrieve all products")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("Failed to retrieve all products")));
   }
 
   // ==================== GET ALL PRODUCTS BY MERCHANT TESTS ====================
@@ -359,7 +374,8 @@ public class ProductControllerTest {
   }
 
   @Test
-  @DisplayName("GET /api/products/merchant/{merchantId}/all should return 200 for merchant admin viewing own merchant")
+  @DisplayName(
+      "GET /api/products/merchant/{merchantId}/all should return 200 for merchant admin viewing own merchant")
   void getAllProductsByMerchant_MerchantAdminOwnMerchant() throws Exception {
     when(permissionService.getAuthenticatedUser(any())).thenReturn(merchantAdminUser);
     when(productService.getProductsByMerchant(1L)).thenReturn(List.of(testProduct));
@@ -372,7 +388,8 @@ public class ProductControllerTest {
   }
 
   @Test
-  @DisplayName("GET /api/products/merchant/{merchantId}/all should return 403 when merchant admin tries to view other merchant")
+  @DisplayName(
+      "GET /api/products/merchant/{merchantId}/all should return 403 when merchant admin tries to view other merchant")
   void getAllProductsByMerchant_MerchantAdminAccessDenied() throws Exception {
     when(permissionService.getAuthenticatedUser(any())).thenReturn(merchantAdminUser);
 
@@ -380,20 +397,27 @@ public class ProductControllerTest {
         .perform(get("/api/products/merchant/999/all"))
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("only view products for your own merchant")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(
+                    org.hamcrest.Matchers.containsString(
+                        "only view products for your own merchant")));
   }
 
   @Test
   @DisplayName("GET /api/products/merchant/{merchantId}/all should return 400 on exception")
   void getAllProductsByMerchant_Exception() throws Exception {
     when(permissionService.getAuthenticatedUser(any())).thenReturn(adminUser);
-    when(productService.getProductsByMerchant(1L)).thenThrow(new RuntimeException("Database error"));
+    when(productService.getProductsByMerchant(1L))
+        .thenThrow(new RuntimeException("Database error"));
 
     mockMvc
         .perform(get("/api/products/merchant/1/all"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Failed to retrieve products")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("Failed to retrieve products")));
   }
 
   // ==================== ADD PRODUCT TESTS ====================
@@ -435,13 +459,15 @@ public class ProductControllerTest {
   }
 
   @Test
-  @DisplayName("POST /api/products should return 403 when merchant admin tries to add to other merchant")
+  @DisplayName(
+      "POST /api/products should return 403 when merchant admin tries to add to other merchant")
   void addProduct_MerchantAdminAccessDenied() throws Exception {
     Merchant otherMerchant = Merchant.builder().id(999L).name("Other Merchant").build();
     Product productForOtherMerchant = Product.builder().merchant(otherMerchant).build();
 
     when(permissionService.getAuthenticatedUser(any())).thenReturn(merchantAdminUser);
-    when(productMapper.toEntity(any(CreateProductRequest.class))).thenReturn(productForOtherMerchant);
+    when(productMapper.toEntity(any(CreateProductRequest.class)))
+        .thenReturn(productForOtherMerchant);
 
     mockMvc
         .perform(
@@ -450,7 +476,11 @@ public class ProductControllerTest {
                 .content(objectMapper.writeValueAsString(testCreateRequest)))
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("only add products for your own merchant")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(
+                    org.hamcrest.Matchers.containsString(
+                        "only add products for your own merchant")));
   }
 
   @Test
@@ -459,7 +489,8 @@ public class ProductControllerTest {
     Product productWithNullMerchant = Product.builder().merchant(null).build();
 
     when(permissionService.getAuthenticatedUser(any())).thenReturn(merchantAdminUser);
-    when(productMapper.toEntity(any(CreateProductRequest.class))).thenReturn(productWithNullMerchant);
+    when(productMapper.toEntity(any(CreateProductRequest.class)))
+        .thenReturn(productWithNullMerchant);
 
     mockMvc
         .perform(
@@ -477,7 +508,8 @@ public class ProductControllerTest {
     Product productWithNullMerchantId = Product.builder().merchant(merchantWithNullId).build();
 
     when(permissionService.getAuthenticatedUser(any())).thenReturn(merchantAdminUser);
-    when(productMapper.toEntity(any(CreateProductRequest.class))).thenReturn(productWithNullMerchantId);
+    when(productMapper.toEntity(any(CreateProductRequest.class)))
+        .thenReturn(productWithNullMerchantId);
 
     mockMvc
         .perform(
@@ -502,7 +534,9 @@ public class ProductControllerTest {
                 .content(objectMapper.writeValueAsString(testCreateRequest)))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Failed to add product")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("Failed to add product")));
   }
 
   // ==================== UPDATE PRODUCT TESTS ====================
@@ -510,7 +544,8 @@ public class ProductControllerTest {
   @Test
   @DisplayName("PUT /api/products/{id} should return 200 for admin")
   void updateProduct_AdminSuccess() throws Exception {
-    Product updatedProduct = Product.builder().id(1L).name("Updated Beer").merchant(testMerchant).build();
+    Product updatedProduct =
+        Product.builder().id(1L).name("Updated Beer").merchant(testMerchant).build();
     ProductDTO updatedDTO = ProductDTO.builder().id(1L).name("Updated Beer").build();
 
     when(productService.getProductById(1L)).thenReturn(testProduct);
@@ -563,7 +598,8 @@ public class ProductControllerTest {
   }
 
   @Test
-  @DisplayName("PUT /api/products/{id} should return 403 when merchant admin tries to update other merchant's product")
+  @DisplayName(
+      "PUT /api/products/{id} should return 403 when merchant admin tries to update other merchant's product")
   void updateProduct_MerchantAdminAccessDenied() throws Exception {
     Merchant otherMerchant = Merchant.builder().id(999L).build();
     Product otherMerchantProduct = Product.builder().id(1L).merchant(otherMerchant).build();
@@ -578,7 +614,11 @@ public class ProductControllerTest {
                 .content(objectMapper.writeValueAsString(testProductDTO)))
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("only update products for your own merchant")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(
+                    org.hamcrest.Matchers.containsString(
+                        "only update products for your own merchant")));
   }
 
   @Test
@@ -632,7 +672,9 @@ public class ProductControllerTest {
                 .content(objectMapper.writeValueAsString(testProductDTO)))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Failed to update product")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("Failed to update product")));
   }
 
   // ==================== DELETE PRODUCT TESTS ====================
@@ -654,7 +696,8 @@ public class ProductControllerTest {
   }
 
   @Test
-  @DisplayName("DELETE /api/products/{id} should return 200 for merchant admin deleting own product")
+  @DisplayName(
+      "DELETE /api/products/{id} should return 200 for merchant admin deleting own product")
   void deleteProduct_MerchantAdminOwnProduct() throws Exception {
     when(productService.getProductById(1L)).thenReturn(testProduct);
     when(permissionService.getAuthenticatedUser(any())).thenReturn(merchantAdminUser);
@@ -683,7 +726,8 @@ public class ProductControllerTest {
   }
 
   @Test
-  @DisplayName("DELETE /api/products/{id} should return 403 when merchant admin tries to delete other merchant's product")
+  @DisplayName(
+      "DELETE /api/products/{id} should return 403 when merchant admin tries to delete other merchant's product")
   void deleteProduct_MerchantAdminAccessDenied() throws Exception {
     Merchant otherMerchant = Merchant.builder().id(999L).build();
     Product otherMerchantProduct = Product.builder().id(1L).merchant(otherMerchant).build();
@@ -695,7 +739,11 @@ public class ProductControllerTest {
         .perform(delete("/api/products/1"))
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("only delete products for your own merchant")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(
+                    org.hamcrest.Matchers.containsString(
+                        "only delete products for your own merchant")));
 
     verify(productService, never()).deleteProduct(any());
   }
@@ -727,6 +775,8 @@ public class ProductControllerTest {
         .perform(delete("/api/products/1"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Failed to delete product")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("Failed to delete product")));
   }
 }

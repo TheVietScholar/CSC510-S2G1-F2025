@@ -18,9 +18,10 @@ class AuthControllerTest {
   private final AuthenticationService authenticationService =
       Mockito.mock(AuthenticationService.class);
   private final AuthController authController = new AuthController(authenticationService);
-  private final MockMvc mockMvc = MockMvcBuilders.standaloneSetup(authController)
-      .setControllerAdvice(new GlobalExceptionHandler())
-      .build();
+  private final MockMvc mockMvc =
+      MockMvcBuilders.standaloneSetup(authController)
+          .setControllerAdvice(new GlobalExceptionHandler())
+          .build();
   private final ObjectMapper objectMapper = new ObjectMapper();
 
   // REGISTER TESTS
@@ -143,9 +144,7 @@ class AuthControllerTest {
 
     Mockito.doNothing().when(authenticationService).logout(userId);
 
-    mockMvc
-        .perform(post("/api/auth/logout/" + userId))
-        .andExpect(status().isNoContent());
+    mockMvc.perform(post("/api/auth/logout/" + userId)).andExpect(status().isNoContent());
 
     Mockito.verify(authenticationService).logout(userId);
   }
@@ -156,9 +155,7 @@ class AuthControllerTest {
 
     Mockito.doNothing().when(authenticationService).logout(userId);
 
-    mockMvc
-        .perform(post("/api/auth/logout/" + userId))
-        .andExpect(status().isNoContent());
+    mockMvc.perform(post("/api/auth/logout/" + userId)).andExpect(status().isNoContent());
 
     Mockito.verify(authenticationService).logout(999L);
   }

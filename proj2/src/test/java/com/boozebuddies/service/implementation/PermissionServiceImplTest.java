@@ -61,10 +61,9 @@ class PermissionServiceImplTest {
   void testOwnsMerchant_True() {
     when(userService.findByEmail("test@example.com")).thenReturn(Optional.of(testUser));
     testUser.setMerchantId(10L);
-    testUser.addRole(Role.MERCHANT_ADMIN);          // ← make the user a merchant admin
+    testUser.addRole(Role.MERCHANT_ADMIN); // ← make the user a merchant admin
     assertTrue(permissionService.ownsMerchant(auth, 10L));
   }
-
 
   @Test
   void testOwnsMerchant_FalseWhenNotOwnerOrNull() {

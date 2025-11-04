@@ -29,7 +29,6 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(
@@ -164,7 +163,8 @@ public class OrderControllerTest {
   }
 
   @Test
-  @DisplayName("POST /api/orders should return 403 when user tries to create order for someone else")
+  @DisplayName(
+      "POST /api/orders should return 403 when user tries to create order for someone else")
   void createOrder_AccessDenied() throws Exception {
     CreateOrderRequest invalidRequest =
         CreateOrderRequest.builder()
@@ -182,7 +182,9 @@ public class OrderControllerTest {
                 .content(objectMapper.writeValueAsString(invalidRequest)))
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("only create orders for yourself")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("only create orders for yourself")));
   }
 
   @Test
@@ -224,7 +226,9 @@ public class OrderControllerTest {
                 .content(objectMapper.writeValueAsString(testCreateRequest)))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Failed to create order")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("Failed to create order")));
   }
 
   // ==================== GET ORDER BY ID TESTS ====================
@@ -284,7 +288,9 @@ public class OrderControllerTest {
         .perform(get("/api/orders/1"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Failed to retrieve order")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("Failed to retrieve order")));
   }
 
   // ==================== GET MY ORDERS TESTS ====================
@@ -329,7 +335,9 @@ public class OrderControllerTest {
         .perform(get("/api/orders/my-orders"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Failed to retrieve your orders")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("Failed to retrieve your orders")));
   }
 
   // ==================== GET ORDERS BY USER (ADMIN) TESTS ====================
@@ -382,7 +390,9 @@ public class OrderControllerTest {
         .perform(get("/api/orders/user/1"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Failed to retrieve user orders")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("Failed to retrieve user orders")));
   }
 
   // ==================== GET ALL ORDERS (ADMIN) TESTS ====================
@@ -428,7 +438,9 @@ public class OrderControllerTest {
         .perform(get("/api/orders"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Failed to retrieve orders")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("Failed to retrieve orders")));
   }
 
   // ==================== GET MY MERCHANT ORDERS TESTS ====================
@@ -452,7 +464,8 @@ public class OrderControllerTest {
   @Test
   @DisplayName("GET /api/orders/merchant/my-orders should return 400 when no merchant assigned")
   void getMyMerchantOrders_NoMerchantAssigned() throws Exception {
-    User adminWithoutMerchant = User.builder().id(20L).name("Admin Without Merchant").merchantId(null).build();
+    User adminWithoutMerchant =
+        User.builder().id(20L).name("Admin Without Merchant").merchantId(null).build();
     adminWithoutMerchant.addRole(Role.MERCHANT_ADMIN);
 
     when(permissionService.getAuthenticatedUser(any())).thenReturn(adminWithoutMerchant);
@@ -476,7 +489,9 @@ public class OrderControllerTest {
         .perform(get("/api/orders/merchant/my-orders"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Failed to retrieve merchant orders")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("Failed to retrieve merchant orders")));
   }
 
   // ==================== GET ORDERS BY MERCHANT TESTS ====================
@@ -497,7 +512,8 @@ public class OrderControllerTest {
   }
 
   @Test
-  @DisplayName("GET /api/orders/merchant/{merchantId} should return 200 for merchant admin viewing own merchant")
+  @DisplayName(
+      "GET /api/orders/merchant/{merchantId} should return 200 for merchant admin viewing own merchant")
   void getOrdersByMerchant_MerchantAdminSuccess() throws Exception {
     when(permissionService.getAuthenticatedUser(any())).thenReturn(merchantAdminUser);
     when(orderService.getOrdersByMerchant(1L)).thenReturn(List.of(testOrder));
@@ -510,7 +526,8 @@ public class OrderControllerTest {
   }
 
   @Test
-  @DisplayName("GET /api/orders/merchant/{merchantId} should return 403 when merchant admin tries to view other merchant")
+  @DisplayName(
+      "GET /api/orders/merchant/{merchantId} should return 403 when merchant admin tries to view other merchant")
   void getOrdersByMerchant_AccessDenied() throws Exception {
     when(permissionService.getAuthenticatedUser(any())).thenReturn(merchantAdminUser);
 
@@ -518,7 +535,11 @@ public class OrderControllerTest {
         .perform(get("/api/orders/merchant/999"))
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("only view orders for your own merchant")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(
+                    org.hamcrest.Matchers.containsString(
+                        "only view orders for your own merchant")));
 
     verify(orderService, never()).getOrdersByMerchant(999L);
   }
@@ -557,7 +578,9 @@ public class OrderControllerTest {
         .perform(get("/api/orders/merchant/1"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Failed to retrieve merchant orders")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("Failed to retrieve merchant orders")));
   }
 
   // ==================== GET DRIVER ORDERS TESTS ====================
@@ -605,7 +628,9 @@ public class OrderControllerTest {
         .perform(get("/api/orders/driver/assigned"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Failed to retrieve driver orders")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("Failed to retrieve driver orders")));
   }
 
   // ==================== CANCEL ORDER TESTS ====================
@@ -638,7 +663,9 @@ public class OrderControllerTest {
         .perform(post("/api/orders/1/cancel"))
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("only cancel your own orders")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("only cancel your own orders")));
   }
 
   @Test
@@ -687,7 +714,9 @@ public class OrderControllerTest {
         .perform(post("/api/orders/1/cancel"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Failed to cancel order")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("Failed to cancel order")));
   }
 
   // ==================== UPDATE ORDER STATUS TESTS ====================
@@ -751,6 +780,8 @@ public class OrderControllerTest {
         .perform(put("/api/orders/1/status").param("status", "CONFIRMED"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Failed to update order status")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("Failed to update order status")));
   }
 }

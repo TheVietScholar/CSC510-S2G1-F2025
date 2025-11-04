@@ -1,5 +1,8 @@
 package com.boozebuddies.service.implementation;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
 import com.boozebuddies.entity.Merchant;
 import com.boozebuddies.entity.User;
 import com.boozebuddies.exception.UnauthorizedException;
@@ -15,9 +18,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class RoleServiceImplTest {
@@ -114,8 +114,8 @@ class RoleServiceImplTest {
     assertThrows(ValidationException.class, () -> roleService.removeRole(1L, Role.USER));
   }
 
-    @Test
-    void testRemoveRole_RemovingMerchantAdmin_ClearsMerchantId() {
+  @Test
+  void testRemoveRole_RemovingMerchantAdmin_ClearsMerchantId() {
     testUser.addRole(Role.MERCHANT_ADMIN);
     testUser.addRole(Role.USER); // ✅ Add an extra role so it's not the last one
     testUser.setMerchantId(5L);
@@ -128,8 +128,7 @@ class RoleServiceImplTest {
     assertNull(result.getMerchantId());
     assertFalse(result.getRoles().contains(Role.MERCHANT_ADMIN));
     verify(userService).updateUser(eq(1L), any(User.class));
-    }
-
+  }
 
   @Test
   void testSetRoles_ValidRoles_Success() {

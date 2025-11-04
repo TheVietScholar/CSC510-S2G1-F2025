@@ -390,7 +390,7 @@ public class DriverControllerTest {
   void updateMyLocation_success() throws Exception {
     testDriver.setCurrentLatitude(40.7128);
     testDriver.setCurrentLongitude(-74.0060);
-    
+
     when(permissionService.getAuthenticatedUser(any())).thenReturn(testDriverUser);
     when(driverService.updateDriverLocation(1L, 40.7128, -74.0060)).thenReturn(testDriver);
     when(driverMapper.toDTO(testDriver)).thenReturn(testDriverDTO);
@@ -408,7 +408,7 @@ public class DriverControllerTest {
   void updateMyLocation_noDriverProfile() throws Exception {
     User userWithoutDriver = User.builder().id(99L).name("No Driver").build();
     userWithoutDriver.addRole(Role.DRIVER);
-    
+
     when(permissionService.getAuthenticatedUser(any())).thenReturn(userWithoutDriver);
 
     mockMvc
@@ -429,6 +429,8 @@ public class DriverControllerTest {
         .perform(put("/api/drivers/my-profile/location?latitude=40.7128&longitude=-74.0060"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.startsWith("Failed to update location:")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.startsWith("Failed to update location:")));
   }
 }

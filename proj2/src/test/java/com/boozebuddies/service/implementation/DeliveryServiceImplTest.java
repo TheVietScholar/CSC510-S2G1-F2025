@@ -172,7 +172,8 @@ class DeliveryServiceImplTest {
     when(repository.findById(1L)).thenReturn(Optional.of(existing));
     when(repository.save(any(Delivery.class))).thenAnswer(inv -> inv.getArgument(0));
 
-    Delivery updated = service.updateDeliveryWithAgeVerification(1L, true, "Driver License", "A1234567");
+    Delivery updated =
+        service.updateDeliveryWithAgeVerification(1L, true, "Driver License", "A1234567");
 
     assertTrue(updated.getAgeVerified());
     assertEquals("Driver License", updated.getIdType());
@@ -196,7 +197,8 @@ class DeliveryServiceImplTest {
   @DisplayName("updateDeliveryWithAgeVerification throws if delivery not found")
   void updateDeliveryWithAgeVerification_notFoundThrows() {
     when(repository.findById(999L)).thenReturn(Optional.empty());
-    assertThrows(RuntimeException.class,
+    assertThrows(
+        RuntimeException.class,
         () -> service.updateDeliveryWithAgeVerification(999L, true, "ID", "0000"));
   }
 
@@ -209,19 +211,21 @@ class DeliveryServiceImplTest {
 
     service.updateDeliveryLocation(3L, 35.123, -80.987);
 
-    verify(repository, times(1)).save(argThat(delivery ->
-        delivery.getCurrentLatitude().equals(35.123)
-            && delivery.getCurrentLongitude().equals(-80.987)
-            && delivery.getLastLocationUpdate() != null
-            && delivery.getUpdatedAt() != null));
+    verify(repository, times(1))
+        .save(
+            argThat(
+                delivery ->
+                    delivery.getCurrentLatitude().equals(35.123)
+                        && delivery.getCurrentLongitude().equals(-80.987)
+                        && delivery.getLastLocationUpdate() != null
+                        && delivery.getUpdatedAt() != null));
   }
 
   @Test
   @DisplayName("updateDeliveryLocation throws when delivery not found")
   void updateDeliveryLocation_notFoundThrows() {
     when(repository.findById(404L)).thenReturn(Optional.empty());
-    assertThrows(RuntimeException.class,
-        () -> service.updateDeliveryLocation(404L, 1.0, 2.0));
+    assertThrows(RuntimeException.class, () -> service.updateDeliveryLocation(404L, 1.0, 2.0));
   }
 
   @Test
@@ -242,7 +246,4 @@ class DeliveryServiceImplTest {
     assertNotNull(delivered.getDeliveredTime());
     assertEquals(DeliveryStatus.DELIVERED, delivered.getStatus());
   }
-
-
-
 }

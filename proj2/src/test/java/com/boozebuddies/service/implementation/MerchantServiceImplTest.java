@@ -397,8 +397,8 @@ class MerchantServiceImplTest {
 
   // ==================== getMerchantByName Tests ====================
 
-@Test
-void testGetMerchantByName_Found() {
+  @Test
+  void testGetMerchantByName_Found() {
     when(merchantRepository.findByName("Test Merchant")).thenReturn(Optional.of(testMerchant));
 
     Merchant result = merchantService.getMerchantByName("Test Merchant");
@@ -406,22 +406,22 @@ void testGetMerchantByName_Found() {
     assertNotNull(result);
     assertEquals("Test Merchant", result.getName());
     verify(merchantRepository, times(1)).findByName("Test Merchant");
-}
+  }
 
-@Test
-void testGetMerchantByName_NotFound() {
+  @Test
+  void testGetMerchantByName_NotFound() {
     when(merchantRepository.findByName("Unknown")).thenReturn(Optional.empty());
 
     Merchant result = merchantService.getMerchantByName("Unknown");
 
     assertNull(result);
     verify(merchantRepository, times(1)).findByName("Unknown");
-}
+  }
 
-// ==================== getMerchantsSortedByDistance Tests ====================
+  // ==================== getMerchantsSortedByDistance Tests ====================
 
-@Test
-void testGetMerchantsSortedByDistance_Success() {
+  @Test
+  void testGetMerchantsSortedByDistance_Success() {
     Merchant m1 = Merchant.builder().id(1L).name("A").latitude(35.0).longitude(-80.0).build();
     Merchant m2 = Merchant.builder().id(2L).name("B").latitude(36.0).longitude(-81.0).build();
     Merchant m3 = Merchant.builder().id(3L).name("C").latitude(34.5).longitude(-79.5).build();
@@ -434,10 +434,10 @@ void testGetMerchantsSortedByDistance_Success() {
     assertEquals(3, sorted.size());
     // m1 should be closest to (35, -80)
     assertEquals("A", sorted.get(0).getName());
-}
+  }
 
-@Test
-void testGetMerchantsSortedByDistance_IgnoresNullCoordinates() {
+  @Test
+  void testGetMerchantsSortedByDistance_IgnoresNullCoordinates() {
     Merchant m1 = Merchant.builder().id(1L).name("A").latitude(35.0).longitude(-80.0).build();
     Merchant m2 = Merchant.builder().id(2L).name("B").latitude(null).longitude(null).build();
 
@@ -447,22 +447,21 @@ void testGetMerchantsSortedByDistance_IgnoresNullCoordinates() {
 
     assertEquals(1, result.size());
     assertEquals("A", result.get(0).getName());
-}
+  }
 
-@Test
-void testGetMerchantsSortedByDistance_LatitudeNull() {
+  @Test
+  void testGetMerchantsSortedByDistance_LatitudeNull() {
     assertThrows(
         IllegalArgumentException.class,
         () -> merchantService.getMerchantsSortedByDistance(null, -80.0),
         "Latitude and longitude are required");
-}
+  }
 
-@Test
-void testGetMerchantsSortedByDistance_LongitudeNull() {
+  @Test
+  void testGetMerchantsSortedByDistance_LongitudeNull() {
     assertThrows(
         IllegalArgumentException.class,
         () -> merchantService.getMerchantsSortedByDistance(35.0, null),
         "Latitude and longitude are required");
-}
-
+  }
 }

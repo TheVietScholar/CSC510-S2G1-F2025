@@ -35,7 +35,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(
@@ -75,7 +74,7 @@ public class DeliveryControllerTest {
   void setUp() {
     Order testOrder = new Order();
     testOrder.setId(100L);
-    
+
     testDriverUser = User.builder().id(10L).name("John Driver").phone("555-1234").build();
     testDriver =
         Driver.builder().user(testDriverUser).id(10L).name("John Driver").phone("555-1234").build();
@@ -84,7 +83,12 @@ public class DeliveryControllerTest {
 
     otherDriverUser = User.builder().id(20L).name("Jane Driver").phone("555-5678").build();
     otherDriver =
-        Driver.builder().user(otherDriverUser).id(20L).name("Jane Driver").phone("555-5678").build();
+        Driver.builder()
+            .user(otherDriverUser)
+            .id(20L)
+            .name("Jane Driver")
+            .phone("555-5678")
+            .build();
     otherDriverUser.setDriver(otherDriver);
     otherDriverUser.addRole(Role.DRIVER);
 
@@ -142,7 +146,8 @@ public class DeliveryControllerTest {
         .perform(post("/api/deliveries/assign?orderId=999&driverId=10"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Order not found")));
+        .andExpect(
+            jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Order not found")));
   }
 
   @Test
@@ -155,7 +160,8 @@ public class DeliveryControllerTest {
         .perform(post("/api/deliveries/assign?orderId=100&driverId=999"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Driver not found")));
+        .andExpect(
+            jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Driver not found")));
   }
 
   @Test
@@ -201,7 +207,9 @@ public class DeliveryControllerTest {
         .perform(get("/api/deliveries"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Failed to retrieve deliveries")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("Failed to retrieve deliveries")));
   }
 
   // ==================== GET ACTIVE DELIVERIES TESTS ====================
@@ -298,7 +306,8 @@ public class DeliveryControllerTest {
   }
 
   @Test
-  @DisplayName("GET /api/deliveries/{id} returns 403 when driver tries to access another's delivery")
+  @DisplayName(
+      "GET /api/deliveries/{id} returns 403 when driver tries to access another's delivery")
   void getDeliveryById_wrongDriver_accessDenied() throws Exception {
     when(permissionService.getAuthenticatedUser(any())).thenReturn(otherDriverUser);
     when(deliveryService.getDeliveryById(1L)).thenReturn(testDelivery);
@@ -307,7 +316,9 @@ public class DeliveryControllerTest {
         .perform(get("/api/deliveries/1"))
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("don't have permission")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("don't have permission")));
   }
 
   @Test
@@ -376,7 +387,9 @@ public class DeliveryControllerTest {
         .perform(get("/api/deliveries/driver/my-deliveries"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Failed to retrieve deliveries")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("Failed to retrieve deliveries")));
   }
 
   // ==================== UPDATE DELIVERY STATUS TESTS ====================
@@ -411,11 +424,13 @@ public class DeliveryControllerTest {
   @DisplayName("PUT /api/deliveries/{id}/status returns 200 for admin")
   void updateDeliveryStatus_adminAccess_success() throws Exception {
     testDelivery.setStatus(DeliveryStatus.DELIVERED);
-    DeliveryDTO mapped = DeliveryDTO.builder().id(1L).status(DeliveryStatus.DELIVERED.name()).build();
+    DeliveryDTO mapped =
+        DeliveryDTO.builder().id(1L).status(DeliveryStatus.DELIVERED.name()).build();
 
     when(permissionService.getAuthenticatedUser(any())).thenReturn(adminUser);
     when(deliveryService.getDeliveryById(1L)).thenReturn(testDelivery);
-    when(deliveryService.updateDeliveryStatus(1L, DeliveryStatus.DELIVERED)).thenReturn(testDelivery);
+    when(deliveryService.updateDeliveryStatus(1L, DeliveryStatus.DELIVERED))
+        .thenReturn(testDelivery);
     when(deliveryMapper.toDTO(testDelivery)).thenReturn(mapped);
 
     mockMvc
@@ -434,7 +449,9 @@ public class DeliveryControllerTest {
         .perform(put("/api/deliveries/1/status?status=DELIVERED"))
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("your own deliveries")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("your own deliveries")));
   }
 
   @Test
@@ -471,11 +488,13 @@ public class DeliveryControllerTest {
   @DisplayName("POST /api/deliveries/{id}/pickup returns 200 on success")
   void markAsPickedUp_success() throws Exception {
     testDelivery.setStatus(DeliveryStatus.PICKED_UP);
-    DeliveryDTO mapped = DeliveryDTO.builder().id(1L).status(DeliveryStatus.PICKED_UP.name()).build();
+    DeliveryDTO mapped =
+        DeliveryDTO.builder().id(1L).status(DeliveryStatus.PICKED_UP.name()).build();
 
     when(permissionService.getAuthenticatedUser(any())).thenReturn(testDriverUser);
     when(deliveryService.getDeliveryById(1L)).thenReturn(testDelivery);
-    when(deliveryService.updateDeliveryStatus(1L, DeliveryStatus.PICKED_UP)).thenReturn(testDelivery);
+    when(deliveryService.updateDeliveryStatus(1L, DeliveryStatus.PICKED_UP))
+        .thenReturn(testDelivery);
     when(deliveryMapper.toDTO(testDelivery)).thenReturn(mapped);
 
     mockMvc
@@ -510,7 +529,9 @@ public class DeliveryControllerTest {
         .perform(post("/api/deliveries/1/pickup"))
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("your own deliveries")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("your own deliveries")));
   }
 
   @Test
@@ -519,9 +540,7 @@ public class DeliveryControllerTest {
     when(permissionService.getAuthenticatedUser(any())).thenReturn(testDriverUser);
     when(deliveryService.getDeliveryById(999L)).thenReturn(null);
 
-    mockMvc
-        .perform(post("/api/deliveries/999/pickup"))
-        .andExpect(status().isNotFound());
+    mockMvc.perform(post("/api/deliveries/999/pickup")).andExpect(status().isNotFound());
   }
 
   @Test
@@ -536,7 +555,9 @@ public class DeliveryControllerTest {
         .perform(post("/api/deliveries/1/pickup"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Failed to mark as picked up")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("Failed to mark as picked up")));
   }
 
   // ==================== MARK AS DELIVERED TESTS ====================
@@ -545,11 +566,13 @@ public class DeliveryControllerTest {
   @DisplayName("POST /api/deliveries/{id}/deliver returns 200 on success")
   void markAsDelivered_success() throws Exception {
     testDelivery.setStatus(DeliveryStatus.DELIVERED);
-    DeliveryDTO mapped = DeliveryDTO.builder().id(1L).status(DeliveryStatus.DELIVERED.name()).build();
+    DeliveryDTO mapped =
+        DeliveryDTO.builder().id(1L).status(DeliveryStatus.DELIVERED.name()).build();
 
     when(permissionService.getAuthenticatedUser(any())).thenReturn(testDriverUser);
     when(deliveryService.getDeliveryById(1L)).thenReturn(testDelivery);
-    when(deliveryService.updateDeliveryStatus(1L, DeliveryStatus.DELIVERED)).thenReturn(testDelivery);
+    when(deliveryService.updateDeliveryStatus(1L, DeliveryStatus.DELIVERED))
+        .thenReturn(testDelivery);
     when(deliveryMapper.toDTO(testDelivery)).thenReturn(mapped);
 
     mockMvc
@@ -584,7 +607,8 @@ public class DeliveryControllerTest {
         .perform(post("/api/deliveries/1/deliver"))
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("your own orders")));
+        .andExpect(
+            jsonPath("$.message").value(org.hamcrest.Matchers.containsString("your own orders")));
   }
 
   @Test
@@ -593,9 +617,7 @@ public class DeliveryControllerTest {
     when(permissionService.getAuthenticatedUser(any())).thenReturn(testDriverUser);
     when(deliveryService.getDeliveryById(999L)).thenReturn(null);
 
-    mockMvc
-        .perform(post("/api/deliveries/999/deliver"))
-        .andExpect(status().isNotFound());
+    mockMvc.perform(post("/api/deliveries/999/deliver")).andExpect(status().isNotFound());
   }
 
   @Test
@@ -610,7 +632,9 @@ public class DeliveryControllerTest {
         .perform(post("/api/deliveries/1/deliver"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Failed to mark as delivered")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("Failed to mark as delivered")));
   }
 
   // ==================== VERIFY AGE TESTS ====================
@@ -630,7 +654,9 @@ public class DeliveryControllerTest {
     when(deliveryMapper.toDTO(testDelivery)).thenReturn(mapped);
 
     mockMvc
-        .perform(post("/api/deliveries/1/verify-age?ageVerified=true&idType=Driver License&idNumber=1234"))
+        .perform(
+            post(
+                "/api/deliveries/1/verify-age?ageVerified=true&idType=Driver License&idNumber=1234"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.success").value(true))
         .andExpect(jsonPath("$.message").value("Customer age verified successfully"));
@@ -652,7 +678,9 @@ public class DeliveryControllerTest {
         .perform(post("/api/deliveries/1/verify-age?ageVerified=false"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.success").value(true))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("verification failed")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("verification failed")));
   }
 
   @Test
@@ -679,7 +707,9 @@ public class DeliveryControllerTest {
         .perform(post("/api/deliveries/1/verify-age?ageVerified=true"))
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("your own deliveries")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("your own deliveries")));
   }
 
   @Test
@@ -705,7 +735,9 @@ public class DeliveryControllerTest {
         .perform(post("/api/deliveries/1/verify-age?ageVerified=true"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Failed to verify age")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("Failed to verify age")));
   }
 
   // ==================== CANCEL DELIVERY TESTS ====================
@@ -725,8 +757,7 @@ public class DeliveryControllerTest {
             .build();
     when(permissionService.getAuthenticatedUser(any())).thenReturn(testDriverUser);
     when(deliveryService.getDeliveryById(1L)).thenReturn(testDelivery);
-    when(deliveryService.cancelDelivery(eq(1L), eq("Customer requested")))
-        .thenReturn(testDelivery);
+    when(deliveryService.cancelDelivery(eq(1L), eq("Customer requested"))).thenReturn(testDelivery);
     when(deliveryMapper.toDTO(testDelivery)).thenReturn(mapped);
 
     mockMvc
@@ -761,7 +792,9 @@ public class DeliveryControllerTest {
         .perform(post("/api/deliveries/1/cancel?reason=test"))
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("your own deliveries")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("your own deliveries")));
   }
 
   @Test
@@ -770,9 +803,7 @@ public class DeliveryControllerTest {
     when(permissionService.getAuthenticatedUser(any())).thenReturn(testDriverUser);
     when(deliveryService.getDeliveryById(999L)).thenReturn(null);
 
-    mockMvc
-        .perform(post("/api/deliveries/999/cancel?reason=x"))
-        .andExpect(status().isNotFound());
+    mockMvc.perform(post("/api/deliveries/999/cancel?reason=x")).andExpect(status().isNotFound());
   }
 
   @Test
@@ -833,7 +864,9 @@ public class DeliveryControllerTest {
         .perform(put("/api/deliveries/1/location?latitude=40.7128&longitude=-74.0060"))
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("your own deliveries")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("your own deliveries")));
   }
 
   @Test
@@ -853,12 +886,15 @@ public class DeliveryControllerTest {
     when(permissionService.getAuthenticatedUser(any())).thenReturn(testDriverUser);
     when(deliveryService.getDeliveryById(1L)).thenReturn(testDelivery);
     doThrow(new RuntimeException("location update failed"))
-        .when(deliveryService).updateDeliveryLocation(eq(1L), any(), any());
+        .when(deliveryService)
+        .updateDeliveryLocation(eq(1L), any(), any());
 
     mockMvc
         .perform(put("/api/deliveries/1/location?latitude=40.7128&longitude=-74.0060"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Failed to update location")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("Failed to update location")));
   }
 }

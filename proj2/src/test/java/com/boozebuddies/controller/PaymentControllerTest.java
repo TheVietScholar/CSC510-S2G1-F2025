@@ -76,8 +76,7 @@ public class PaymentControllerTest {
     otherUser = User.builder().id(2L).name("Jane Doe").build();
     otherUser.addRole(Role.USER);
 
-    testOrder =
-        Order.builder().id(1L).user(testUser).totalAmount(new BigDecimal("99.99")).build();
+    testOrder = Order.builder().id(1L).user(testUser).totalAmount(new BigDecimal("99.99")).build();
 
     testPayment =
         Payment.builder()
@@ -129,7 +128,8 @@ public class PaymentControllerTest {
         .perform(post("/api/payments/process?orderId=999&paymentMethod=credit_card"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Order not found")));
+        .andExpect(
+            jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Order not found")));
   }
 
   @Test
@@ -144,7 +144,9 @@ public class PaymentControllerTest {
         .perform(post("/api/payments/process?orderId=2&paymentMethod=credit_card"))
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("only pay for your own orders")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("only pay for your own orders")));
   }
 
   @Test
@@ -173,7 +175,9 @@ public class PaymentControllerTest {
         .perform(post("/api/payments/process?orderId=1&paymentMethod=credit_card"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Failed to process payment")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("Failed to process payment")));
   }
 
   // ==================== REFUND PAYMENT TESTS ====================
@@ -190,11 +194,7 @@ public class PaymentControllerTest {
             .status(PaymentStatus.REFUNDED)
             .build();
     PaymentDTO refundedDTO =
-        PaymentDTO.builder()
-            .id(2L)
-            .orderId(1L)
-            .status(PaymentStatus.REFUNDED.name())
-            .build();
+        PaymentDTO.builder().id(2L).orderId(1L).status(PaymentStatus.REFUNDED.name()).build();
 
     when(orderService.getOrderById(1L)).thenReturn(Optional.of(testOrder));
     when(paymentService.refundPayment(testOrder, "customer_request")).thenReturn(refundedPayment);
@@ -217,7 +217,8 @@ public class PaymentControllerTest {
         .perform(post("/api/payments/refund?orderId=999&reason=test"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Order not found")));
+        .andExpect(
+            jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Order not found")));
   }
 
   @Test
@@ -231,7 +232,9 @@ public class PaymentControllerTest {
         .perform(post("/api/payments/refund?orderId=1&reason=reason"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Failed to process refund")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("Failed to process refund")));
   }
 
   // ==================== GET MY PAYMENTS TESTS ====================
@@ -282,7 +285,9 @@ public class PaymentControllerTest {
         .perform(get("/api/payments/my-payments"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Failed to retrieve payments")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("Failed to retrieve payments")));
   }
 
   // ==================== GET PAYMENTS BY USER TESTS ====================
@@ -306,7 +311,8 @@ public class PaymentControllerTest {
   }
 
   @Test
-  @DisplayName("GET /api/payments/user/{userId} should return 200 when admin views any user's payments")
+  @DisplayName(
+      "GET /api/payments/user/{userId} should return 200 when admin views any user's payments")
   void getPaymentsByUser_AdminAccess() throws Exception {
     Pageable pageable = PageRequest.of(0, 10);
     Page<Payment> pagedPayments = new PageImpl<>(List.of(testPayment), pageable, 1);
@@ -322,7 +328,8 @@ public class PaymentControllerTest {
   }
 
   @Test
-  @DisplayName("GET /api/payments/user/{userId} should return 403 when non-admin views other user's payments")
+  @DisplayName(
+      "GET /api/payments/user/{userId} should return 403 when non-admin views other user's payments")
   void getPaymentsByUser_AccessDenied() throws Exception {
     when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
 
@@ -330,7 +337,9 @@ public class PaymentControllerTest {
         .perform(get("/api/payments/user/2?page=0&size=10"))
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("only view your own payment history")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("only view your own payment history")));
   }
 
   @Test
@@ -344,13 +353,16 @@ public class PaymentControllerTest {
         .perform(get("/api/payments/user/1"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Failed to retrieve payments")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("Failed to retrieve payments")));
   }
 
   // ==================== GET PAYMENT BY ORDER ID TESTS ====================
 
   @Test
-  @DisplayName("GET /api/payments/order/{orderId} should return 200 when user views own order payment")
+  @DisplayName(
+      "GET /api/payments/order/{orderId} should return 200 when user views own order payment")
   void getPaymentByOrderId_Success() throws Exception {
     when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
     when(orderService.getOrderById(1L)).thenReturn(Optional.of(testOrder));
@@ -366,7 +378,8 @@ public class PaymentControllerTest {
   }
 
   @Test
-  @DisplayName("GET /api/payments/order/{orderId} should return 200 when admin views any order payment")
+  @DisplayName(
+      "GET /api/payments/order/{orderId} should return 200 when admin views any order payment")
   void getPaymentByOrderId_AdminAccess() throws Exception {
     when(permissionService.getAuthenticatedUser(any())).thenReturn(adminUser);
     when(orderService.getOrderById(1L)).thenReturn(Optional.of(testOrder));
@@ -389,7 +402,8 @@ public class PaymentControllerTest {
         .perform(get("/api/payments/order/999"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Order not found")));
+        .andExpect(
+            jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Order not found")));
   }
 
   @Test
@@ -403,7 +417,8 @@ public class PaymentControllerTest {
   }
 
   @Test
-  @DisplayName("GET /api/payments/order/{orderId} should return 403 when order doesn't belong to user")
+  @DisplayName(
+      "GET /api/payments/order/{orderId} should return 403 when order doesn't belong to user")
   void getPaymentByOrderId_AccessDenied() throws Exception {
     Order otherUserOrder = Order.builder().id(2L).user(otherUser).build();
 
@@ -414,7 +429,11 @@ public class PaymentControllerTest {
         .perform(get("/api/payments/order/2"))
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("only view payments for your own orders")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(
+                    org.hamcrest.Matchers.containsString(
+                        "only view payments for your own orders")));
   }
 
   @Test
@@ -436,14 +455,15 @@ public class PaymentControllerTest {
   void getPaymentByOrderId_Exception() throws Exception {
     when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
     when(orderService.getOrderById(1L)).thenReturn(Optional.of(testOrder));
-    when(paymentService.getPaymentByOrderId(1L))
-        .thenThrow(new RuntimeException("Database error"));
+    when(paymentService.getPaymentByOrderId(1L)).thenThrow(new RuntimeException("Database error"));
 
     mockMvc
         .perform(get("/api/payments/order/1"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Failed to retrieve payment")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("Failed to retrieve payment")));
   }
 
   // ==================== CALCULATE REVENUE TESTS ====================
@@ -479,7 +499,9 @@ public class PaymentControllerTest {
                 .param("endDate", "2024-12-31T23:59:59"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Failed to calculate revenue")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("Failed to calculate revenue")));
   }
 
   // ==================== GET ALL PAYMENTS TESTS ====================
@@ -529,13 +551,16 @@ public class PaymentControllerTest {
         .perform(get("/api/payments"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Failed to retrieve payments")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("Failed to retrieve payments")));
   }
 
   // ==================== VALIDATE PAYMENT METHOD TESTS ====================
 
   @Test
-  @DisplayName("POST /api/payments/validate should return 200 when user validates own payment method")
+  @DisplayName(
+      "POST /api/payments/validate should return 200 when user validates own payment method")
   void validatePaymentMethod_OwnMethod_Valid() throws Exception {
     when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
     when(paymentService.validatePaymentMethod(any(User.class), eq("credit_card"))).thenReturn(true);
@@ -562,7 +587,8 @@ public class PaymentControllerTest {
   }
 
   @Test
-  @DisplayName("POST /api/payments/validate should return 200 when admin validates for another user")
+  @DisplayName(
+      "POST /api/payments/validate should return 200 when admin validates for another user")
   void validatePaymentMethod_AdminAccess() throws Exception {
     when(permissionService.getAuthenticatedUser(any())).thenReturn(adminUser);
     when(paymentService.validatePaymentMethod(any(User.class), eq("credit_card"))).thenReturn(true);
@@ -575,7 +601,8 @@ public class PaymentControllerTest {
   }
 
   @Test
-  @DisplayName("POST /api/payments/validate should return 403 when non-admin validates for another user")
+  @DisplayName(
+      "POST /api/payments/validate should return 403 when non-admin validates for another user")
   void validatePaymentMethod_AccessDenied() throws Exception {
     when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
 
@@ -583,7 +610,11 @@ public class PaymentControllerTest {
         .perform(post("/api/payments/validate?userId=2&paymentMethod=credit_card"))
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("only validate your own payment methods")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(
+                    org.hamcrest.Matchers.containsString(
+                        "only validate your own payment methods")));
   }
 
   @Test
@@ -597,6 +628,8 @@ public class PaymentControllerTest {
         .perform(post("/api/payments/validate?userId=1&paymentMethod=credit_card"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Failed to validate payment method")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("Failed to validate payment method")));
   }
 }

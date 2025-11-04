@@ -99,21 +99,23 @@ class MerchantControllerTest {
             .imageUrl("http://example.com/image.jpg")
             .build();
 
-    testUser = User.builder()
-        .id(10L)
-        .name("Test User")
-        .email("user@example.com")
-        .latitude(40.7589)
-        .longitude(-73.9851)
-        .build();
+    testUser =
+        User.builder()
+            .id(10L)
+            .name("Test User")
+            .email("user@example.com")
+            .latitude(40.7589)
+            .longitude(-73.9851)
+            .build();
     testUser.addRole(Role.USER);
 
-    merchantAdminUser = User.builder()
-        .id(20L)
-        .name("Merchant Admin")
-        .email("admin@example.com")
-        .merchantId(1L)
-        .build();
+    merchantAdminUser =
+        User.builder()
+            .id(20L)
+            .name("Merchant Admin")
+            .email("admin@example.com")
+            .merchantId(1L)
+            .build();
     merchantAdminUser.addRole(Role.MERCHANT_ADMIN);
   }
 
@@ -348,7 +350,9 @@ class MerchantControllerTest {
         .perform(get("/api/merchants/name/Test Restaurant"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Failed to retrieve merchant")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("Failed to retrieve merchant")));
   }
 
   // ==================== GET MERCHANTS BY DISTANCE TESTS ====================
@@ -356,17 +360,15 @@ class MerchantControllerTest {
   @Test
   @DisplayName("GET /api/merchants/by-distance should return 200 with sorted merchants")
   void testGetMerchantsByDistance_Success() throws Exception {
-    Merchant merchant2 = Merchant.builder()
-        .id(2L)
-        .name("Second Restaurant")
-        .latitude(40.7500)
-        .longitude(-73.9900)
-        .build();
-    
-    MerchantDTO dto2 = MerchantDTO.builder()
-        .id(2L)
-        .name("Second Restaurant")
-        .build();
+    Merchant merchant2 =
+        Merchant.builder()
+            .id(2L)
+            .name("Second Restaurant")
+            .latitude(40.7500)
+            .longitude(-73.9900)
+            .build();
+
+    MerchantDTO dto2 = MerchantDTO.builder().id(2L).name("Second Restaurant").build();
 
     when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
     when(merchantService.getMerchantsSortedByDistance(40.7589, -73.9851))
@@ -401,11 +403,8 @@ class MerchantControllerTest {
   @Test
   @DisplayName("GET /api/merchants/by-distance should return 400 when user location not set")
   void testGetMerchantsByDistance_NoUserLocation() throws Exception {
-    User userWithoutLocation = User.builder()
-        .id(10L)
-        .name("Test User")
-        .email("user@example.com")
-        .build();
+    User userWithoutLocation =
+        User.builder().id(10L).name("Test User").email("user@example.com").build();
 
     when(permissionService.getAuthenticatedUser(any())).thenReturn(userWithoutLocation);
 
@@ -413,17 +412,16 @@ class MerchantControllerTest {
         .perform(get("/api/merchants/by-distance"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("User location not set")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("User location not set")));
   }
 
   @Test
   @DisplayName("GET /api/merchants/by-distance should return 400 when latitude is null")
   void testGetMerchantsByDistance_NullLatitude() throws Exception {
-    User userWithPartialLocation = User.builder()
-        .id(10L)
-        .name("Test User")
-        .longitude(-73.9851)
-        .build();
+    User userWithPartialLocation =
+        User.builder().id(10L).name("Test User").longitude(-73.9851).build();
 
     when(permissionService.getAuthenticatedUser(any())).thenReturn(userWithPartialLocation);
 
@@ -431,17 +429,16 @@ class MerchantControllerTest {
         .perform(get("/api/merchants/by-distance"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("User location not set")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("User location not set")));
   }
 
   @Test
   @DisplayName("GET /api/merchants/by-distance should return 400 when longitude is null")
   void testGetMerchantsByDistance_NullLongitude() throws Exception {
-    User userWithPartialLocation = User.builder()
-        .id(10L)
-        .name("Test User")
-        .latitude(40.7589)
-        .build();
+    User userWithPartialLocation =
+        User.builder().id(10L).name("Test User").latitude(40.7589).build();
 
     when(permissionService.getAuthenticatedUser(any())).thenReturn(userWithPartialLocation);
 
@@ -449,7 +446,9 @@ class MerchantControllerTest {
         .perform(get("/api/merchants/by-distance"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("User location not set")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("User location not set")));
   }
 
   @Test
@@ -463,7 +462,9 @@ class MerchantControllerTest {
         .perform(get("/api/merchants/by-distance"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Failed to retrieve merchants")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("Failed to retrieve merchants")));
   }
 
   // ==================== GET ALL MERCHANTS TESTS ====================
@@ -688,11 +689,8 @@ class MerchantControllerTest {
   @Test
   @DisplayName("GET /api/merchants/my-merchant should return 400 when no merchant assigned")
   void testGetMyMerchant_NoMerchantAssigned() throws Exception {
-    User adminWithoutMerchant = User.builder()
-        .id(20L)
-        .name("Admin Without Merchant")
-        .merchantId(null)
-        .build();
+    User adminWithoutMerchant =
+        User.builder().id(20L).name("Admin Without Merchant").merchantId(null).build();
     adminWithoutMerchant.addRole(Role.MERCHANT_ADMIN);
 
     when(permissionService.getAuthenticatedUser(any())).thenReturn(adminWithoutMerchant);
@@ -761,11 +759,8 @@ class MerchantControllerTest {
   @Test
   @DisplayName("GET /api/merchants/my-merchant/orders should return 400 when no merchant assigned")
   void testGetMyMerchantOrders_NoMerchantAssigned() throws Exception {
-    User adminWithoutMerchant = User.builder()
-        .id(20L)
-        .name("Admin Without Merchant")
-        .merchantId(null)
-        .build();
+    User adminWithoutMerchant =
+        User.builder().id(20L).name("Admin Without Merchant").merchantId(null).build();
     adminWithoutMerchant.addRole(Role.MERCHANT_ADMIN);
 
     when(permissionService.getAuthenticatedUser(any())).thenReturn(adminWithoutMerchant);

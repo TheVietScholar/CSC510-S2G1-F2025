@@ -7,7 +7,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.boozebuddies.config.TestSecurityConfig;
-import com.boozebuddies.dto.ApiResponse;
 import com.boozebuddies.dto.UserDTO;
 import com.boozebuddies.entity.User;
 import com.boozebuddies.mapper.UserMapper;
@@ -19,7 +18,6 @@ import com.boozebuddies.service.UserService;
 import com.boozebuddies.service.ValidationService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
@@ -62,13 +60,14 @@ class UserControllerTest {
 
   @BeforeEach
   void setUp() {
-    testUser = User.builder()
-        .id(1L)
-        .name("John Doe")
-        .email("john@example.com")
-        .dateOfBirth(LocalDate.of(1990, 1, 1))
-        .ageVerified(true)
-        .build();
+    testUser =
+        User.builder()
+            .id(1L)
+            .name("John Doe")
+            .email("john@example.com")
+            .dateOfBirth(LocalDate.of(1990, 1, 1))
+            .ageVerified(true)
+            .build();
     testUserDTO = new UserDTO();
     testUserDTO.setId(1L);
     testUserDTO.setEmail("john@example.com");
@@ -84,7 +83,8 @@ class UserControllerTest {
     when(userService.getUserById(1L)).thenReturn(Optional.of(testUser));
     when(userMapper.toDTO(testUser)).thenReturn(testUserDTO);
 
-    mockMvc.perform(get("/api/users/1"))
+    mockMvc
+        .perform(get("/api/users/1"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.success").value(true))
         .andExpect(jsonPath("$.data.email").value("john@example.com"));
@@ -98,7 +98,8 @@ class UserControllerTest {
     User otherUser = User.builder().id(2L).build();
     when(permissionService.getAuthenticatedUser(any())).thenReturn(otherUser);
 
-    mockMvc.perform(get("/api/users/1"))
+    mockMvc
+        .perform(get("/api/users/1"))
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$.message").value("You can only view your own profile"));
   }
@@ -110,7 +111,8 @@ class UserControllerTest {
     when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
     when(userMapper.toDTO(testUser)).thenReturn(testUserDTO);
 
-    mockMvc.perform(get("/api/users/me"))
+    mockMvc
+        .perform(get("/api/users/me"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.success").value(true))
         .andExpect(jsonPath("$.message").value("Your profile retrieved successfully"))
@@ -126,9 +128,11 @@ class UserControllerTest {
     when(userService.updateUser(eq(1L), any(User.class))).thenReturn(testUser);
     when(userMapper.toDTO(testUser)).thenReturn(testUserDTO);
 
-    mockMvc.perform(put("/api/users/1")
-        .contentType(MediaType.APPLICATION_JSON)
-        .content(objectMapper.writeValueAsString(testUserDTO)))
+    mockMvc
+        .perform(
+            put("/api/users/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(testUserDTO)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.message").value("User updated successfully"));
   }
@@ -143,7 +147,8 @@ class UserControllerTest {
     when(userService.updateUser(1L, testUser)).thenReturn(testUser);
     when(userMapper.toDTO(testUser)).thenReturn(testUserDTO);
 
-    mockMvc.perform(post("/api/users/1/verify-age"))
+    mockMvc
+        .perform(post("/api/users/1/verify-age"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.message").value("Age verification successful"));
   }
@@ -155,7 +160,8 @@ class UserControllerTest {
     when(userService.getUserById(1L)).thenReturn(Optional.of(testUser));
     when(validationService.validateAge(testUser)).thenReturn(false);
 
-    mockMvc.perform(post("/api/users/1/verify-age"))
+    mockMvc
+        .perform(post("/api/users/1/verify-age"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.message").value("Age verification failed"));
   }
@@ -166,7 +172,8 @@ class UserControllerTest {
   void testDeleteUserSuccess() throws Exception {
     when(userService.deleteUser(1L)).thenReturn(true);
 
-    mockMvc.perform(delete("/api/users/1"))
+    mockMvc
+        .perform(delete("/api/users/1"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.message").value("User deleted successfully"));
   }
@@ -176,8 +183,7 @@ class UserControllerTest {
   void testDeleteUserNotFound() throws Exception {
     when(userService.deleteUser(999L)).thenReturn(false);
 
-    mockMvc.perform(delete("/api/users/999"))
-        .andExpect(status().isNotFound());
+    mockMvc.perform(delete("/api/users/999")).andExpect(status().isNotFound());
   }
 
   // ==================== ROLE MANAGEMENT ====================
@@ -190,9 +196,11 @@ class UserControllerTest {
     when(roleService.assignRole(1L, Role.ADMIN)).thenReturn(testUser);
     when(userMapper.toDTO(testUser)).thenReturn(testUserDTO);
 
-    mockMvc.perform(post("/api/users/1/roles")
-        .contentType(MediaType.APPLICATION_JSON)
-        .content(objectMapper.writeValueAsString(request)))
+    mockMvc
+        .perform(
+            post("/api/users/1/roles")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.message").value("Role assigned successfully"));
   }
@@ -203,7 +211,8 @@ class UserControllerTest {
     when(roleService.removeRole(1L, Role.ADMIN)).thenReturn(testUser);
     when(userMapper.toDTO(testUser)).thenReturn(testUserDTO);
 
-    mockMvc.perform(delete("/api/users/1/roles/ADMIN"))
+    mockMvc
+        .perform(delete("/api/users/1/roles/ADMIN"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.message").value("Role removed successfully"));
   }
@@ -217,9 +226,11 @@ class UserControllerTest {
     when(roleService.setRoles(1L, request.getRoles())).thenReturn(testUser);
     when(userMapper.toDTO(testUser)).thenReturn(testUserDTO);
 
-    mockMvc.perform(put("/api/users/1/roles")
-        .contentType(MediaType.APPLICATION_JSON)
-        .content(objectMapper.writeValueAsString(request)))
+    mockMvc
+        .perform(
+            put("/api/users/1/roles")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.message").value("Roles updated successfully"));
   }
@@ -227,15 +238,18 @@ class UserControllerTest {
   @Test
   @DisplayName("POST /api/users/{id}/merchant assigns merchant successfully")
   void testAssignMerchant() throws Exception {
-    UserController.MerchantAssignmentRequest request = new UserController.MerchantAssignmentRequest();
+    UserController.MerchantAssignmentRequest request =
+        new UserController.MerchantAssignmentRequest();
     request.setMerchantId(10L);
 
     when(roleService.assignMerchantToUser(1L, 10L)).thenReturn(testUser);
     when(userMapper.toDTO(testUser)).thenReturn(testUserDTO);
 
-    mockMvc.perform(post("/api/users/1/merchant")
-        .contentType(MediaType.APPLICATION_JSON)
-        .content(objectMapper.writeValueAsString(request)))
+    mockMvc
+        .perform(
+            post("/api/users/1/merchant")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.message").value("Merchant assigned successfully"));
   }
@@ -246,9 +260,11 @@ class UserControllerTest {
     User anotherUser = User.builder().id(2L).build();
     when(permissionService.getAuthenticatedUser(any())).thenReturn(anotherUser);
 
-    mockMvc.perform(put("/api/users/1")
-        .contentType(MediaType.APPLICATION_JSON)
-        .content(objectMapper.writeValueAsString(testUserDTO)))
+    mockMvc
+        .perform(
+            put("/api/users/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(testUserDTO)))
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$.message").value("You can only update your own profile"));
   }
@@ -262,9 +278,11 @@ class UserControllerTest {
     when(roleService.assignRole(1L, Role.ADMIN))
         .thenThrow(new com.boozebuddies.exception.ValidationException("Invalid role"));
 
-    mockMvc.perform(post("/api/users/1/roles")
-        .contentType(MediaType.APPLICATION_JSON)
-        .content(objectMapper.writeValueAsString(request)))
+    mockMvc
+        .perform(
+            post("/api/users/1/roles")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.message").value("Error assigning role: Invalid role"));
   }
@@ -272,23 +290,23 @@ class UserControllerTest {
   @Test
   @DisplayName("POST /api/users/{id}/merchant handles null merchantId")
   void testAssignMerchantNullId() throws Exception {
-      UserController.MerchantAssignmentRequest request = new UserController.MerchantAssignmentRequest();
-      request.setMerchantId(null); // legitimate null
+    UserController.MerchantAssignmentRequest request =
+        new UserController.MerchantAssignmentRequest();
+    request.setMerchantId(null); // legitimate null
 
-      User updatedUser = testUser; // whatever you want the service to return
-      when(roleService.assignMerchantToUser(1L, null)).thenReturn(updatedUser);
-      when(userMapper.toDTO(updatedUser)).thenReturn(testUserDTO);
+    User updatedUser = testUser; // whatever you want the service to return
+    when(roleService.assignMerchantToUser(1L, null)).thenReturn(updatedUser);
+    when(userMapper.toDTO(updatedUser)).thenReturn(testUserDTO);
 
-      mockMvc.perform(post("/api/users/1/merchant")
-              .contentType(MediaType.APPLICATION_JSON)
-              .content(objectMapper.writeValueAsString(request)))
-          .andExpect(status().isOk())
-          .andExpect(jsonPath("$.success").value(true))
-          .andExpect(jsonPath("$.message").value("Merchant assigned successfully"));
+    mockMvc
+        .perform(
+            post("/api/users/1/merchant")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.success").value(true))
+        .andExpect(jsonPath("$.message").value("Merchant assigned successfully"));
 
-      verify(roleService, times(1)).assignMerchantToUser(1L, null);
+    verify(roleService, times(1)).assignMerchantToUser(1L, null);
   }
-
-
-  
 }

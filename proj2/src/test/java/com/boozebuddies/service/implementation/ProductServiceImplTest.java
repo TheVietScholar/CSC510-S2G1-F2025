@@ -385,7 +385,7 @@ class ProductServiceImplTest {
     assertTrue(result.get(0).isAvailable());
   }
 
-    @Test
+  @Test
   void testAddProduct_NullProduct_ThrowsException() {
     assertThrows(IllegalArgumentException.class, () -> productService.addProduct(null));
     verify(productRepository, never()).save(any());
@@ -393,11 +393,12 @@ class ProductServiceImplTest {
 
   @Test
   void testAddProduct_NoMerchant_ThrowsException() {
-    Product product = Product.builder()
-        .name("No Merchant Beer")
-        .price(new BigDecimal("5.00"))
-        .available(true)
-        .build();
+    Product product =
+        Product.builder()
+            .name("No Merchant Beer")
+            .price(new BigDecimal("5.00"))
+            .available(true)
+            .build();
 
     assertThrows(IllegalArgumentException.class, () -> productService.addProduct(product));
     verify(productRepository, never()).save(any());
@@ -405,13 +406,14 @@ class ProductServiceImplTest {
 
   @Test
   void testAddProduct_InvalidPrice_ThrowsException() {
-    Product product = Product.builder()
-        .name("Cheap Beer")
-        .price(new BigDecimal("-1.00"))
-        .merchant(testMerchant)
-        .category(testCategory)
-        .available(true)
-        .build();
+    Product product =
+        Product.builder()
+            .name("Cheap Beer")
+            .price(new BigDecimal("-1.00"))
+            .merchant(testMerchant)
+            .category(testCategory)
+            .available(true)
+            .build();
 
     assertThrows(IllegalArgumentException.class, () -> productService.addProduct(product));
     verify(productRepository, never()).save(any());
@@ -419,14 +421,15 @@ class ProductServiceImplTest {
 
   @Test
   void testAddProduct_InvalidAlcoholContent_ThrowsException() {
-    Product product = Product.builder()
-        .name("Crazy Beer")
-        .price(new BigDecimal("5.00"))
-        .merchant(testMerchant)
-        .category(testCategory)
-        .available(true)
-        .alcoholContent(120.0)
-        .build();
+    Product product =
+        Product.builder()
+            .name("Crazy Beer")
+            .price(new BigDecimal("5.00"))
+            .merchant(testMerchant)
+            .category(testCategory)
+            .available(true)
+            .alcoholContent(120.0)
+            .build();
 
     assertThrows(IllegalArgumentException.class, () -> productService.addProduct(product));
     verify(productRepository, never()).save(any());
@@ -434,14 +437,15 @@ class ProductServiceImplTest {
 
   @Test
   void testAddProduct_InvalidVolume_ThrowsException() {
-    Product product = Product.builder()
-        .name("Tiny Beer")
-        .price(new BigDecimal("5.00"))
-        .merchant(testMerchant)
-        .category(testCategory)
-        .available(true)
-        .volume(0)
-        .build();
+    Product product =
+        Product.builder()
+            .name("Tiny Beer")
+            .price(new BigDecimal("5.00"))
+            .merchant(testMerchant)
+            .category(testCategory)
+            .available(true)
+            .volume(0)
+            .build();
 
     assertThrows(IllegalArgumentException.class, () -> productService.addProduct(product));
     verify(productRepository, never()).save(any());
@@ -482,6 +486,4 @@ class ProductServiceImplTest {
     assertTrue(result.get(0).isAvailable());
     verify(productRepository, times(1)).findByCategoryIdAndAvailableTrue(1L);
   }
-
-
 }
