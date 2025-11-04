@@ -1,23 +1,56 @@
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/TheVietScholar/CSC510-S2G1-F2025/java-ci.yml?style=for-the-badge)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17458738.svg)](https://zenodo.org/doi/10.5281/zenodo.17458738)
 
-# Tech Stack #
-Front-End:
+# 🍻 BoozeBuddies — CSC510-S2G1-F2025
+
+## 💡 Motivation (Why)
+BoozeBuddies is designed to modernize local alcohol delivery by connecting customers, drivers, and breweries through a unified digital platform.  
+Our goal is to streamline order processing, driver tracking, and payments while ensuring compliance with age verification and delivery safety standards. Also our goal is to extend on food delivery and tackle a new and profitable market.
+
+In short: **we make local beer delivery faster, safer, and easier** for everyone involved.  
+The project demonstrates the power of distributed teamwork, automation, and clean software architecture using modern tools like Docker, Spring Boot, and React.
+
+---
+
+## 🧩 Tech Stack
+**Front-End:**
 
 ![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
-![Vite](https://img.shields.io/badge/Vite-B73BFE?style=for-the-badge&logo=vite&logoColor=FFD62E) ![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white) ![JavaScript](https://img.shields.io/badge/javascript-%23323330.svg?style=for-the-badge&logo=javascript&logoColor=%23F7DF1E)
+![Vite](https://img.shields.io/badge/Vite-B73BFE?style=for-the-badge&logo=vite&logoColor=FFD62E)
+![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white)
+![JavaScript](https://img.shields.io/badge/javascript-%23323330.svg?style=for-the-badge&logo=javascript&logoColor=%23F7DF1E)
 
-Back-End:
+**Back-End:**
 
-![Java](https://img.shields.io/badge/java-%23ED8B00.svg?style=for-the-badge&logo=openjdk&logoColor=white) ![YAML](https://img.shields.io/badge/yaml-%23ffffff.svg?style=for-the-badge&logo=yaml&logoColor=151515) ![Spring Boot](https://img.shields.io/badge/Spring_Boot-6DB33F?style=for-the-badge&logo=spring-boot&logoColor=white)
+![Java](https://img.shields.io/badge/java-%23ED8B00.svg?style=for-the-badge&logo=openjdk&logoColor=white)
+![YAML](https://img.shields.io/badge/yaml-%23ffffff.svg?style=for-the-badge&logo=yaml&logoColor=151515)
+![Spring Boot](https://img.shields.io/badge/Spring_Boot-6DB33F?style=for-the-badge&logo=spring-boot&logoColor=white)
 
-Database:
+**Database:**
 
 ![MySQL](https://img.shields.io/badge/mysql-4479A1.svg?style=for-the-badge&logo=mysql&logoColor=white)
 
-Dev-Tools:
+**Dev-Tools:**
 
-![GitHub](https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white) ![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white) ![Maven](https://img.shields.io/badge/apache_maven-C71A36?style=for-the-badge&logo=apachemaven&logoColor=white) [![Maven Central: Spotless](https://img.shields.io/maven-central/v/com.diffplug.spotless/spotless-maven-plugin.svg)](https://search.maven.org/artifact/com.diffplug.spotless/spotless-maven-plugin) ![JUnits](https://img.shields.io/badge/Junit5-25A162?style=for-the-badge&logo=junit5&logoColor=white)
+![GitHub](https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white)
+![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
+![Maven](https://img.shields.io/badge/apache_maven-C71A36?style=for-the-badge&logo=apachemaven&logoColor=white)
+[![Maven Central: Spotless](https://img.shields.io/maven-central/v/com.diffplug.spotless/spotless-maven-plugin.svg)](https://search.maven.org/artifact/com.diffplug.spotless/spotless-maven-plugin)
+![JUnits](https://img.shields.io/badge/Junit5-25A162?style=for-the-badge&logo=junit5&logoColor=white)
+
+---
+
+## ⚙️ What the Code Does
+The system is structured around a **microservice-like layered architecture**:
+- **Controllers** handle RESTful API requests (e.g., user registration, order creation, driver updates)
+- **Services** contain business logic (e.g., price calculations, delivery routing, payment validation)
+- **Repositories** communicate with the MySQL database using Spring Data JPA
+- **DTOs (Data Transfer Objects)** define clear data boundaries between layers
+
+Auto-generated Javadoc documentation can be built with:
+```bash
+mvn javadoc:javadoc
+
 
 # CSC510-S2G1-F2025 Project Setup Guide
 
@@ -171,4 +204,64 @@ You should now have:
 * MySQL Workbench or Adminer connected to your Dockerized database
 
 If you encounter issues, double-check Docker container logs and verify the port bindings in `docker-compose.yml`.
+
+# Tutorials (Not done)
+
+## 🧍‍♂️ Register a New User
+
+Send a POST request:
+
+POST /api/users/register
+{
+  "username": "john_doe",
+  "password": "securePass123",
+  "email": "john@example.com"
+}
+
+🍺 Place an Order
+POST /api/orders
+{
+  "userId": 1,
+  "productId": 3,
+  "quantity": 2
+}
+
+
+Response:
+
+{
+  "status": "SUCCESS",
+  "orderId": 17
+}
+
+## 🚗 Update Driver Location
+PUT /api/driver/location?latitude=35.7796&longitude=-78.6382
+
+
+These examples demonstrate real API calls that connect the front-end React app to the Spring Boot backend.
+
+
+# Demo Video (Not Done)
+
+
+# 🧪 Testing
+
+We use JUnit5 for backend testing and Mockito for mocking services.
+GitHub Actions automatically runs all tests on every push to main.
+
+Run tests locally:
+
+mvn test
+
+
+Test coverage reports are automatically generated and verified through CI.
+
+# Collaboration:
+All commits, issues, and PRs are tracked on GitHub
+
+Issues are discussed before closure, with summaries posted in comments.
+
+We communicate via Discord, and summaries of key decisions are documented in issues and in a shared google drive and in a discord chat.
+We also communicated in person with two meetings every week plus additional meetings added if needed.
+
 
