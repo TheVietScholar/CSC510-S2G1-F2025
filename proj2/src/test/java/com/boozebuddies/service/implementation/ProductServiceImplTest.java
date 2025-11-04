@@ -384,4 +384,104 @@ class ProductServiceImplTest {
     assertEquals("Available Product", result.get(0).getName());
     assertTrue(result.get(0).isAvailable());
   }
+
+    @Test
+  void testAddProduct_NullProduct_ThrowsException() {
+    assertThrows(IllegalArgumentException.class, () -> productService.addProduct(null));
+    verify(productRepository, never()).save(any());
+  }
+
+  @Test
+  void testAddProduct_NoMerchant_ThrowsException() {
+    Product product = Product.builder()
+        .name("No Merchant Beer")
+        .price(new BigDecimal("5.00"))
+        .available(true)
+        .build();
+
+    assertThrows(IllegalArgumentException.class, () -> productService.addProduct(product));
+    verify(productRepository, never()).save(any());
+  }
+
+  @Test
+  void testAddProduct_InvalidPrice_ThrowsException() {
+    Product product = Product.builder()
+        .name("Cheap Beer")
+        .price(new BigDecimal("-1.00"))
+        .merchant(testMerchant)
+        .category(testCategory)
+        .available(true)
+        .build();
+
+    assertThrows(IllegalArgumentException.class, () -> productService.addProduct(product));
+    verify(productRepository, never()).save(any());
+  }
+
+  @Test
+  void testAddProduct_InvalidAlcoholContent_ThrowsException() {
+    Product product = Product.builder()
+        .name("Crazy Beer")
+        .price(new BigDecimal("5.00"))
+        .merchant(testMerchant)
+        .category(testCategory)
+        .available(true)
+        .alcoholContent(120.0)
+        .build();
+
+    assertThrows(IllegalArgumentException.class, () -> productService.addProduct(product));
+    verify(productRepository, never()).save(any());
+  }
+
+  @Test
+  void testAddProduct_InvalidVolume_ThrowsException() {
+    Product product = Product.builder()
+        .name("Tiny Beer")
+        .price(new BigDecimal("5.00"))
+        .merchant(testMerchant)
+        .category(testCategory)
+        .available(true)
+        .volume(0)
+        .build();
+
+    assertThrows(IllegalArgumentException.class, () -> productService.addProduct(product));
+    verify(productRepository, never()).save(any());
+  }
+
+  @Test
+  void testDeleteProduct_ProductNotFound_ThrowsException() {
+    when(productRepository.findById(999L)).thenReturn(Optional.empty());
+
+    assertThrows(RuntimeException.class, () -> productService.deleteProduct(999L));
+    verify(productRepository, times(1)).findById(999L);
+    verify(productRepository, never()).save(any());
+  }
+
+  @Test
+  void testGetProductsByCategory_ReturnsProducts() {
+    Product p1 = Product.builder().id(1L).name("IPA").category(testCategory).build();
+    Product p2 = Product.builder().id(2L).name("Stout").category(testCategory).build();
+
+    when(productRepository.findByCategoryId(1L)).thenReturn(Arrays.asList(p1, p2));
+
+    List<Product> result = productService.getProductsByCategory(1L);
+
+    assertEquals(2, result.size());
+    assertEquals("IPA", result.get(0).getName());
+    verify(productRepository, times(1)).findByCategoryId(1L);
+  }
+
+  @Test
+  void testGetAvailableProductsByCategory_ReturnsAvailableOnly() {
+    Product available = Product.builder().id(1L).name("Available IPA").available(true).build();
+    when(productRepository.findByCategoryIdAndAvailableTrue(1L))
+        .thenReturn(Arrays.asList(available));
+
+    List<Product> result = productService.getAvailableProductsByCategory(1L);
+
+    assertEquals(1, result.size());
+    assertTrue(result.get(0).isAvailable());
+    verify(productRepository, times(1)).findByCategoryIdAndAvailableTrue(1L);
+  }
+
+
 }

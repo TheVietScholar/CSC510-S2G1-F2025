@@ -4,6 +4,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.boozebuddies.dto.*;
+import com.boozebuddies.exception.GlobalExceptionHandler;
 import com.boozebuddies.service.AuthenticationService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -17,9 +18,37 @@ class AuthControllerTest {
   private final AuthenticationService authenticationService =
       Mockito.mock(AuthenticationService.class);
   private final AuthController authController = new AuthController(authenticationService);
-  private final MockMvc mockMvc = MockMvcBuilders.standaloneSetup(authController).build();
+  private final MockMvc mockMvc = MockMvcBuilders.standaloneSetup(authController)
+      .setControllerAdvice(new GlobalExceptionHandler())
+      .build();
   private final ObjectMapper objectMapper = new ObjectMapper();
 
+  // REGISTER TESTS
+  @Test
+  void registerSuccessfullyCreatesUser() throws Exception {
+    RegisterUserRequest request = new RegisterUserRequest();
+    request.setEmail("newuser@example.com");
+    request.setPassword("password123");
+    request.setName("newuser");
+
+    AuthenticationResponse response = new AuthenticationResponse();
+    response.setToken("new-user-jwt-token");
+
+    Mockito.when(authenticationService.register(Mockito.any(RegisterUserRequest.class)))
+        .thenReturn(response);
+
+    mockMvc
+        .perform(
+            post("/api/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.token").value("new-user-jwt-token"));
+
+    Mockito.verify(authenticationService).register(Mockito.any(RegisterUserRequest.class));
+  }
+
+  // LOGIN TESTS
   @Test
   void loginReturnsToken() throws Exception {
     AuthenticationRequest request = new AuthenticationRequest();
@@ -39,5 +68,98 @@ class AuthControllerTest {
                 .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.token").value("fake-jwt-token"));
+  }
+
+  @Test
+  void loginThrowsExceptionWhenEmailIsNull() throws Exception {
+    AuthenticationRequest request = new AuthenticationRequest();
+    request.setPassword("password");
+
+    mockMvc
+        .perform(
+            post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.message").value("Email and password are required"));
+  }
+
+  @Test
+  void loginThrowsExceptionWhenPasswordIsNull() throws Exception {
+    AuthenticationRequest request = new AuthenticationRequest();
+    request.setEmail("test@example.com");
+
+    mockMvc
+        .perform(
+            post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.message").value("Email and password are required"));
+  }
+
+  @Test
+  void loginThrowsExceptionWhenBothEmailAndPasswordAreNull() throws Exception {
+    AuthenticationRequest request = new AuthenticationRequest();
+
+    mockMvc
+        .perform(
+            post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.message").value("Email and password are required"));
+  }
+
+  // REFRESH TOKEN TESTS
+  @Test
+  void refreshTokenSuccessfullyReturnsNewToken() throws Exception {
+    RefreshTokenRequest request = new RefreshTokenRequest();
+    request.setRefreshToken("old-refresh-token");
+
+    AuthenticationResponse response = new AuthenticationResponse();
+    response.setToken("new-jwt-token");
+    response.setRefreshToken("new-refresh-token");
+
+    Mockito.when(authenticationService.refreshToken(Mockito.any(RefreshTokenRequest.class)))
+        .thenReturn(response);
+
+    mockMvc
+        .perform(
+            post("/api/auth/refresh")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.token").value("new-jwt-token"))
+        .andExpect(jsonPath("$.refreshToken").value("new-refresh-token"));
+
+    Mockito.verify(authenticationService).refreshToken(Mockito.any(RefreshTokenRequest.class));
+  }
+
+  // LOGOUT TESTS
+  @Test
+  void logoutSuccessfullyLogsOutUser() throws Exception {
+    Long userId = 123L;
+
+    Mockito.doNothing().when(authenticationService).logout(userId);
+
+    mockMvc
+        .perform(post("/api/auth/logout/" + userId))
+        .andExpect(status().isNoContent());
+
+    Mockito.verify(authenticationService).logout(userId);
+  }
+
+  @Test
+  void logoutHandlesDifferentUserId() throws Exception {
+    Long userId = 999L;
+
+    Mockito.doNothing().when(authenticationService).logout(userId);
+
+    mockMvc
+        .perform(post("/api/auth/logout/" + userId))
+        .andExpect(status().isNoContent());
+
+    Mockito.verify(authenticationService).logout(999L);
   }
 }

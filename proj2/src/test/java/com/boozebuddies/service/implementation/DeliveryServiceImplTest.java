@@ -1,6 +1,8 @@
 package com.boozebuddies.service.implementation;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 
 import com.boozebuddies.entity.Delivery;
@@ -149,4 +151,98 @@ class DeliveryServiceImplTest {
     assertEquals(1, active.size());
     assertEquals(d1.getId(), active.get(0).getId());
   }
+
+  @Test
+  @DisplayName("getAllDeliveries returns list from repository")
+  void getAllDeliveries_returnsList() {
+    Delivery d1 = Delivery.builder().id(1L).status(DeliveryStatus.PENDING).build();
+    Delivery d2 = Delivery.builder().id(2L).status(DeliveryStatus.DELIVERED).build();
+    when(repository.findAll()).thenReturn(List.of(d1, d2));
+
+    List<Delivery> all = service.getAllDeliveries();
+
+    assertEquals(2, all.size());
+    assertEquals(1L, all.get(0).getId());
+  }
+
+  @Test
+  @DisplayName("updateDeliveryWithAgeVerification truncates ID number properly")
+  void updateDeliveryWithAgeVerification_truncatesIdNumber() {
+    Delivery existing = Delivery.builder().id(1L).build();
+    when(repository.findById(1L)).thenReturn(Optional.of(existing));
+    when(repository.save(any(Delivery.class))).thenAnswer(inv -> inv.getArgument(0));
+
+    Delivery updated = service.updateDeliveryWithAgeVerification(1L, true, "Driver License", "A1234567");
+
+    assertTrue(updated.getAgeVerified());
+    assertEquals("Driver License", updated.getIdType());
+    assertEquals("4567", updated.getIdNumber()); // only last 4 digits stored
+    assertNotNull(updated.getAgeVerifiedAt());
+    assertNotNull(updated.getUpdatedAt());
+  }
+
+  @Test
+  @DisplayName("updateDeliveryWithAgeVerification accepts short ID numbers unchanged")
+  void updateDeliveryWithAgeVerification_acceptsShortId() {
+    Delivery existing = Delivery.builder().id(2L).build();
+    when(repository.findById(2L)).thenReturn(Optional.of(existing));
+    when(repository.save(any(Delivery.class))).thenAnswer(inv -> inv.getArgument(0));
+
+    Delivery updated = service.updateDeliveryWithAgeVerification(2L, true, "Passport", "123");
+    assertEquals("123", updated.getIdNumber());
+  }
+
+  @Test
+  @DisplayName("updateDeliveryWithAgeVerification throws if delivery not found")
+  void updateDeliveryWithAgeVerification_notFoundThrows() {
+    when(repository.findById(999L)).thenReturn(Optional.empty());
+    assertThrows(RuntimeException.class,
+        () -> service.updateDeliveryWithAgeVerification(999L, true, "ID", "0000"));
+  }
+
+  @Test
+  @DisplayName("updateDeliveryLocation updates coordinates and timestamps")
+  void updateDeliveryLocation_updatesCoordinates() {
+    Delivery existing = Delivery.builder().id(3L).build();
+    when(repository.findById(3L)).thenReturn(Optional.of(existing));
+    when(repository.save(any(Delivery.class))).thenAnswer(inv -> inv.getArgument(0));
+
+    service.updateDeliveryLocation(3L, 35.123, -80.987);
+
+    verify(repository, times(1)).save(argThat(delivery ->
+        delivery.getCurrentLatitude().equals(35.123)
+            && delivery.getCurrentLongitude().equals(-80.987)
+            && delivery.getLastLocationUpdate() != null
+            && delivery.getUpdatedAt() != null));
+  }
+
+  @Test
+  @DisplayName("updateDeliveryLocation throws when delivery not found")
+  void updateDeliveryLocation_notFoundThrows() {
+    when(repository.findById(404L)).thenReturn(Optional.empty());
+    assertThrows(RuntimeException.class,
+        () -> service.updateDeliveryLocation(404L, 1.0, 2.0));
+  }
+
+  @Test
+  @DisplayName("updateDeliveryStatus sets pickup and delivered timestamps correctly")
+  void updateDeliveryStatus_setsTimestamps() {
+    Delivery delivery = Delivery.builder().id(10L).status(DeliveryStatus.ASSIGNED).build();
+    when(repository.findById(10L)).thenReturn(Optional.of(delivery));
+    when(repository.save(any(Delivery.class))).thenAnswer(inv -> inv.getArgument(0));
+
+    // PICKED_UP sets pickupTime
+    Delivery pickedUp = service.updateDeliveryStatus(10L, DeliveryStatus.PICKED_UP);
+    assertNotNull(pickedUp.getPickupTime());
+    assertEquals(DeliveryStatus.PICKED_UP, pickedUp.getStatus());
+
+    // DELIVERED sets deliveredTime
+    when(repository.findById(10L)).thenReturn(Optional.of(pickedUp));
+    Delivery delivered = service.updateDeliveryStatus(10L, DeliveryStatus.DELIVERED);
+    assertNotNull(delivered.getDeliveredTime());
+    assertEquals(DeliveryStatus.DELIVERED, delivered.getStatus());
+  }
+
+
+
 }

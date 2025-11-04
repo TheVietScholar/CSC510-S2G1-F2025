@@ -41,8 +41,8 @@ import org.springframework.test.web.servlet.MockMvc;
         @ComponentScan.Filter(
             type = FilterType.ASSIGNABLE_TYPE,
             classes = JwtAuthenticationFilter.class))
-@AutoConfigureMockMvc(addFilters = false) // ⛔ disables all Spring Security filters
-@Import(TestSecurityConfig.class) // ✅ imports your test security config
+@AutoConfigureMockMvc(addFilters = false)
+@Import(TestSecurityConfig.class)
 @DisplayName("DriverController Tests")
 public class DriverControllerTest {
 
@@ -95,10 +95,12 @@ public class DriverControllerTest {
             .build();
   }
 
+  // ==================== REGISTER DRIVER TESTS ====================
+
   @Test
-  @DisplayName("POST /api/drivers/register returns 200 and ApiResponse on success")
+  @DisplayName("POST /api/drivers/register returns 201 and ApiResponse on success")
   void registerDriver_success() throws Exception {
-    when(driverMapper.toEntity(testDriverDTO)).thenReturn(testDriver);
+    when(driverMapper.toEntity(any(DriverDTO.class))).thenReturn(testDriver);
     when(driverService.registerDriver(testDriver)).thenReturn(testDriver);
     when(driverMapper.toDTO(testDriver)).thenReturn(testDriverDTO);
 
@@ -114,9 +116,26 @@ public class DriverControllerTest {
   }
 
   @Test
+  @DisplayName("POST /api/drivers/register returns 400 on IllegalArgumentException")
+  void registerDriver_illegalArgumentException_returnsBadRequest() throws Exception {
+    when(driverMapper.toEntity(any(DriverDTO.class))).thenReturn(testDriver);
+    when(driverService.registerDriver(testDriver))
+        .thenThrow(new IllegalArgumentException("Invalid driver data"));
+
+    mockMvc
+        .perform(
+            post("/api/drivers/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(testDriverDTO)))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(jsonPath("$.message").value("Driver registration failed: Invalid driver data"));
+  }
+
+  @Test
   @DisplayName("POST /api/drivers/register returns 400 on exception")
   void registerDriver_exception_returnsBadRequest() throws Exception {
-    when(driverMapper.toEntity(testDriverDTO)).thenReturn(testDriver);
+    when(driverMapper.toEntity(any(DriverDTO.class))).thenReturn(testDriver);
     when(driverService.registerDriver(testDriver)).thenThrow(new RuntimeException("boom"));
 
     mockMvc
@@ -130,6 +149,8 @@ public class DriverControllerTest {
             jsonPath("$.message")
                 .value(org.hamcrest.Matchers.startsWith("Driver registration failed: boom")));
   }
+
+  // ==================== UPDATE CERTIFICATION STATUS TESTS ====================
 
   @Test
   @DisplayName("PUT /api/drivers/{id}/certification returns 200 on success")
@@ -155,14 +176,14 @@ public class DriverControllerTest {
 
     mockMvc
         .perform(put("/api/drivers/999/certification?status=REVOKED"))
-        .andExpect(status().isNotFound());
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(jsonPath("$.message").value("Driver not found with ID: 999"));
   }
 
   @Test
   @DisplayName("PUT /api/drivers/{id}/certification returns 400 on exception")
   void updateCertificationStatus_exception_returnsBadRequest() throws Exception {
-    when(permissionService.getAuthenticatedUser(any()))
-        .thenReturn(testDriver.getUser()); // Mock auth user
     when(driverService.updateCertificationStatus(1L, CertificationStatus.PENDING))
         .thenThrow(new RuntimeException("error"));
 
@@ -175,49 +196,7 @@ public class DriverControllerTest {
                 .value(org.hamcrest.Matchers.startsWith("Failed to update certification status:")));
   }
 
-  @Test
-  @DisplayName("PUT /api/drivers/my-profile/availability returns 200 on success")
-  void updateAvailability_success() throws Exception {
-    testDriver.setAvailable(false);
-    when(permissionService.getAuthenticatedUser(any()))
-        .thenReturn(testDriver.getUser()); // Mock auth user
-    when(driverService.updateAvailability(1L, false)).thenReturn(testDriver);
-    when(driverMapper.toDTO(testDriver)).thenReturn(testDriverDTO);
-
-    mockMvc
-        .perform(put("/api/drivers/my-profile/availability?available=false"))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.success").value(true))
-        .andExpect(jsonPath("$.message").value("You are now unavailable for deliveries"))
-        .andExpect(jsonPath("$.data.id").value(1));
-  }
-
-  @Test
-  @DisplayName("PUT /api/drivers/my-profile/availability returns 404 when not found")
-  void updateAvailability_notFound() throws Exception {
-    when(permissionService.getAuthenticatedUser(any()))
-        .thenReturn(testDriver.getUser()); // Mock auth user
-    when(driverService.updateAvailability(anyLong(), anyBoolean()))
-        .thenThrow(DriverNotFoundException.class);
-
-    mockMvc
-        .perform(put("/api/drivers/my-profile/availability?available=true"))
-        .andExpect(status().isNotFound());
-  }
-
-  @Test
-  @DisplayName("PUT /api/drivers/my-profile/availability returns 400 on exception")
-  void updateAvailability_exception_returnsBadRequest() throws Exception {
-    when(driverService.updateAvailability(1L, true)).thenThrow(new RuntimeException("x"));
-
-    mockMvc
-        .perform(put("/api/drivers/my-profile/availability?available=true"))
-        .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.success").value(false))
-        .andExpect(
-            jsonPath("$.message")
-                .value(org.hamcrest.Matchers.startsWith("Failed to update availability:")));
-  }
+  // ==================== GET AVAILABLE DRIVERS TESTS ====================
 
   @Test
   @DisplayName("GET /api/drivers/available returns 200 with list")
@@ -234,6 +213,22 @@ public class DriverControllerTest {
         .andExpect(jsonPath("$.data").isArray())
         .andExpect(jsonPath("$.data[0].id").value(1));
   }
+
+  @Test
+  @DisplayName("GET /api/drivers/available returns 400 on exception")
+  void getAvailableDrivers_exception_returnsBadRequest() throws Exception {
+    when(driverService.getAvailableDrivers()).thenThrow(new RuntimeException("x"));
+
+    mockMvc
+        .perform(get("/api/drivers/available"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.startsWith("Failed to retrieve available drivers:")));
+  }
+
+  // ==================== GET DRIVER BY ID TESTS ====================
 
   @Test
   @DisplayName("GET /api/drivers/{id} returns 200 with driver")
@@ -254,8 +249,28 @@ public class DriverControllerTest {
   void getDriverById_notFound() throws Exception {
     when(driverService.getDriverById(999L)).thenThrow(DriverNotFoundException.class);
 
-    mockMvc.perform(get("/api/drivers/999")).andExpect(status().isNotFound());
+    mockMvc
+        .perform(get("/api/drivers/999"))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(jsonPath("$.message").value("Driver not found with ID: 999"));
   }
+
+  @Test
+  @DisplayName("GET /api/drivers/{id} returns 400 on exception")
+  void getDriverById_exception_returnsBadRequest() throws Exception {
+    when(driverService.getDriverById(5L)).thenThrow(new RuntimeException("boom"));
+
+    mockMvc
+        .perform(get("/api/drivers/5"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.startsWith("Failed to retrieve driver:")));
+  }
+
+  // ==================== GET ALL DRIVERS TESTS ====================
 
   @Test
   @DisplayName("GET /api/drivers returns 200 with list")
@@ -287,31 +302,133 @@ public class DriverControllerTest {
                 .value(org.hamcrest.Matchers.startsWith("Failed to retrieve drivers:")));
   }
 
+  // ==================== GET MY PROFILE TESTS ====================
+
   @Test
-  @DisplayName("GET /api/drivers/available returns 400 on exception")
-  void getAvailableDrivers_exception_returnsBadRequest() throws Exception {
-    when(driverService.getAvailableDrivers()).thenThrow(new RuntimeException("x"));
+  @DisplayName("GET /api/drivers/my-profile returns 200 with driver profile")
+  void getMyProfile_success() throws Exception {
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(testDriverUser);
+    when(driverService.getDriverProfile(testDriverUser)).thenReturn(testDriver);
+    when(driverMapper.toDTO(testDriver)).thenReturn(testDriverDTO);
 
     mockMvc
-        .perform(get("/api/drivers/available"))
-        .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.success").value(false))
-        .andExpect(
-            jsonPath("$.message")
-                .value(org.hamcrest.Matchers.startsWith("Failed to retrieve available drivers:")));
+        .perform(get("/api/drivers/my-profile"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.success").value(true))
+        .andExpect(jsonPath("$.message").value("Your profile retrieved successfully"))
+        .andExpect(jsonPath("$.data.id").value(1))
+        .andExpect(jsonPath("$.data.name").value("John Doe"));
+  }
+
+  // ==================== UPDATE AVAILABILITY TESTS ====================
+
+  @Test
+  @DisplayName("PUT /api/drivers/my-profile/availability returns 200 when setting to false")
+  void updateAvailability_availableFalse_success() throws Exception {
+    testDriver.setAvailable(false);
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(testDriverUser);
+    when(driverService.updateAvailability(1L, false)).thenReturn(testDriver);
+    when(driverMapper.toDTO(testDriver)).thenReturn(testDriverDTO);
+
+    mockMvc
+        .perform(put("/api/drivers/my-profile/availability?available=false"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.success").value(true))
+        .andExpect(jsonPath("$.message").value("You are now unavailable for deliveries"))
+        .andExpect(jsonPath("$.data.id").value(1));
   }
 
   @Test
-  @DisplayName("GET /api/drivers/{id} returns 400 on exception")
-  void getDriverById_exception_returnsBadRequest() throws Exception {
-    when(driverService.getDriverById(5L)).thenThrow(new RuntimeException("boom"));
+  @DisplayName("PUT /api/drivers/my-profile/availability returns 200 when setting to true")
+  void updateAvailability_availableTrue_success() throws Exception {
+    testDriver.setAvailable(true);
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(testDriverUser);
+    when(driverService.updateAvailability(1L, true)).thenReturn(testDriver);
+    when(driverMapper.toDTO(testDriver)).thenReturn(testDriverDTO);
 
     mockMvc
-        .perform(get("/api/drivers/5"))
+        .perform(put("/api/drivers/my-profile/availability?available=true"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.success").value(true))
+        .andExpect(jsonPath("$.message").value("You are now available for deliveries"))
+        .andExpect(jsonPath("$.data.id").value(1));
+  }
+
+  @Test
+  @DisplayName("PUT /api/drivers/my-profile/availability returns 404 when not found")
+  void updateAvailability_notFound() throws Exception {
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(testDriverUser);
+    when(driverService.updateAvailability(anyLong(), anyBoolean()))
+        .thenThrow(DriverNotFoundException.class);
+
+    mockMvc
+        .perform(put("/api/drivers/my-profile/availability?available=true"))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(jsonPath("$.message").value("Driver not found for the authenticated user"));
+  }
+
+  @Test
+  @DisplayName("PUT /api/drivers/my-profile/availability returns 400 on exception")
+  void updateAvailability_exception_returnsBadRequest() throws Exception {
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(testDriverUser);
+    when(driverService.updateAvailability(1L, true)).thenThrow(new RuntimeException("x"));
+
+    mockMvc
+        .perform(put("/api/drivers/my-profile/availability?available=true"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.success").value(false))
         .andExpect(
             jsonPath("$.message")
-                .value(org.hamcrest.Matchers.startsWith("Failed to retrieve driver:")));
+                .value(org.hamcrest.Matchers.startsWith("Failed to update availability:")));
+  }
+
+  // ==================== UPDATE LOCATION TESTS ====================
+
+  @Test
+  @DisplayName("PUT /api/drivers/my-profile/location returns 200 on success")
+  void updateMyLocation_success() throws Exception {
+    testDriver.setCurrentLatitude(40.7128);
+    testDriver.setCurrentLongitude(-74.0060);
+    
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(testDriverUser);
+    when(driverService.updateDriverLocation(1L, 40.7128, -74.0060)).thenReturn(testDriver);
+    when(driverMapper.toDTO(testDriver)).thenReturn(testDriverDTO);
+
+    mockMvc
+        .perform(put("/api/drivers/my-profile/location?latitude=40.7128&longitude=-74.0060"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.success").value(true))
+        .andExpect(jsonPath("$.message").value("Location updated successfully"))
+        .andExpect(jsonPath("$.data.id").value(1));
+  }
+
+  @Test
+  @DisplayName("PUT /api/drivers/my-profile/location returns 400 when no driver profile")
+  void updateMyLocation_noDriverProfile() throws Exception {
+    User userWithoutDriver = User.builder().id(99L).name("No Driver").build();
+    userWithoutDriver.addRole(Role.DRIVER);
+    
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(userWithoutDriver);
+
+    mockMvc
+        .perform(put("/api/drivers/my-profile/location?latitude=40.7128&longitude=-74.0060"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(jsonPath("$.message").value("No driver profile found for this user"));
+  }
+
+  @Test
+  @DisplayName("PUT /api/drivers/my-profile/location returns 400 on exception")
+  void updateMyLocation_exception_returnsBadRequest() throws Exception {
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(testDriverUser);
+    when(driverService.updateDriverLocation(1L, 40.7128, -74.0060))
+        .thenThrow(new RuntimeException("location service down"));
+
+    mockMvc
+        .perform(put("/api/drivers/my-profile/location?latitude=40.7128&longitude=-74.0060"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.startsWith("Failed to update location:")));
   }
 }
