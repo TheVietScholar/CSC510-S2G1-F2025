@@ -7,6 +7,8 @@
 BoozeBuddies is designed to modernize local alcohol delivery by connecting customers, drivers, and breweries through a unified digital platform.  
 Our goal is to streamline order processing, driver tracking, and payments while ensuring compliance with age verification and delivery safety standards. Also our goal is to extend on food delivery and tackle a new and profitable market.
 
+Therefore, if you need a beer but don't want to drive, call your booze buddy!!!
+
 In short: **we make local beer delivery faster, safer, and easier** for everyone involved.  
 The project demonstrates the power of distributed teamwork, automation, and clean software architecture using modern tools like Docker, Spring Boot, and React.
 
