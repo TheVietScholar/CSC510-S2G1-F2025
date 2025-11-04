@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 
 import com.boozebuddies.dto.RegisterUserRequest;
 import com.boozebuddies.entity.User;
+import com.boozebuddies.exception.UserNotFoundException;
 import com.boozebuddies.repository.UserRepository;
 import com.boozebuddies.service.ValidationService;
 import org.junit.jupiter.api.BeforeEach;
@@ -362,9 +363,7 @@ class UserServiceImplTest {
 
         when(userRepository.findById(999L)).thenReturn(Optional.empty());
 
-        User result = userService.updateUser(999L, updatedUser);
-
-        assertNull(result);
+        assertThrows(UserNotFoundException.class, ()-> userService.updateUser(999L, updatedUser));
         verify(userRepository, never()).save(any(User.class));
     }
 
@@ -400,7 +399,7 @@ class UserServiceImplTest {
                 .build();
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(existingUser));
-        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(userRepository.save(any(User.class))).thenReturn(updatedUser);
 
         User result = userService.updateUser(1L, updatedUser);
 

@@ -56,7 +56,7 @@ public class UserMapper {
   /** Converts RegisterUserRequest to User entity. Sets default values for new users. */
   public User toEntity(RegisterUserRequest request) {
     if (request == null) return null;
-    
+
     return User.builder()
         .name(request.getName())
         .email(request.getEmail())
