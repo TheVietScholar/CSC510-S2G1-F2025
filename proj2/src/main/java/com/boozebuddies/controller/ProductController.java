@@ -129,7 +129,8 @@ public class ProductController {
   // Get available products by merchant
   // -----------------------------
   @GetMapping("/merchant/{merchantId}/available")
-  public ResponseEntity<List<ProductDTO>> getAvailableProductsByMerchant(@PathVariable Long merchantId) {
+  public ResponseEntity<List<ProductDTO>> getAvailableProductsByMerchant(
+      @PathVariable Long merchantId) {
     List<ProductDTO> products =
         productService.getAvailableProductsByMerchant(merchantId).stream()
             .map(productMapper::toDTO)

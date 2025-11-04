@@ -4,7 +4,9 @@ import com.boozebuddies.entity.Order;
 import com.boozebuddies.entity.Payment;
 import com.boozebuddies.entity.User;
 import java.math.BigDecimal;
-import java.util.List;
+import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface PaymentService {
 
@@ -32,7 +34,7 @@ public interface PaymentService {
    * @param user The user whose payment history is being retrieved.
    * @return A list of Payment objects linked to the user.
    */
-  List<Payment> getPaymentsByUser(User user);
+  Page<Payment> getPaymentsByUser(User user, Pageable pageable);
 
   /**
    * Retrieves the payment details for a specific order.
@@ -40,7 +42,7 @@ public interface PaymentService {
    * @param orderId The ID of the order.
    * @return The associated Payment object, or null if not found.
    */
-  Payment getPaymentByOrderId(Long orderId);
+  Optional<Payment> getPaymentByOrderId(Long orderId);
 
   /**
    * Calculates the total revenue generated within a given period.

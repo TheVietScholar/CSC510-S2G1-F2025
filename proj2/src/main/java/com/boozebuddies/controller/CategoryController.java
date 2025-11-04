@@ -8,7 +8,6 @@ import com.boozebuddies.service.CategoryService;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.NoSuchElementException;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -48,8 +47,7 @@ public class CategoryController {
       CategoryDTO dto = categoryMapper.toDTO(category);
       return ResponseEntity.ok(ApiResponse.success(dto, "Category retrieved successfully"));
     } catch (IllegalArgumentException e) {
-      return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-          .body(ApiResponse.error(e.getMessage()));
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error(e.getMessage()));
     } catch (NoSuchElementException e) {
       return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error(e.getMessage()));
     } catch (Exception e) {
@@ -70,8 +68,7 @@ public class CategoryController {
       return ResponseEntity.status(HttpStatus.CREATED)
           .body(ApiResponse.success(savedDto, "Category created successfully"));
     } catch (IllegalArgumentException e) {
-      return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-          .body(ApiResponse.error(e.getMessage()));
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error(e.getMessage()));
     } catch (Exception e) {
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
           .body(ApiResponse.error("An error occurred creating category"));

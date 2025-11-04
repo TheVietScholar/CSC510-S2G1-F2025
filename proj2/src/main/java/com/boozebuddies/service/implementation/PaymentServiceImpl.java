@@ -4,18 +4,25 @@ import com.boozebuddies.entity.Order;
 import com.boozebuddies.entity.Payment;
 import com.boozebuddies.entity.User;
 import com.boozebuddies.model.PaymentStatus;
+import com.boozebuddies.repository.PaymentRepository;
 import com.boozebuddies.service.PaymentService;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Optional;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
 public class PaymentServiceImpl implements PaymentService {
 
-  private final List<Payment> payments = new ArrayList<>();
+  private final PaymentRepository paymentRepository;
+
+  @Autowired
+  public PaymentServiceImpl(PaymentRepository paymentRepository) {
+    this.paymentRepository = paymentRepository;
+  }
 
   /** Processes a payment for an order. */
   @Override
@@ -23,6 +30,13 @@ public class PaymentServiceImpl implements PaymentService {
     if (!validatePaymentMethod(order.getUser(), paymentMethod)) {
       throw new RuntimeException("Invalid payment method");
     }
+
+    paymentRepository
+        .findByOrder_Id(order.getId())
+        .ifPresent(
+            p -> {
+              throw new RuntimeException("Payment already exists for order: " + order.getId());
+            });
 
     Payment payment = new Payment();
     payment.setOrder(order);
@@ -33,7 +47,8 @@ public class PaymentServiceImpl implements PaymentService {
     payment.setCreatedAt(LocalDateTime.now());
     payment.setUpdatedAt(LocalDateTime.now());
 
-    payments.add(payment);
+    paymentRepository.save(payment);
+
     System.out.println(
         "[PAYMENT] Processed payment of "
             + payment.getAmount()
@@ -47,21 +62,23 @@ public class PaymentServiceImpl implements PaymentService {
   /** Issues a refund for a specific order. */
   @Override
   public Payment refundPayment(Order order, String reason) {
-    Payment payment = getPaymentByOrderId(order.getId());
-    if (payment == null) {
+    Optional<Payment> payment = getPaymentByOrderId(order.getId());
+    if (!payment.isPresent()) {
       throw new RuntimeException("Payment not found for order: " + order.getId());
     }
+
+    paymentRepository.delete(payment.get());
 
     Payment refund = new Payment();
     refund.setOrder(order);
     refund.setUser(order.getUser());
-    refund.setAmount(payment.getAmount());
-    refund.setPaymentMethod(payment.getPaymentMethod());
+    refund.setAmount(payment.get().getAmount());
+    refund.setPaymentMethod(payment.get().getPaymentMethod());
     refund.setStatus(PaymentStatus.REFUNDED);
     refund.setUpdatedAt(LocalDateTime.now());
     refund.setRefundReason(reason);
 
-    payments.add(refund);
+    paymentRepository.save(refund);
     System.out.println(
         "[PAYMENT] Refunded "
             + refund.getAmount()
@@ -74,29 +91,21 @@ public class PaymentServiceImpl implements PaymentService {
 
   /** Retrieves all payments made by a specific user. */
   @Override
-  public List<Payment> getPaymentsByUser(User user) {
-    return payments.stream().filter(p -> p.getUser().equals(user)).collect(Collectors.toList());
+  public Page<Payment> getPaymentsByUser(User user, Pageable pageable) {
+    return paymentRepository.findByUser_Id(user.getId(), pageable);
   }
 
   /** Retrieves the payment details for a specific order. */
   @Override
-  public Payment getPaymentByOrderId(Long orderId) {
-    return payments.stream()
-        .filter(p -> p.getOrder() != null && p.getOrder().getId().equals(orderId))
-        .findFirst()
-        .orElse(null);
+  public Optional<Payment> getPaymentByOrderId(Long orderId) {
+    return paymentRepository.findByOrder_Id(orderId);
   }
 
   /** Calculates the total revenue generated within a given period. */
   @Override
   public BigDecimal calculateTotalRevenue(LocalDateTime startDate, LocalDateTime endDate) {
-    return payments.stream()
-        .filter(
-            p ->
-                p.getPaymentDate() != null
-                    && !p.getPaymentDate().isBefore(startDate)
-                    && !p.getPaymentDate().isAfter(endDate)
-                    && p.getStatus() == PaymentStatus.AUTHORIZED)
+    return paymentRepository.findByCreatedAtBetween(startDate, endDate, Pageable.unpaged()).stream()
+        .filter(p -> p.getStatus() == PaymentStatus.AUTHORIZED)
         .map(Payment::getAmount)
         .reduce(BigDecimal.ZERO, BigDecimal::add);
   }

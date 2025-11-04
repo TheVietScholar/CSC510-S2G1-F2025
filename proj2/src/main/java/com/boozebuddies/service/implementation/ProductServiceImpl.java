@@ -78,10 +78,7 @@ public class ProductServiceImpl implements ProductService {
   /** Checks if a product is available for ordering. */
   @Override
   public boolean isProductAvailable(Long productId) {
-    return productRepository
-        .findById(productId)
-        .map(Product::isAvailable)
-        .orElse(false);
+    return productRepository.findById(productId).map(Product::isAvailable).orElse(false);
   }
 
   /** Gets all available products. */
@@ -99,7 +96,6 @@ public class ProductServiceImpl implements ProductService {
         .filter(p -> p.getMerchant() != null && p.getMerchant().getId().equals(merchantId))
         .collect(Collectors.toList());
   }
-
   /** Gets available products by merchant. */
   @Override
   public List<Product> getAvailableProductsByMerchant(Long merchantId) {
@@ -108,4 +104,5 @@ public class ProductServiceImpl implements ProductService {
         .filter(Product::isAvailable)
         .collect(Collectors.toList());
   }
+
 }

@@ -4,9 +4,7 @@ import com.boozebuddies.entity.Delivery;
 import com.boozebuddies.entity.Order;
 import com.boozebuddies.model.OrderStatus;
 import com.boozebuddies.repository.DeliveryRepository;
-import com.boozebuddies.repository.MerchantRepository;
 import com.boozebuddies.repository.OrderRepository;
-import com.boozebuddies.repository.UserRepository;
 import com.boozebuddies.service.NotificationService;
 import com.boozebuddies.service.OrderService;
 import com.boozebuddies.service.PaymentService;
@@ -21,10 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class OrderServiceImpl implements OrderService {
 
   @Autowired private OrderRepository orderRepository;
-
-  @Autowired private UserRepository userRepository;
-
-  @Autowired private MerchantRepository merchantRepository;
 
   @Autowired private DeliveryRepository deliveryRepository;
 

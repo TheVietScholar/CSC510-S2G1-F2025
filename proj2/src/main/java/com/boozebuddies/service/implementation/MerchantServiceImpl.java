@@ -7,6 +7,8 @@ import com.boozebuddies.repository.OrderRepository;
 import com.boozebuddies.service.MerchantService;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -19,7 +21,8 @@ public class MerchantServiceImpl implements MerchantService {
   private final OrderRepository orderRepository;
 
   @Autowired
-  public MerchantServiceImpl(MerchantRepository merchantRepository, OrderRepository orderRepository) {
+  public MerchantServiceImpl(
+      MerchantRepository merchantRepository, OrderRepository orderRepository) {
     this.merchantRepository = merchantRepository;
     this.orderRepository = orderRepository;
   }
@@ -68,7 +71,8 @@ public class MerchantServiceImpl implements MerchantService {
       throw new IllegalArgumentException("Invalid merchant ID");
     }
 
-    return merchantRepository.findById(merchantId)
+    return merchantRepository
+        .findById(merchantId)
         .orElseThrow(() -> new IllegalArgumentException("Merchant not found"));
   }
 
