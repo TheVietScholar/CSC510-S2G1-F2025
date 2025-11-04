@@ -39,14 +39,13 @@ public class OrderController {
     try {
       User user = permissionService.getAuthenticatedUser(authentication);
 
-      // Ensure the order is being created for the authenticated user
-      if (createOrderRequest.getUserId() == null
-          || !createOrderRequest.getUserId().equals(user.getId())) {
+      // Set the user ID from authenticated user if not provided
+      if (createOrderRequest.getUserId() == null) {
+        createOrderRequest.setUserId(user.getId());
+      } else if (!createOrderRequest.getUserId().equals(user.getId())) {
+        // If userId is provided but doesn't match authenticated user, reject it
         throw new AccessDeniedException("You can only create orders for yourself");
       }
-
-      // Set the user ID from authenticated user if not provided
-      createOrderRequest.setUserId(user.getId());
 
       // Convert CreateOrderRequest to Order entity using mapper
       Order order = orderMapper.toEntity(createOrderRequest);

@@ -28,7 +28,9 @@ public class AuthController {
 
   @PostMapping("/login")
   public ResponseEntity<AuthenticationResponse> login(@RequestBody AuthenticationRequest request) {
-    if (request == null || request.getEmail() == null || request.getPassword() == null) {
+    // Removed unreachable "request == null" check - Spring handles this via
+    // HttpMessageNotReadableException
+    if (request.getEmail() == null || request.getPassword() == null) {
       throw new IllegalArgumentException("Email and password are required");
     }
 
