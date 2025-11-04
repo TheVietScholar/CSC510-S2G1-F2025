@@ -121,3 +121,54 @@ PowerShell parses arguments differently than bash. Use the following patterns:
 	- `$env:DB_HOST = "127.0.0.1"; $env:DB_PORT = "3306"; $env:DB_NAME = "boozebuddies"; $env:DB_USER = "app"; $env:DB_PASS = "app"; ./mvnw spring-boot:run`
 
 Tip: If you see `unknown life cycle .run.profiles=docker`, quote the property as shown above so PowerShell doesn’t split the `-D` argument.
+
+
+## Frontend Setup (Vite + React)
+
+The frontend connects to the Spring Boot backend running on http://localhost:8080
+.
+
+Prerequisites
+
+Node.js 18+ (LTS recommended)
+
+npm (comes with Node)
+
+Install dependencies
+
+From the frontend/ directory:
+
+npm install
+
+
+This installs all required Node modules.
+
+Start the development server
+npm run dev
+
+
+The app runs by default at http://localhost:5173
+.
+When both frontend and backend are running, API requests are automatically proxied to http://localhost:8080
+.
+
+Troubleshooting
+
+Port already in use (5173):
+If something else is using port 5173, start the dev server on a different port:
+
+npm run dev -- --port 5174
+
+
+Backend connection errors:
+Ensure the Spring Boot backend is running on http://localhost:8080
+.
+If you changed the backend port, update the frontend proxy setting in vite.config.js.
+
+Environment variables:
+If your project uses a .env file (for API URLs or keys), copy the example file before starting:
+
+cp .env.example .env
+
+
+Then edit .env to match your local setup.

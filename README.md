@@ -140,72 +140,76 @@ Once the containers are running and MySQL is ready, start the Spring Boot applic
 ./mvnw "-Dspring-boot.run.profiles=docker" spring-boot:run
 ```
 
----
+## ▶️ Step 6: Run the Application
 
-## 🧩 Step 7: Connect MySQL Workbench to Docker MySQL
+Once the containers are running and MySQL is ready, start the Spring Boot application with the Docker profile:
 
-If your MySQL Docker container doesn’t appear automatically in MySQL Workbench, create a manual connection.
+./mvnw "-Dspring-boot.run.profiles=docker" spring-boot:run
 
-### Steps to Connect:
 
-1. Open **MySQL Workbench**
+## 💻 Frontend Setup (Vite + React)
 
-2. Click the **“+”** next to **MySQL Connections**
+The frontend connects to the Spring Boot backend running on http://localhost:8080
+.
 
-3. Set up the connection:
+Prerequisites
 
-   * **Connection Name:** Docker MySQL (or any name you prefer)
-   * **Hostname:** `127.0.0.1` or `localhost`
-   * **Port:** `33060` (check your `docker-compose.yml`)
-   * **Username:** `app`
-   * **Password:** *(from your `docker-compose.yml` file)*
+Node.js 18+ (LTS recommended)
 
-4. Click **Test Connection** to verify.
+npm (comes with Node)
 
-### Example Connection Details
+Install dependencies
 
-```
-Host: 127.0.0.1
-Port: 33060
-User: app
-Password: [check docker-compose.yml]
-```
+From the frontend/ directory:
 
----
+npm install
 
-## 🔍 Troubleshooting MySQL Connection
 
-### Reason 1: Different Connection Methods
+This installs all required Node modules.
 
-Dockerized MySQL runs inside a container, not as a local service that Workbench auto-detects.
+Start the development server
+npm run dev
 
-### Reason 2: External Connection Setup
 
-Ensure your `docker-compose.yml` exposes the correct port mapping:
+The app runs by default at http://localhost:5173
+.
+When both frontend and backend are running, API requests are automatically proxied to http://localhost:8080
+.
 
-```yaml
-ports:
-  - "33060:3306"
-```
+## ⚠️ Troubleshooting (Frontend)
 
-### Reason 3: Test External Connection from Terminal
+### Port already in use (5173):
+If something else is using port 5173, start the dev server on another port:
 
-You can verify access to the MySQL instance using:
+npm run dev -- --port 5174
 
-```bash
-mysql -h 127.0.0.1 -P 33060 -u app -p -e "SHOW DATABASES;"
-```
 
+### Backend connection errors:
+Ensure the Spring Boot backend is running on http://localhost:8080
+.
+If you changed the backend port, update the frontend proxy setting in vite.config.js.
+
+### Environment variables:
+If your project uses a .env file (for API URLs or keys), copy the example file before starting:
+
+cp .env.example .env
+
+
+Then edit .env to match your local setup.
 
 ## ✅ Environment Setup Complete!
 
 You should now have:
 
-* Docker containers running MySQL
-* Spring Boot app running with the Docker profile
-* MySQL Workbench or Adminer connected to your Dockerized database
+Docker containers running MySQL
 
-If you encounter issues, double-check Docker container logs and verify the port bindings in `docker-compose.yml`.
+Spring Boot app running with the Docker profile
+
+React + Vite frontend running on http://localhost:5173
+
+MySQL Workbench or Adminer connected to your Dockerized database
+
+If you encounter issues, double-check Docker container logs and verify port bindings in docker-compose.yml.
 
 # Use Cases
 
