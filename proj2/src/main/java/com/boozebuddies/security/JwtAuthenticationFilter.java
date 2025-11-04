@@ -79,16 +79,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     Set<String> roles = jwtUtil.extractRoles(token);
 
     // Build authorities
-    Set<SimpleGrantedAuthority> authorities = roles.stream()
-        .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
-        .collect(Collectors.toSet());
+    Set<SimpleGrantedAuthority> authorities =
+        roles.stream()
+            .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
+            .collect(Collectors.toSet());
 
     // You can skip DB lookup if you trust the token
     // Optional: verify the user still exists / active
     User user = userService.findByEmail(username).orElse(null);
     if (user == null || !user.isActive() || !jwtUtil.validateToken(token, user)) {
-        log.debug("JWT invalid or user inactive");
-        return;
+      log.debug("JWT invalid or user inactive");
+      return;
     }
 
     UsernamePasswordAuthenticationToken authentication =
@@ -96,7 +97,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
     SecurityContextHolder.getContext().setAuthentication(authentication);
   }
-
 
   /** Build Spring Security authorities from user roles */
   private Set<SimpleGrantedAuthority> buildAuthorities(User user) {

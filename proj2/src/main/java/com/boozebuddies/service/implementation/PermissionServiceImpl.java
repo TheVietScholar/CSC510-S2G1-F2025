@@ -2,17 +2,15 @@ package com.boozebuddies.service.implementation;
 
 import com.boozebuddies.entity.User;
 import com.boozebuddies.model.Role;
+import com.boozebuddies.service.DeliveryService;
+import com.boozebuddies.service.OrderService;
+import com.boozebuddies.service.PermissionService;
+import com.boozebuddies.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
-import com.boozebuddies.service.PermissionService;
-import com.boozebuddies.service.OrderService;
-import com.boozebuddies.service.DeliveryService;
-import com.boozebuddies.service.UserService;
 
-/**
- * Implementation of permission checking service.
- */
+/** Implementation of permission checking service. */
 @Service
 @RequiredArgsConstructor
 public class PermissionServiceImpl implements PermissionService {
@@ -28,9 +26,7 @@ public class PermissionServiceImpl implements PermissionService {
     }
 
     String email = authentication.getName();
-    return userService.findByEmail(email)
-        .map(user -> user.getId().equals(userId))
-        .orElse(false);
+    return userService.findByEmail(email).map(user -> user.getId().equals(userId)).orElse(false);
   }
 
   @Override
@@ -40,9 +36,7 @@ public class PermissionServiceImpl implements PermissionService {
     }
 
     String email = authentication.getName();
-    return userService.findByEmail(email)
-        .map(user -> user.ownsMerchant(merchantId))
-        .orElse(false);
+    return userService.findByEmail(email).map(user -> user.ownsMerchant(merchantId)).orElse(false);
   }
 
   @Override
@@ -52,9 +46,7 @@ public class PermissionServiceImpl implements PermissionService {
     }
 
     String email = authentication.getName();
-    return userService.findByEmail(email)
-        .map(user -> user.hasRole(role))
-        .orElse(false);
+    return userService.findByEmail(email).map(user -> user.hasRole(role)).orElse(false);
   }
 
   @Override
@@ -74,7 +66,8 @@ public class PermissionServiceImpl implements PermissionService {
     }
 
     String email = authentication.getName();
-    return userService.findByEmail(email)
+    return userService
+        .findByEmail(email)
         .filter(user -> user.hasRole(Role.DRIVER))
         .map(user -> user.getDriver() != null && user.getDriver().getId().equals(driverId))
         .orElse(false);
@@ -92,7 +85,8 @@ public class PermissionServiceImpl implements PermissionService {
       return false;
     }
 
-    return orderService.getOrderById(orderId)
+    return orderService
+        .getOrderById(orderId)
         .map(order -> order.getUser() != null && order.getUser().getId().equals(user.getId()))
         .orElse(false);
   }
@@ -109,9 +103,9 @@ public class PermissionServiceImpl implements PermissionService {
       return false;
     }
 
-    return orderService.getOrderById(orderId)
-        .map(order -> 
-            order.getMerchant() != null && user.ownsMerchant(order.getMerchant().getId()))
+    return orderService
+        .getOrderById(orderId)
+        .map(order -> order.getMerchant() != null && user.ownsMerchant(order.getMerchant().getId()))
         .orElse(false);
   }
 
@@ -152,8 +146,12 @@ public class PermissionServiceImpl implements PermissionService {
     }
 
     try {
-      return orderService.getOrderById(orderId)
-          .map(order -> order.getDriver() != null && order.getDriver().getId().equals(user.getDriver().getId()))
+      return orderService
+          .getOrderById(orderId)
+          .map(
+              order ->
+                  order.getDriver() != null
+                      && order.getDriver().getId().equals(user.getDriver().getId()))
           .orElse(false);
     } catch (Exception e) {
       return false;

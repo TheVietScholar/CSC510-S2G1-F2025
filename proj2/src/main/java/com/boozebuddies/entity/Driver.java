@@ -19,10 +19,7 @@ public class Driver {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  /**
-   * Link to the User account for this driver.
-   * The User must have DRIVER role.
-   */
+  /** Link to the User account for this driver. The User must have DRIVER role. */
   @OneToOne
   @JoinColumn(name = "user_id", nullable = false, unique = true)
   private User user;
@@ -58,8 +55,8 @@ public class Driver {
   private Integer totalDeliveries = 0;
 
   /**
-   * Certification status for handling alcohol deliveries.
-   * Must be APPROVED before driver can accept orders.
+   * Certification status for handling alcohol deliveries. Must be APPROVED before driver can accept
+   * orders.
    */
   @Enumerated(EnumType.STRING)
   @Builder.Default
@@ -89,19 +86,15 @@ public class Driver {
     this.updatedAt = LocalDateTime.now();
   }
 
-  /**
-   * Check if driver is certified and available to accept deliveries.
-   */
+  /** Check if driver is certified and available to accept deliveries. */
   public boolean canAcceptDeliveries() {
-    return isAvailable 
+    return isAvailable
         && certificationStatus == CertificationStatus.APPROVED
-        && user != null 
+        && user != null
         && user.isActive();
   }
 
-  /**
-   * Check if driver's certification is approved.
-   */
+  /** Check if driver's certification is approved. */
   public boolean isCertified() {
     return certificationStatus == CertificationStatus.APPROVED;
   }

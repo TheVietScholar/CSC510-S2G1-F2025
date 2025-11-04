@@ -1,7 +1,6 @@
 package com.boozebuddies.dto;
 
 import com.boozebuddies.entity.Certification;
-import com.boozebuddies.model.CertificationStatus;
 import java.time.LocalDateTime;
 import lombok.*;
 

@@ -57,18 +57,14 @@ public interface MerchantService {
    */
   boolean deleteMerchant(Long merchantId);
 
-
   /**
    * Find merchant by name.
-   * 
+   *
    * @param name The name of the merchant.
    * @return The corresponding Merchant object, or null if not found.
    */
   Merchant getMerchantByName(String name);
 
-  /**
-   * Get all merchants sorted by distance from a location.
-   */
+  /** Get all merchants sorted by distance from a location. */
   List<Merchant> getMerchantsSortedByDistance(Double latitude, Double longitude);
-  
 }

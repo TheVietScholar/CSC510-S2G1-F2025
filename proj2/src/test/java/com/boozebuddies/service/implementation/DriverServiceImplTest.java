@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.boozebuddies.entity.Driver;
+import com.boozebuddies.exception.DriverNotFoundException;
 import com.boozebuddies.model.CertificationStatus;
 import com.boozebuddies.repository.DriverRepository;
 import java.util.Arrays;
@@ -39,19 +40,21 @@ class DriverServiceImplTest {
         verify(repository).save(any(Driver.class));
     }
 
-    @Test
-    @DisplayName("updateCertificationStatus updates when driver exists, null otherwise")
-    void updateCertificationStatus_updatesOrNull() {
-        Driver driver = Driver.builder().id(1L).name("Bob").build();
-        when(repository.findById(1L)).thenReturn(Optional.of(driver));
-        when(repository.findById(999L)).thenReturn(Optional.empty());
-        when(repository.save(any(Driver.class))).thenAnswer(inv -> inv.getArgument(0));
+  @Test
+  @DisplayName("updateCertificationStatus updates when driver exists, null otherwise")
+  void updateCertificationStatus_updatesOrNull() {
+    Driver driver = Driver.builder().id(1L).name("Bob").build();
+    when(repository.findById(1L)).thenReturn(Optional.of(driver));
+    when(repository.findById(999L)).thenThrow(DriverNotFoundException.class);
+    when(repository.save(any(Driver.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        Driver updated = service.updateCertificationStatus(1L, CertificationStatus.APPROVED);
-        assertNotNull(updated);
-        assertEquals(CertificationStatus.APPROVED, updated.getCertificationStatus());
-        assertNull(service.updateCertificationStatus(999L, CertificationStatus.REVOKED));
-    }
+    Driver updated = service.updateCertificationStatus(1L, CertificationStatus.APPROVED);
+    assertNotNull(updated);
+    assertEquals(CertificationStatus.APPROVED, updated.getCertificationStatus());
+    assertThrows(
+        DriverNotFoundException.class,
+        () -> service.updateCertificationStatus(999L, CertificationStatus.REVOKED));
+  }
 
     @Test
     @DisplayName("updateAvailability toggles availability when driver exists, null otherwise")

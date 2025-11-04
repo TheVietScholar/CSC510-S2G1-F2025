@@ -46,8 +46,8 @@ public interface PaymentService {
   Optional<Payment> getPaymentByOrderId(Long orderId);
 
   /**
-   * Retrieves all payments in the system (paginated).
-   * Admin only - for financial reporting and auditing.
+   * Retrieves all payments in the system (paginated). Admin only - for financial reporting and
+   * auditing.
    *
    * @param pageable Pagination information.
    * @return A page of all payments.

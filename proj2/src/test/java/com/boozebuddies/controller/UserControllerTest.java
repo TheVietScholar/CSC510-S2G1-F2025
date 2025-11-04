@@ -12,7 +12,6 @@ import com.boozebuddies.service.RoleService;
 import com.boozebuddies.service.UserService;
 import com.boozebuddies.service.ValidationService;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import java.time.LocalDate;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -347,7 +346,6 @@ class UserControllerTest {
     UserDTO updateDTO = new UserDTO();
     updateDTO.setEmail("invalid-email");
     when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
-
 
     when(userMapper.toEntity(updateDTO)).thenReturn(testUser);
     when(userService.updateUser(1L, testUser))

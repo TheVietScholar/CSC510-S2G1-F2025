@@ -6,7 +6,6 @@ import com.boozebuddies.exception.DriverNotFoundException;
 import com.boozebuddies.model.CertificationStatus;
 import com.boozebuddies.repository.DriverRepository;
 import com.boozebuddies.service.DriverService;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -23,9 +22,9 @@ public class DriverServiceImpl implements DriverService {
   /** Registers a new driver in the system. */
   @Override
   public Driver registerDriver(Driver driver) {
-    if(driver == null) {
+    if (driver == null) {
       throw new IllegalArgumentException("Driver cannot be null");
-    } 
+    }
     driver.setCertificationStatus(CertificationStatus.PENDING);
     driver.setAvailable(false);
     return driverRepository.save(driver);
@@ -75,29 +74,31 @@ public class DriverServiceImpl implements DriverService {
 
   @Transactional
   public Driver updateDriver(Driver driver) {
-      return driverRepository.save(driver);
+    return driverRepository.save(driver);
   }
-
 
   @Transactional
   public Driver updateDriverLocation(Long userId, Double latitude, Double longitude) {
-      Driver driver = driverRepository.findById(userId)
-              .orElseThrow(() -> new IllegalArgumentException("Driver not found"));
-      driver.setCurrentLatitude(latitude);
-      driver.setCurrentLongitude(longitude);
-      driver.setUpdatedAt(LocalDateTime.now());
-      return driverRepository.save(driver);
+    Driver driver =
+        driverRepository
+            .findById(userId)
+            .orElseThrow(() -> new IllegalArgumentException("Driver not found"));
+    driver.setCurrentLatitude(latitude);
+    driver.setCurrentLongitude(longitude);
+    driver.setUpdatedAt(LocalDateTime.now());
+    return driverRepository.save(driver);
   }
 
   @Override
   public Driver getDriverProfile(User user) {
-      return driverRepository.findById(user.getId())
-              .orElseThrow(() -> new IllegalArgumentException("Driver not found"));
+    return driverRepository
+        .findById(user.getId())
+        .orElseThrow(() -> new IllegalArgumentException("Driver not found"));
   }
 
   @Override
-  public List<Driver> getNearbyAvailableDrivers(Double latitude, Double longitude, Double radiusMeters) {
-      return driverRepository.findNearbyAvailableDrivers(latitude, longitude, radiusMeters);
+  public List<Driver> getNearbyAvailableDrivers(
+      Double latitude, Double longitude, Double radiusMeters) {
+    return driverRepository.findNearbyAvailableDrivers(latitude, longitude, radiusMeters);
   }
-
 }

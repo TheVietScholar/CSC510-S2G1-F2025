@@ -44,14 +44,14 @@ public class DeliveryServiceImpl implements DeliveryService {
     Delivery delivery = deliveryOpt.get();
     delivery.setStatus(status);
     delivery.setUpdatedAt(LocalDateTime.now());
-    
+
     // Update specific timestamps based on status (using your field names)
     if (status == DeliveryStatus.PICKED_UP && delivery.getPickupTime() == null) {
       delivery.setPickupTime(LocalDateTime.now());
     } else if (status == DeliveryStatus.DELIVERED && delivery.getDeliveredTime() == null) {
       delivery.setDeliveredTime(LocalDateTime.now());
     }
-    
+
     return deliveryRepository.save(delivery);
   }
 
@@ -109,21 +109,21 @@ public class DeliveryServiceImpl implements DeliveryService {
     if (deliveryOpt.isEmpty()) {
       throw new RuntimeException("Delivery not found");
     }
-    
+
     Delivery delivery = deliveryOpt.get();
     delivery.setAgeVerified(ageVerified);
     delivery.setIdType(idType);
-    
+
     // SECURITY: In production, only store last 4 digits of ID number
     if (idNumber != null && idNumber.length() > 4) {
       delivery.setIdNumber(idNumber.substring(idNumber.length() - 4));
     } else {
       delivery.setIdNumber(idNumber);
     }
-    
+
     delivery.setAgeVerifiedAt(LocalDateTime.now());
     delivery.setUpdatedAt(LocalDateTime.now());
-    
+
     return deliveryRepository.save(delivery);
   }
 
@@ -135,13 +135,13 @@ public class DeliveryServiceImpl implements DeliveryService {
     if (deliveryOpt.isEmpty()) {
       throw new RuntimeException("Delivery not found");
     }
-    
+
     Delivery delivery = deliveryOpt.get();
     delivery.setCurrentLatitude(latitude);
     delivery.setCurrentLongitude(longitude);
     delivery.setLastLocationUpdate(LocalDateTime.now());
     delivery.setUpdatedAt(LocalDateTime.now());
-    
+
     deliveryRepository.save(delivery);
   }
 }

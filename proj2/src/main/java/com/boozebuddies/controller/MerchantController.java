@@ -11,7 +11,6 @@ import com.boozebuddies.service.MerchantService;
 import com.boozebuddies.service.PermissionService;
 import java.util.List;
 import java.util.stream.Collectors;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -98,22 +97,18 @@ public class MerchantController {
     }
   }
 
-  /**
-   * Get merchant by name.
-   * Authenticated users only.
-   */
+  /** Get merchant by name. Authenticated users only. */
   @GetMapping("/name/{name}")
   @IsAuthenticated
-  public ResponseEntity<ApiResponse<MerchantDTO>> getMerchantByName(
-      @PathVariable String name) {
+  public ResponseEntity<ApiResponse<MerchantDTO>> getMerchantByName(@PathVariable String name) {
     try {
       Merchant merchant = merchantService.getMerchantByName(name);
-      
+
       if (merchant == null) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
             .body(ApiResponse.error("Merchant not found"));
       }
-      
+
       return ResponseEntity.ok(
           ApiResponse.success(merchantMapper.toDTO(merchant), "Merchant retrieved successfully"));
     } catch (Exception e) {
@@ -123,8 +118,8 @@ public class MerchantController {
   }
 
   /**
-   * Get all merchants sorted by distance from authenticated user's location.
-   * Authenticated users only - uses user's stored location.
+   * Get all merchants sorted by distance from authenticated user's location. Authenticated users
+   * only - uses user's stored location.
    */
   @GetMapping("/by-distance")
   @IsAuthenticated
@@ -132,19 +127,21 @@ public class MerchantController {
       Authentication authentication) {
     try {
       User user = permissionService.getAuthenticatedUser(authentication);
-      
+
       if (user == null) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
             .body(ApiResponse.error("User not authenticated"));
       }
-      
+
       if (user.getLatitude() == null || user.getLongitude() == null) {
         return ResponseEntity.badRequest()
-            .body(ApiResponse.error("User location not set. Please update your profile with your location."));
+            .body(
+                ApiResponse.error(
+                    "User location not set. Please update your profile with your location."));
       }
-      
-      List<Merchant> merchants = merchantService.getMerchantsSortedByDistance(
-          user.getLatitude(), user.getLongitude());
+
+      List<Merchant> merchants =
+          merchantService.getMerchantsSortedByDistance(user.getLatitude(), user.getLongitude());
       List<MerchantDTO> merchantDTOs =
           merchants.stream().map(merchantMapper::toDTO).collect(Collectors.toList());
       return ResponseEntity.ok(
@@ -194,12 +191,13 @@ public class MerchantController {
   // ==================== ORDERS BY MERCHANT ====================
 
   @GetMapping("/{id}/orders")
-  @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN') or @permissionService.ownsMerchant(authentication, #id)")
+  @org.springframework.security.access.prepost.PreAuthorize(
+      "hasRole('ADMIN') or @permissionService.ownsMerchant(authentication, #id)")
   public ResponseEntity<?> getOrdersByMerchant(
-    @PathVariable Long id,
-    @RequestParam(defaultValue = "0") int page,
-    @RequestParam(defaultValue = "10") int size,
-    Authentication authentication) {
+      @PathVariable Long id,
+      @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "10") int size,
+      Authentication authentication) {
     try {
       if (id == null || id <= 0) {
         return ResponseEntity.badRequest().body(ApiResponse.error("Invalid merchant ID"));
@@ -220,9 +218,7 @@ public class MerchantController {
 
   // ==================== MERCHANT_ADMIN ENDPOINTS ====================
 
-  /**
-   * Get the merchant managed by the authenticated merchant admin.
-   */
+  /** Get the merchant managed by the authenticated merchant admin. */
   @GetMapping("/my-merchant")
   @IsMerchantAdmin
   public ResponseEntity<?> getMyMerchant(Authentication authentication) {
@@ -244,9 +240,7 @@ public class MerchantController {
     }
   }
 
-  /**
-   * Get orders for the merchant managed by the authenticated merchant admin.
-   */
+  /** Get orders for the merchant managed by the authenticated merchant admin. */
   @GetMapping("/my-merchant/orders")
   @IsMerchantAdmin
   public ResponseEntity<?> getMyMerchantOrders(

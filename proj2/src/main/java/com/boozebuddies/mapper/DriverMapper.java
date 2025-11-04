@@ -3,7 +3,6 @@ package com.boozebuddies.mapper;
 import com.boozebuddies.dto.DriverDTO;
 import com.boozebuddies.entity.Driver;
 import com.boozebuddies.model.CertificationStatus;
-
 import org.springframework.stereotype.Component;
 
 @Component

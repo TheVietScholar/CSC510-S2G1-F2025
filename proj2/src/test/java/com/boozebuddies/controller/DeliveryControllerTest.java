@@ -21,12 +21,10 @@ import com.boozebuddies.service.DriverService;
 import com.boozebuddies.service.OrderService;
 import com.boozebuddies.service.PermissionService;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -74,7 +72,8 @@ public class DeliveryControllerTest {
     Order testOrder = new Order();
     testOrder.setId(100L);
     testDriverUser = User.builder().id(10L).name("John Driver").phone("555-1234").build();
-    testDriver = Driver.builder().user(testDriverUser).id(10L).name("John Driver").phone("555-1234").build();
+    testDriver =
+        Driver.builder().user(testDriverUser).id(10L).name("John Driver").phone("555-1234").build();
     testDriverUser.setDriver(testDriver);
     testDriverUser.addRole(Role.DRIVER);
 
@@ -145,7 +144,8 @@ public class DeliveryControllerTest {
             .status(DeliveryStatus.IN_TRANSIT.name())
             .build();
 
-    when(permissionService.getAuthenticatedUser(any())).thenReturn(testDelivery.getDriver().getUser());
+    when(permissionService.getAuthenticatedUser(any()))
+        .thenReturn(testDelivery.getDriver().getUser());
     when(deliveryService.getDeliveryById(1L)).thenReturn(testDelivery);
     when(deliveryService.updateDeliveryStatus(1L, DeliveryStatus.IN_TRANSIT))
         .thenReturn(testDelivery);
@@ -172,7 +172,8 @@ public class DeliveryControllerTest {
   @Test
   @DisplayName("PUT /api/deliveries/{id}/status returns 400 on exception")
   void updateDeliveryStatus_exception_returnsBadRequest() throws Exception {
-    when(permissionService.getAuthenticatedUser(any())).thenReturn(testDelivery.getDriver().getUser());
+    when(permissionService.getAuthenticatedUser(any()))
+        .thenReturn(testDelivery.getDriver().getUser());
     when(deliveryService.getDeliveryById(1L)).thenReturn(testDelivery);
     when(deliveryService.updateDeliveryStatus(1L, DeliveryStatus.FAILED))
         .thenThrow(new RuntimeException("transition invalid"));

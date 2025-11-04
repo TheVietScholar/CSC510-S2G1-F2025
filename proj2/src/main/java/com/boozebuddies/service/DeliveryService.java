@@ -59,8 +59,7 @@ public interface DeliveryService {
   List<Delivery> getActiveDeliveries();
 
   /**
-   * Gets all deliveries in the system.
-   * Admin only - for monitoring and reporting.
+   * Gets all deliveries in the system. Admin only - for monitoring and reporting.
    *
    * @return A list of all deliveries.
    */
