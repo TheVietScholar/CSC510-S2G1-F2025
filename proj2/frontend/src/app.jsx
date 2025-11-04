@@ -5,6 +5,8 @@ import RestaurantMenu from './components/RestaurantMenu'
 import Cart from './components/Cart'
 import Checkout from './components/Checkout'
 import UserSettings from './components/UserSettings'
+import AdminHome from './admin/AdminHome'
+import MerchantHome from './admin/MerchantHome'
 import './App.css'
 
 function App() {
@@ -13,9 +15,17 @@ function App() {
   const [selectedRestaurant, setSelectedRestaurant] = useState(null)
   const [cart, setCart] = useState([])
 
-  const handleLogin = () => {
-    setUser({ id: 1, username: 'user' })
-    setCurrentPage('home')
+  const handleLogin = (userData) => {
+    setUser(userData)
+    
+    // Redirect based on user type
+    if (userData.role === 'admin') {
+      setCurrentPage('admin-home')
+    } else if (userData.role === 'merchant') {
+      setCurrentPage('merchant-home')
+    } else {
+      setCurrentPage('home')
+    }
   }
 
   const handleSelectRestaurant = (restaurant) => {
@@ -69,12 +79,18 @@ function App() {
     setCart(prevCart => prevCart.filter(item => item.id !== itemId))
   }
 
+  const handleLogout = () => {
+    setUser(null)
+    setCart([])
+    setCurrentPage('login')
+  }
+
   const renderPage = () => {
     switch (currentPage) {
       case 'login':
         return <Login onLogin={handleLogin} />
       case 'home':
-        return <Home onSelectRestaurant={handleSelectRestaurant} onOpenSettings={() => setCurrentPage('settings')} />
+        return <Home onSelectRestaurant={handleSelectRestaurant} onOpenSettings={() => setCurrentPage('settings')} onLogout={handleLogout} />
       case 'menu':
         return (
           <RestaurantMenu
@@ -84,6 +100,7 @@ function App() {
             onRemoveFromCart={handleRemoveFromCart}
             onBack={() => setCurrentPage('home')}
             onViewCart={() => setCurrentPage('cart')}
+            onLogout={handleLogout}
           />
         )
       case 'cart':
@@ -108,6 +125,10 @@ function App() {
         )
       case 'settings':
         return <UserSettings onBack={() => setCurrentPage('home')} />
+      case 'admin-home':
+        return <AdminHome onLogout={handleLogout} />
+      case 'merchant-home':
+        return <MerchantHome onLogout={handleLogout} />
       default:
         return <Login onLogin={handleLogin} />
     }
