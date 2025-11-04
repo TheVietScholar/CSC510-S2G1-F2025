@@ -205,41 +205,86 @@ You should now have:
 
 If you encounter issues, double-check Docker container logs and verify the port bindings in `docker-compose.yml`.
 
-# Tutorials (Not done)
+# Use Cases
 
-## 🧍‍♂️ Register a New User
+Common scenarios and workflows for the BoozeBuddies API.
 
-Send a POST request:
+---
 
-POST /api/users/register
-{
-  "username": "john_doe",
-  "password": "securePass123",
-  "email": "john@example.com"
-}
+## 🔐 Use Case 1: New User Registration & First Order
 
-🍺 Place an Order
-POST /api/orders
-{
-  "userId": 1,
-  "productId": 3,
-  "quantity": 2
-}
+**Scenario:** Alice wants to order beer for delivery.
 
+1. **Register:** `POST /api/auth/register` with name, email, password
+2. **Login:** `POST /api/auth/login` to get JWT token
+3. **Browse:** `GET /api/products` to see available products
+4. **Create Order:** `POST /api/orders` with items and delivery address
+5. **Track:** `GET /api/orders/my-orders` to monitor order status
 
-Response:
+---
 
-{
-  "status": "SUCCESS",
-  "orderId": 17
-}
+## 🛒 Use Case 2: Merchant Adds Products
 
-## 🚗 Update Driver Location
-PUT /api/driver/location?latitude=35.7796&longitude=-78.6382
+**Scenario:** A merchant wants to add new products to their store.
 
+1. **Admin registers merchant:** `POST /api/merchants/register`
+2. **Admin verifies merchant:** `PUT /api/merchants/{id}/verify?verified=true`
+3. **Admin assigns MERCHANT_ADMIN role:** `POST /api/users/{id}/roles` with merchant association
+4. **Merchant adds products:** `POST /api/products` for each item
+5. **Merchant updates inventory:** `PUT /api/products/{id}` when stock changes
 
-These examples demonstrate real API calls that connect the front-end React app to the Spring Boot backend.
+---
 
+## 🚚 Use Case 3: Complete Delivery Workflow
+
+**Scenario:** A driver delivers an order from merchant to customer.
+
+1. **Admin registers driver:** `POST /api/drivers/register`
+2. **Admin approves certification:** `PUT /api/drivers/{id}/certification?status=APPROVED`
+3. **Driver goes online:** `PUT /api/drivers/my-profile/availability?available=true`
+4. **Admin assigns delivery:** `POST /api/deliveries/assign?orderId={id}&driverId={id}`
+5. **Driver picks up:** `POST /api/deliveries/{id}/pickup`
+6. **Driver en route:** `PUT /api/deliveries/{id}/status?status=IN_TRANSIT`
+7. **Driver verifies age:** `POST /api/deliveries/{id}/verify-age?ageVerified=true`
+8. **Driver completes:** `POST /api/deliveries/{id}/deliver`
+
+---
+
+## 💳 Use Case 4: Payment & Refund
+
+**Scenario:** Customer pays for order, but needs a refund due to cancellation.
+
+1. **User creates order:** `POST /api/orders`
+2. **User pays:** `POST /api/payments/process?orderId={id}&paymentMethod=CREDIT_CARD`
+3. **User cancels:** `POST /api/orders/{id}/cancel`
+4. **Admin refunds:** `POST /api/payments/refund?orderId={id}&reason=Customer%20cancelled`
+
+---
+
+## 📊 Use Case 5: Merchant Reviews Orders & Revenue
+
+**Scenario:** Merchant wants to see their orders and earnings.
+
+1. **Merchant logs in:** `POST /api/auth/login`
+2. **View their merchant:** `GET /api/merchants/my-merchant`
+3. **View orders:** `GET /api/merchants/my-merchant/orders`
+4. **Check products:** `GET /api/products/merchant/{merchantId}/all`
+5. **Admin calculates revenue:** `GET /api/payments/revenue?startDate={date}&endDate={date}`
+
+---
+
+## 🔍 Use Case 6: Customer Age Verification
+
+**Scenario:** System ensures customer is of legal drinking age.
+
+1. **User registers:** Age verification defaults to `false`
+2. **User verifies age:** `POST /api/users/{id}/verify-age` (requires ID check)
+3. **User creates order:** System checks `ageVerified` status before processing
+4. **Driver double-checks:** `POST /api/deliveries/{id}/verify-age` at delivery
+
+---
+
+> **Note:** For detailed endpoint documentation, parameters, and responses, see [API.md](proj2/docs/API.md)
 
 # Demo Video (Not Done)
 

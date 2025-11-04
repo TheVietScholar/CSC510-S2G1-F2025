@@ -1877,13 +1877,5 @@ All API responses (except auth endpoints) are wrapped in an `ApiResponse` object
 | Process Payments | ✓ (own orders) | ✗ | ✗ | ✓ |
 | View All Users | ✗ | ✗ | ✗ | ✓ |
 
----
-
-## Additional Resources
-
-- [Architecture Documentation](ARCHITECTURE.md)
-- [Testing Guide](TESTING.md)
-- [Troubleshooting Guide](TROUBLESHOOTING.md)
-- [Deployment Guide](DEPLOYMENT.md)
 
 For questions or support, please open an issue on GitHub.
