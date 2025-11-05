@@ -23,6 +23,9 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * REST controller for managing deliveries and driver operations.
+ */
 @RestController
 @RequestMapping("/api/deliveries")
 @RequiredArgsConstructor
@@ -36,7 +39,13 @@ public class DeliveryController {
 
   // ==================== ADMIN ENDPOINTS ====================
 
-  /** Assign a driver to an order and create delivery record. Admin only. */
+  /**
+   * Assigns a driver to an order and creates a delivery record. Admin only.
+   *
+   * @param orderId the ID of the order
+   * @param driverId the ID of the driver to assign
+   * @return the created delivery
+   */
   @PostMapping("/assign")
   @IsAdmin
   public ResponseEntity<ApiResponse<DeliveryDTO>> assignDriverToOrder(
@@ -63,7 +72,11 @@ public class DeliveryController {
     }
   }
 
-  /** Get all active deliveries. Admin only. */
+  /**
+   * Retrieves all active deliveries. Admin only.
+   *
+   * @return a list of active deliveries
+   */
   @GetMapping("/active")
   @IsSelfOrAdmin
   public ResponseEntity<ApiResponse<List<DeliveryDTO>>> getActiveDeliveries() {
@@ -79,7 +92,11 @@ public class DeliveryController {
     }
   }
 
-  /** Get all deliveries in the system. Admin only. */
+  /**
+   * Retrieves all deliveries in the system. Admin only.
+   *
+   * @return a list of all deliveries
+   */
   @GetMapping
   @IsAdmin
   public ResponseEntity<ApiResponse<List<DeliveryDTO>>> getAllDeliveries() {
@@ -95,7 +112,12 @@ public class DeliveryController {
     }
   }
 
-  /** Get deliveries by driver ID. Admin can view any driver's deliveries. */
+  /**
+   * Retrieves deliveries by driver ID. Admin can view any driver's deliveries.
+   *
+   * @param driverId the driver ID
+   * @return a list of deliveries for the specified driver
+   */
   @GetMapping("/driver/{driverId}")
   @IsAdmin
   public ResponseEntity<ApiResponse<List<DeliveryDTO>>> getDeliveriesByDriver(
@@ -112,7 +134,13 @@ public class DeliveryController {
     }
   }
 
-  /** Get delivery by ID. Drivers can view their own deliveries, admins can view all. */
+  /**
+   * Retrieves a delivery by ID. Drivers can view their own deliveries, admins can view all.
+   *
+   * @param deliveryId the delivery ID
+   * @param authentication the authentication object
+   * @return the delivery with the specified ID
+   */
   @GetMapping("/{deliveryId}")
   @IsAuthenticated
   public ResponseEntity<ApiResponse<DeliveryDTO>> getDeliveryById(
@@ -153,7 +181,12 @@ public class DeliveryController {
 
   // ==================== DRIVER ENDPOINTS ====================
 
-  /** Get all deliveries for the authenticated driver. Driver can only view their own deliveries. */
+  /**
+   * Retrieves all deliveries for the authenticated driver. Drivers can only view their own deliveries.
+   *
+   * @param authentication the authentication object
+   * @return a list of deliveries for the authenticated driver
+   */
   @GetMapping("/driver/my-deliveries")
   @IsDriver
   public ResponseEntity<ApiResponse<List<DeliveryDTO>>> getMyDeliveries(
@@ -177,7 +210,14 @@ public class DeliveryController {
     }
   }
 
-  /** Update delivery status. Driver can update their own deliveries, admin can update any. */
+  /**
+   * Updates delivery status. Drivers can update their own deliveries, admins can update any.
+   *
+   * @param deliveryId the delivery ID
+   * @param status the new delivery status
+   * @param authentication the authentication object
+   * @return the updated delivery
+   */
   @PutMapping("/{deliveryId}/status")
   @IsAuthenticated
   public ResponseEntity<ApiResponse<DeliveryDTO>> updateDeliveryStatus(
@@ -214,8 +254,11 @@ public class DeliveryController {
   }
 
   /**
-   * Mark delivery as picked up. Driver can pickup their own deliveries, admin can mark any as
-   * picked up.
+   * Marks delivery as picked up. Drivers can pickup their own deliveries.
+   *
+   * @param deliveryId the delivery ID
+   * @param authentication the authentication object
+   * @return the updated delivery
    */
   @PostMapping("/{deliveryId}/pickup")
   @IsDriver
@@ -254,8 +297,11 @@ public class DeliveryController {
   }
 
   /**
-   * Mark delivery as delivered. Driver can deliver their own deliveries, admin can mark any as
-   * delivered.
+   * Marks delivery as delivered. Drivers can deliver their own deliveries.
+   *
+   * @param deliveryId the delivery ID
+   * @param authentication the authentication object
+   * @return the updated delivery
    */
   @PostMapping("/{deliveryId}/deliver")
   @IsDriver
@@ -293,7 +339,16 @@ public class DeliveryController {
     }
   }
 
-  /** Verify customer age at delivery. Driver only - critical for alcohol delivery compliance. */
+  /**
+   * Verifies customer age at delivery. Critical for alcohol delivery compliance.
+   *
+   * @param deliveryId the delivery ID
+   * @param ageVerified whether the customer's age was verified
+   * @param idType the type of ID presented
+   * @param idNumber the ID number (last 4 digits)
+   * @param authentication the authentication object
+   * @return the updated delivery
+   */
   @PostMapping("/{deliveryId}/verify-age")
   @IsDriver
   public ResponseEntity<ApiResponse<DeliveryDTO>> verifyCustomerAge(
@@ -347,7 +402,14 @@ public class DeliveryController {
     }
   }
 
-  /** Cancel a delivery with reason. Driver can cancel their own deliveries with reason. */
+  /**
+   * Cancels a delivery with a reason. Drivers can cancel their own deliveries.
+   *
+   * @param deliveryId the delivery ID
+   * @param reason the cancellation reason
+   * @param authentication the authentication object
+   * @return the cancelled delivery
+   */
   @PostMapping("/{deliveryId}/cancel")
   @IsDriver
   public ResponseEntity<ApiResponse<DeliveryDTO>> cancelDelivery(
@@ -383,8 +445,13 @@ public class DeliveryController {
   }
 
   /**
-   * Update delivery location (for real-time tracking). Driver updates their current location while
-   * delivering.
+   * Updates delivery location for real-time tracking. Drivers update their current location while delivering.
+   *
+   * @param deliveryId the delivery ID
+   * @param latitude the current latitude
+   * @param longitude the current longitude
+   * @param authentication the authentication object
+   * @return a success message
    */
   @PutMapping("/{deliveryId}/location")
   @IsDriver

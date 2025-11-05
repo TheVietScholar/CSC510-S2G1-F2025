@@ -23,6 +23,9 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * REST controller for managing payments and payment operations.
+ */
 @RestController
 @RequestMapping("/api/payments")
 @RequiredArgsConstructor
@@ -35,7 +38,14 @@ public class PaymentController {
 
   // ==================== PROCESS PAYMENT ====================
 
-  /** Process a payment for an order. Only users can pay for their own orders. */
+  /**
+   * Processes a payment for an order. Only users can pay for their own orders.
+   *
+   * @param orderId the order ID
+   * @param paymentMethod the payment method
+   * @param authentication the authentication object
+   * @return the processed payment
+   */
   @PostMapping("/process")
   @IsUser
   public ResponseEntity<ApiResponse<PaymentDTO>> processPayment(
@@ -68,7 +78,13 @@ public class PaymentController {
 
   // ==================== REFUND PAYMENT ====================
 
-  /** Issue a refund for an order. Admin only. */
+  /**
+   * Issues a refund for an order. Admin only.
+   *
+   * @param orderId the order ID
+   * @param reason the refund reason
+   * @return the refund payment
+   */
   @PostMapping("/refund")
   @IsAdmin
   public ResponseEntity<ApiResponse<PaymentDTO>> refundPayment(
@@ -90,7 +106,13 @@ public class PaymentController {
 
   // ==================== RETRIEVE PAYMENTS ====================
 
-  /** Get the authenticated user's payment history. Users can only view their own payments. */
+  /**
+   * Retrieves the authenticated user's payment history. Users can only view their own payments.
+   *
+   * @param authentication the authentication object
+   * @param pageable the pagination information
+   * @return a paginated list of the user's payments
+   */
   @GetMapping("/my-payments")
   @IsUser
   public ResponseEntity<ApiResponse<Page<PaymentDTO>>> getMyPayments(
@@ -108,8 +130,12 @@ public class PaymentController {
   }
 
   /**
-   * Get payments by user ID. Users can view their own payments, admins can view any user's
-   * payments.
+   * Retrieves payments by user ID. Users can view their own payments, admins can view any user's payments.
+   *
+   * @param userId the user ID
+   * @param authentication the authentication object
+   * @param pageable the pagination information
+   * @return a paginated list of payments for the specified user
    */
   @GetMapping("/user/{userId}")
   @IsAuthenticated
@@ -137,8 +163,11 @@ public class PaymentController {
   }
 
   /**
-   * Get payment by order ID. Users can view payment for their own orders, admins can view any
-   * payment.
+   * Retrieves payment by order ID. Users can view payment for their own orders, admins can view any payment.
+   *
+   * @param orderId the order ID
+   * @param authentication the authentication object
+   * @return the payment for the specified order
    */
   @GetMapping("/order/{orderId}")
   @IsAuthenticated
@@ -177,7 +206,13 @@ public class PaymentController {
 
   // ==================== ADMIN OPERATIONS ====================
 
-  /** Calculate total revenue within a period. Admin only. */
+  /**
+   * Calculates total revenue within a period. Admin only.
+   *
+   * @param startDate the start date
+   * @param endDate the end date
+   * @return the total revenue for the specified period
+   */
   @GetMapping("/revenue")
   @IsAdmin
   public ResponseEntity<ApiResponse<Object>> calculateTotalRevenue(
@@ -192,7 +227,12 @@ public class PaymentController {
     }
   }
 
-  /** Get all payments (paginated). Admin only. */
+  /**
+   * Retrieves all payments. Admin only.
+   *
+   * @param pageable the pagination information
+   * @return a paginated list of all payments
+   */
   @GetMapping
   @IsAdmin
   public ResponseEntity<ApiResponse<Page<PaymentDTO>>> getAllPayments(Pageable pageable) {
@@ -210,8 +250,12 @@ public class PaymentController {
   // ==================== PAYMENT METHOD VALIDATION ====================
 
   /**
-   * Validate a payment method. Users can validate their own payment methods, admins can validate
-   * for any user.
+   * Validates a payment method. Users can validate their own payment methods, admins can validate for any user.
+   *
+   * @param userId the user ID
+   * @param paymentMethod the payment method to validate
+   * @param authentication the authentication object
+   * @return whether the payment method is valid
    */
   @PostMapping("/validate")
   @IsAuthenticated

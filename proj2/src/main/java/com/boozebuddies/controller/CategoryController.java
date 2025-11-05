@@ -14,6 +14,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * REST controller for managing product categories.
+ */
 @RestController
 @RequestMapping("/api/categories")
 public class CategoryController {
@@ -21,6 +24,12 @@ public class CategoryController {
   private final CategoryService categoryService;
   private final CategoryMapper categoryMapper;
 
+  /**
+   * Constructor injection for category service and mapper.
+   *
+   * @param categoryService the category service
+   * @param categoryMapper the category mapper
+   */
   @Autowired
   public CategoryController(CategoryService categoryService, CategoryMapper categoryMapper) {
     this.categoryService = categoryService;
@@ -29,6 +38,11 @@ public class CategoryController {
 
   // ==================== RETRIEVE ====================
 
+  /**
+   * Retrieves all categories.
+   *
+   * @return a list of all categories
+   */
   @GetMapping
   public ResponseEntity<ApiResponse<List<CategoryDTO>>> getAllCategories() {
     try {
@@ -41,6 +55,12 @@ public class CategoryController {
     }
   }
 
+  /**
+   * Retrieves a category by ID.
+   *
+   * @param id the category ID
+   * @return the category with the specified ID
+   */
   @GetMapping("/{id}")
   public ResponseEntity<ApiResponse<CategoryDTO>> getCategoryById(@PathVariable Long id) {
     try {
@@ -59,6 +79,12 @@ public class CategoryController {
 
   // ==================== CREATE ====================
 
+  /**
+   * Creates a new category. Admin only.
+   *
+   * @param dto the category data
+   * @return the created category
+   */
   @PostMapping
   @IsAdmin
   public ResponseEntity<ApiResponse<CategoryDTO>> createCategory(

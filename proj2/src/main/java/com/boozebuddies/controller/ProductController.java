@@ -19,6 +19,9 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * REST controller for managing products and product operations.
+ */
 @RestController
 @RequestMapping("/api/products")
 @RequiredArgsConstructor
@@ -30,7 +33,11 @@ public class ProductController {
 
   // ==================== PUBLIC ENDPOINTS (No authentication required) ====================
 
-  /** Get all available products. Public endpoint - anyone can browse available products. */
+  /**
+   * Retrieves all available products. Public endpoint.
+   *
+   * @return a list of all available products
+   */
   @GetMapping
   public ResponseEntity<ApiResponse<List<ProductDTO>>> getAllAvailableProducts() {
     try {
@@ -45,7 +52,12 @@ public class ProductController {
     }
   }
 
-  /** Get a product by ID. Public endpoint - anyone can view product details. */
+  /**
+   * Retrieves a product by ID. Public endpoint.
+   *
+   * @param id the product ID
+   * @return the product with the specified ID
+   */
   @GetMapping("/{id}")
   public ResponseEntity<ApiResponse<ProductDTO>> getProductById(@PathVariable Long id) {
     try {
@@ -64,7 +76,12 @@ public class ProductController {
     }
   }
 
-  /** Search for products by keyword. Public endpoint - anyone can search products. */
+  /**
+   * Searches for products by keyword. Public endpoint.
+   *
+   * @param keyword the search keyword
+   * @return a list of products matching the keyword
+   */
   @GetMapping("/search")
   public ResponseEntity<ApiResponse<List<ProductDTO>>> searchProducts(
       @RequestParam String keyword) {
@@ -79,7 +96,12 @@ public class ProductController {
     }
   }
 
-  /** Get products by merchant. Public endpoint - anyone can browse a merchant's products. */
+  /**
+   * Retrieves products by merchant. Public endpoint.
+   *
+   * @param merchantId the merchant ID
+   * @return a list of available products for the specified merchant
+   */
   @GetMapping("/merchant/{merchantId}")
   public ResponseEntity<ApiResponse<List<ProductDTO>>> getProductsByMerchant(
       @PathVariable Long merchantId) {
@@ -95,7 +117,12 @@ public class ProductController {
     }
   }
 
-  /** Check if a product is available. Public endpoint - anyone can check availability. */
+  /**
+   * Checks if a product is available. Public endpoint.
+   *
+   * @param id the product ID
+   * @return whether the product is available
+   */
   @GetMapping("/{id}/available")
   public ResponseEntity<ApiResponse<Boolean>> isProductAvailable(@PathVariable Long id) {
     try {
@@ -110,7 +137,11 @@ public class ProductController {
 
   // ==================== ADMIN ENDPOINTS ====================
 
-  /** Get ALL products (including unavailable ones). Admin only - for management purposes. */
+  /**
+   * Retrieves all products including unavailable ones. Admin only.
+   *
+   * @return a list of all products
+   */
   @GetMapping("/all")
   @IsAdmin
   public ResponseEntity<ApiResponse<List<ProductDTO>>> getAllProducts() {
@@ -127,8 +158,11 @@ public class ProductController {
   }
 
   /**
-   * Get all products by merchant (including unavailable ones). Admin can see all, merchant admin
-   * can only see their own.
+   * Retrieves all products by merchant including unavailable ones. Admin can see all, merchant admin can only see their own.
+   *
+   * @param merchantId the merchant ID
+   * @param authentication the authentication object
+   * @return a list of all products for the specified merchant
    */
   @GetMapping("/merchant/{merchantId}/all")
   @IsAdminOrMerchantAdmin
@@ -160,8 +194,11 @@ public class ProductController {
   // ==================== ADMIN & MERCHANT_ADMIN ENDPOINTS ====================
 
   /**
-   * Add a new product. Admin can add for any merchant, merchant admin can only add for their own
-   * merchant.
+   * Adds a new product. Admin can add for any merchant, merchant admin can only add for their own merchant.
+   *
+   * @param request the product creation request
+   * @param authentication the authentication object
+   * @return the created product
    */
   @PostMapping
   @IsAdminOrMerchantAdmin
@@ -193,8 +230,12 @@ public class ProductController {
   }
 
   /**
-   * Update an existing product. Admin can update any product, merchant admin can only update their
-   * own products.
+   * Updates an existing product. Admin can update any product, merchant admin can only update their own products.
+   *
+   * @param id the product ID
+   * @param productDTO the updated product data
+   * @param authentication the authentication object
+   * @return the updated product
    */
   @PutMapping("/{id}")
   @IsAdminOrMerchantAdmin
@@ -235,8 +276,11 @@ public class ProductController {
   }
 
   /**
-   * Delete a product. Admin can delete any product, merchant admin can only delete their own
-   * products.
+   * Deletes a product. Admin can delete any product, merchant admin can only delete their own products.
+   *
+   * @param id the product ID
+   * @param authentication the authentication object
+   * @return a success message
    */
   @DeleteMapping("/{id}")
   @IsAdminOrMerchantAdmin
