@@ -10,17 +10,13 @@ const http = axios.create({
   },
 })
 
-// Add request interceptor to include auth token automatically
+// Add request interceptor to include JWT token in Authorization header
 http.interceptors.request.use(
   (config) => {
-    // Get token from localStorage
-    const token = localStorage.getItem('authToken')
-    
-    // If token exists, add it to the request headers
+    const token = localStorage.getItem('bb_token')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
-    
     return config
   },
   (error) => {
@@ -28,15 +24,18 @@ http.interceptors.request.use(
   }
 )
 
-// Optional: Add response interceptor to handle auth errors
+// Add response interceptor to handle token expiration
 http.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401 || error.response?.status === 403) {
-      // Token expired or invalid - redirect to login
-      localStorage.removeItem('authToken')
-      localStorage.removeItem('userRole')
-      window.location.href = '/login'
+    if (error.response?.status === 401) {
+      // Token expired or invalid - clear token and redirect to login
+      localStorage.removeItem('bb_token')
+      localStorage.removeItem('bb_refresh_token')
+      // Optionally redirect to login page
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login'
+      }
     }
     return Promise.reject(error)
   }

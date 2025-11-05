@@ -13,13 +13,17 @@ const Home = ({ onSelectRestaurant }) => {
 
   useEffect(() => {
     let mounted = true
-    merchants.getAll().then(resp => {
+    // Token is automatically added by axios interceptor in http.js
+    merchants.getByDistance().then(resp => {
       // MerchantController returns ApiResponse envelope
       const payload = resp.data?.data || []
       if (mounted) setRestaurants(payload)
-    }).catch(() => setRestaurants([]))
+    }).catch((err) => {
+      console.error('Failed to load merchants:', err)
+      if (mounted) setRestaurants([])
+    })
     return () => { mounted = false }
-  }, [])
+  }, []) // Empty dependency array - only run once on mount
 
   const filteredRestaurants = restaurants.filter(restaurant =>
     restaurant.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
