@@ -5,9 +5,18 @@ import com.boozebuddies.dto.PaymentRequest;
 import com.boozebuddies.entity.Payment;
 import org.springframework.stereotype.Component;
 
+/**
+ * Mapper for converting between Payment entities and Payment-related DTO objects.
+ */
 @Component
 public class PaymentMapper {
 
+  /**
+   * Converts a Payment entity to a PaymentDTO.
+   *
+   * @param payment the payment entity to convert
+   * @return the PaymentDTO, or null if the input is null
+   */
   public PaymentDTO toDTO(Payment payment) {
     if (payment == null) return null;
 
@@ -23,6 +32,12 @@ public class PaymentMapper {
         .build();
   }
 
+  /**
+   * Converts a PaymentRequest to a Payment entity.
+   *
+   * @param request the PaymentRequest to convert
+   * @return the Payment entity, or null if the input is null
+   */
   public Payment toEntity(PaymentRequest request) {
     if (request == null) return null;
 
