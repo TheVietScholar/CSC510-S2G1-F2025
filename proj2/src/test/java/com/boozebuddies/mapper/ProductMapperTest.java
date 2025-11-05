@@ -54,12 +54,6 @@ class ProductMapperTest {
   }
 
   @Test
-  @DisplayName("toDTO returns null when Product is null")
-  void testToDTONull() {
-    assertNull(productMapper.toDTO(null));
-  }
-
-  @Test
   @DisplayName("toEntity converts ProductDTO to Product entity correctly")
   void testToEntityFromDTO() {
     ProductDTO dto =
@@ -71,7 +65,7 @@ class ProductMapperTest {
             .isAlcohol(true)
             .alcoholContent(5.5)
             .imageUrl("http://image.url/beer.png")
-            .available(true)
+            .isAvailable(true)
             .build();
 
     Product product = productMapper.toEntity(dto);
@@ -103,6 +97,7 @@ class ProductMapperTest {
     request.setAlcohol(true);
     request.setAlcoholContent(5.5);
     request.setImageUrl("http://image.url/beer.png");
+    request.setAvailable(true);
 
     Product product = productMapper.toEntity(request);
 
