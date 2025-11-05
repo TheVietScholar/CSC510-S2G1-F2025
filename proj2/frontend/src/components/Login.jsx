@@ -1,53 +1,86 @@
 import React, { useState } from 'react'
 
 const Login = ({ onLogin }) => {
-  const [username, setUsername] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    e.stopPropagation()
     setLoading(true)
-
+  
     try {
-      // Call your backend authentication endpoint
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ email, password }),
       })
-
+  
       if (response.ok) {
         const userData = await response.json()
-        onLogin(userData) // userData should include role, merchantId, etc.
+        console.log('Login successful:', userData)
+        
+        // Store token and role from the nested user object
+        if (userData.token) {
+          localStorage.setItem('authToken', userData.token)
+        }
+        if (userData.user && userData.user.roles) {
+          localStorage.setItem('userRole', userData.user.roles[0]) // Store first role
+        }
+        
+        onLogin(userData)
       } else {
-        // Fallback to hardcoded for demo
+        console.log('API login failed, using hardcoded auth')
         handleHardcodedAuth()
       }
     } catch (error) {
-      // Fallback to hardcoded for demo
+      console.log('API error, using hardcoded auth:', error)
       handleHardcodedAuth()
     } finally {
       setLoading(false)
     }
   }
-
+  
   const handleHardcodedAuth = () => {
-    // Simple authentication fallback
-    if (username === 'user' && password === 'password') {
-      onLogin({ username: 'user', role: 'user' })
-    } else if (username === 'admin' && password === 'password') {
-      onLogin({ username: 'admin', role: 'admin' })
-    } else if (username === 'merchant1' && password === 'password') {
-      onLogin({ 
-        username: 'merchant1', 
-        role: 'merchant',
-        merchantId: 1 // This should come from the actual merchant user
-      })
+    console.log('Hardcoded auth triggered with:', email, password)
+    
+    if (email === 'admin@boozebuddies.com' && password === 'password') {
+      const token = 'simulated-admin-token-123'
+      localStorage.setItem('authToken', token)
+      localStorage.setItem('userRole', 'ADMIN')
+      
+      const userData = {
+        token: token,
+        user: {
+          email: 'admin@boozebuddies.com',
+          roles: ['ADMIN']
+        }
+      }
+      
+      console.log('Hardcoded login successful, calling onLogin')
+      onLogin(userData)
+    } else if (email === 'merchant1@boozebuddies.com' && password === 'password') {
+      const token = 'simulated-merchant-token-123'
+      localStorage.setItem('authToken', token)
+      localStorage.setItem('userRole', 'MERCHANT_ADMIN')
+      localStorage.setItem('merchantId', '1') // Store merchant ID
+      
+      const userData = {
+        token: token,
+        user: {
+          email: 'merchant1@boozebuddies.com',
+          roles: ['MERCHANT_ADMIN'],
+          merchantId: 1 // Include merchant ID
+        }
+      }
+      
+      console.log('Merchant admin login successful, calling onLogin')
+      onLogin(userData)
     } else {
-      alert('Invalid credentials')
+      alert('Invalid credentials. Use: admin@boozebuddies.com / password OR merchant1@boozebuddies.com / password')
     }
   }
 
@@ -63,15 +96,16 @@ const Login = ({ onLogin }) => {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Username
+              Email
             </label>
             <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-transparent bg-white text-black"
-              placeholder="Enter username"
+              placeholder="Enter email"
               required
+              autoComplete="username" // Helps with browser autofill
             />
           </div>
           
@@ -86,22 +120,23 @@ const Login = ({ onLogin }) => {
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-transparent bg-white text-black"
               placeholder="Enter password"
               required
+              autoComplete="current-password" // Helps with browser autofill
             />
           </div>
           
           <button
             type="submit"
-            className="w-full bg-red-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-red-700 transition duration-200 transform hover:scale-105"
+            disabled={loading}
+            className="w-full bg-red-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-red-700 transition duration-200 transform hover:scale-105 disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
-            Login
+            {loading ? 'Signing in...' : 'Login'}
           </button>
         </form>
         
         <div className="mt-6 text-center text-sm text-gray-600">
           <p>Demo credentials:</p>
-          <p className="font-mono">User: user / password</p>
-          <p className="font-mono">Admin: admin / password</p>
-          <p className="font-mono">Merchant: merchant1 / password</p>
+          <p className="font-mono">Admin: admin@boozebuddies.com / password</p>
+          <p className="font-mono">Merchant: merchant1@boozebuddies.com / password</p>
         </div>
       </div>
     </div>

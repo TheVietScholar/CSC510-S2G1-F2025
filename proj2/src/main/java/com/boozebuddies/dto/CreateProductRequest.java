@@ -1,6 +1,9 @@
 package com.boozebuddies.dto;
 
 import java.math.BigDecimal;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import lombok.*;
 
 @Data
@@ -13,8 +16,14 @@ public class CreateProductRequest {
   private BigDecimal price;
   private String category;
   private Long merchantId;
+
+  @JsonProperty("isAlcohol")  
   private boolean isAlcohol;
+
   private Double alcoholContent;
-  private Integer stockQuantity;
+
+  @JsonProperty("isAvailable")  
+  private boolean isAvailable;
+  
   private String imageUrl;
 }

@@ -77,7 +77,7 @@ public class ProductControllerTest {
             .id(1L)
             .name("Test Beer")
             .price(new BigDecimal("8.99"))
-            .available(true)
+            .isAvailable(true)
             .merchantId(1L)
             .build();
 
@@ -327,7 +327,7 @@ public class ProductControllerTest {
     Product unavailableProduct =
         Product.builder().id(2L).name("Unavailable Beer").available(false).build();
     ProductDTO unavailableDTO =
-        ProductDTO.builder().id(2L).name("Unavailable Beer").available(false).build();
+        ProductDTO.builder().id(2L).name("Unavailable Beer").isAvailable(false).build();
 
     when(productService.getAllProducts()).thenReturn(List.of(testProduct, unavailableProduct));
     when(productMapper.toDTO(testProduct)).thenReturn(testProductDTO);

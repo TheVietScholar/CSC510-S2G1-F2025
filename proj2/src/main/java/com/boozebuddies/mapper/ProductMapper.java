@@ -10,8 +10,6 @@ public class ProductMapper {
 
   /** Convert a Product entity to a ProductDTO for API responses. */
   public ProductDTO toDTO(Product product) {
-    if (product == null) return null;
-
     return ProductDTO.builder()
         .id(product.getId())
         .name(product.getName())
@@ -20,10 +18,10 @@ public class ProductMapper {
         .category(product.getCategory() != null ? product.getCategory().getName() : null)
         .merchantId(product.getMerchant() != null ? product.getMerchant().getId() : null)
         .merchantName(product.getMerchant() != null ? product.getMerchant().getName() : null)
-        .isAlcohol(product.isAlcohol())
+        .isAlcohol(product.isAlcohol())           
         .alcoholContent(product.getAlcoholContent())
+        .isAvailable(product.isAvailable())       
         .imageUrl(product.getImageUrl())
-        .available(product.isAvailable())
         .build();
   }
 
@@ -59,7 +57,7 @@ public class ProductMapper {
         .isAlcohol(request.isAlcohol())
         .alcoholContent(request.getAlcoholContent())
         .imageUrl(request.getImageUrl())
-        .available(true) // default to available for MVP
+        .available(request.isAvailable())
         .build();
   }
 }

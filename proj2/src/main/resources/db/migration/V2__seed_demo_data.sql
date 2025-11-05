@@ -12,17 +12,17 @@ VALUES
 
 -- ============= CATEGORIES ==============
 -- Associate categories with merchants by name lookup to avoid hardcoding IDs
-INSERT INTO categories (name, description, image_url, merchant_id)
+INSERT INTO categories (name, description, image_url)
 VALUES
-  ('Beer', 'All beer styles', NULL, (SELECT id FROM merchants WHERE name='Red Dragon Brewery')),
-  ('Snacks', 'Bar snacks', NULL, (SELECT id FROM merchants WHERE name='Red Dragon Brewery')),
-  ('Cocktails', 'House cocktails', NULL, (SELECT id FROM merchants WHERE name='Black Label Bar')),
-  ('Spirits', 'Premium spirits', NULL, (SELECT id FROM merchants WHERE name='Black Label Bar')),
-  ('Lagers & Ales', 'Taps and bottles', NULL, (SELECT id FROM merchants WHERE name='Crimson Tap House')),
-  ('Wine', 'Red, white and rosé', NULL, (SELECT id FROM merchants WHERE name='Scarlet Wine Bar')),
-  ('Small Plates', 'Shared bites', NULL, (SELECT id FROM merchants WHERE name='Scarlet Wine Bar')),
-  ('Pub Fare', 'Comfort food', NULL, (SELECT id FROM merchants WHERE name='Burgundy Pub')),
-  ('Drafts', 'On tap', NULL, (SELECT id FROM merchants WHERE name='Burgundy Pub'));
+  ('Beer', 'All beer styles', NULL),
+  ('Snacks', 'Bar snacks', NULL),
+  ('Cocktails', 'House cocktails', NULL),
+  ('Spirits', 'Premium spirits', NULL),
+  ('Lagers & Ales', 'Taps and bottles', NULL),
+  ('Wine', 'Red, white and rosé', NULL),
+  ('Small Plates', 'Shared bites', NULL),
+  ('Pub Fare', 'Comfort food', NULL),
+  ('Drafts', 'On tap', NULL);
 
 -- ============= PRODUCTS ==============
 -- Red Dragon Brewery

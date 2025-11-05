@@ -10,4 +10,36 @@ const http = axios.create({
   },
 })
 
+// Add request interceptor to include auth token automatically
+http.interceptors.request.use(
+  (config) => {
+    // Get token from localStorage
+    const token = localStorage.getItem('authToken')
+    
+    // If token exists, add it to the request headers
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
+    
+    return config
+  },
+  (error) => {
+    return Promise.reject(error)
+  }
+)
+
+// Optional: Add response interceptor to handle auth errors
+http.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      // Token expired or invalid - redirect to login
+      localStorage.removeItem('authToken')
+      localStorage.removeItem('userRole')
+      window.location.href = '/login'
+    }
+    return Promise.reject(error)
+  }
+)
+
 export default http

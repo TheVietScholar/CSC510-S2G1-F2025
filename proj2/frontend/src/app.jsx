@@ -16,14 +16,18 @@ function App() {
   const [cart, setCart] = useState([])
 
   const handleLogin = (userData) => {
-    setUser(userData)
+    console.log('Login userData:', userData)
+    setUser(userData.user)
     
-    // Redirect based on user type
-    if (userData.role === 'admin') {
+    // Check if user has ADMIN or MERCHANT_ADMIN role
+    if (userData.user && userData.user.roles && userData.user.roles.includes('ADMIN')) {
+      console.log('User is ADMIN, redirecting to admin-home')
       setCurrentPage('admin-home')
-    } else if (userData.role === 'merchant') {
+    } else if (userData.user && userData.user.roles && userData.user.roles.includes('MERCHANT_ADMIN')) {
+      console.log('User is MERCHANT_ADMIN, redirecting to merchant-home')
       setCurrentPage('merchant-home')
     } else {
+      console.log('User is regular user, redirecting to home')
       setCurrentPage('home')
     }
   }
@@ -128,7 +132,8 @@ function App() {
       case 'admin-home':
         return <AdminHome onLogout={handleLogout} />
       case 'merchant-home':
-        return <MerchantHome onLogout={handleLogout} />
+        console.log('Rendering: MerchantHome')
+        return <MerchantHome user={user} onLogout={handleLogout} /> // Add user prop
       default:
         return <Login onLogin={handleLogin} />
     }

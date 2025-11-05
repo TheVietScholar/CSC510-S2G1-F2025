@@ -15,9 +15,9 @@ public class ProductDTO {
   private String category;
   private Long merchantId;
   private String merchantName;
-  private boolean isAlcohol;
+  private boolean isAlcohol;        
   private Double alcoholContent;
+  private boolean isAvailable;     
   private String imageUrl;
-  private boolean available;
-  private Integer volume; // in milliliters
+  private Integer volume;
 }

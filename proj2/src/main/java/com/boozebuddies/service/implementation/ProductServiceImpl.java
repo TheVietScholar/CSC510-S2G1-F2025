@@ -101,9 +101,7 @@ public class ProductServiceImpl implements ProductService {
       throw new RuntimeException("Product not found with id: " + id);
     }
 
-    // Soft delete for MVP: mark as unavailable instead of removing from DB
-    product.setAvailable(false);
-    productRepository.save(product);
+    productRepository.deleteById(id);
   }
 
   @Override

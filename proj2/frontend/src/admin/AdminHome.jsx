@@ -39,6 +39,7 @@ const AdminHome = ({ onLogout }) => {
   }
 
   const handleCreateMerchant = async (e) => {
+    console.log('Create merchant clicked!')
     e.preventDefault()
     if (!newMerchant.name || !newMerchant.cuisineType) {
       alert('Please fill in required fields: Name and Cuisine Type')
@@ -89,6 +90,7 @@ const AdminHome = ({ onLogout }) => {
   }
 
   const handleDeleteMerchant = async (id) => {
+    console.log('Delete merchant clicked!')
     if (!window.confirm('Are you sure you want to delete this merchant?')) {
       return
     }

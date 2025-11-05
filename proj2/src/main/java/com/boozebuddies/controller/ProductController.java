@@ -3,11 +3,13 @@ package com.boozebuddies.controller;
 import com.boozebuddies.dto.ApiResponse;
 import com.boozebuddies.dto.CreateProductRequest;
 import com.boozebuddies.dto.ProductDTO;
+import com.boozebuddies.entity.Merchant;
 import com.boozebuddies.entity.Product;
 import com.boozebuddies.entity.User;
 import com.boozebuddies.mapper.ProductMapper;
 import com.boozebuddies.model.Role;
 import com.boozebuddies.security.annotation.RoleAnnotations.*;
+import com.boozebuddies.service.MerchantService;
 import com.boozebuddies.service.PermissionService;
 import com.boozebuddies.service.ProductService;
 import java.util.List;
@@ -27,6 +29,7 @@ public class ProductController {
   private final ProductService productService;
   private final ProductMapper productMapper;
   private final PermissionService permissionService;
+  private final MerchantService merchantService;
 
   // ==================== PUBLIC ENDPOINTS (No authentication required) ====================
 
@@ -168,19 +171,43 @@ public class ProductController {
   public ResponseEntity<ApiResponse<ProductDTO>> addProduct(
       @RequestBody CreateProductRequest request, Authentication authentication) {
     try {
+      System.out.println("DEBUG - CreateProductRequest received:");
+      System.out.println("  isAlcohol: " + request.isAlcohol());
+      System.out.println("  alcoholContent: " + request.getAlcoholContent());
+      
       User user = permissionService.getAuthenticatedUser(authentication);
+      
+      // Convert request to entity FIRST
       Product product = productMapper.toEntity(request);
-
+      
+      // Debug after mapping
+      System.out.println("DEBUG - After ProductMapper.toEntity():");
+      System.out.println("  isAlcohol: " + product.isAlcohol());
+      
+      // THEN set the merchant relationship using the merchantId from request
+      Merchant merchant = merchantService.getMerchantById(request.getMerchantId());
+      if (merchant == null) {
+        return ResponseEntity.badRequest().body(ApiResponse.error("Merchant not found"));
+      }
+      product.setMerchant(merchant);
+      
+      // Debug after setting merchant
+      System.out.println("DEBUG - After setting merchant:");
+      System.out.println("  isAlcohol: " + product.isAlcohol());
+      
       // Validate merchant ownership for merchant admins
       if (user != null && user.hasRole(Role.MERCHANT_ADMIN)) {
-        if (product.getMerchant() == null
-            || product.getMerchant().getId() == null
-            || !user.ownsMerchant(product.getMerchant().getId())) {
+        if (!user.ownsMerchant(request.getMerchantId())) {
           throw new AccessDeniedException("You can only add products for your own merchant");
         }
       }
 
       Product savedProduct = productService.addProduct(product);
+      
+      // Debug after saving
+      System.out.println("DEBUG - After productService.addProduct():");
+      System.out.println("  isAlcohol: " + savedProduct.isAlcohol());
+      
       return ResponseEntity.status(HttpStatus.CREATED)
           .body(
               ApiResponse.success(productMapper.toDTO(savedProduct), "Product added successfully"));
