@@ -7,18 +7,30 @@ import java.math.BigDecimal;
 import java.util.regex.Pattern;
 import org.springframework.stereotype.Service;
 
+/**
+ * Implementation of the {@link ValidationService} that provides input and business validation
+ * methods for users and products within the BoozeBuddies application.
+ *
+ * <p>This service includes validation for user registration fields such as email, password, and
+ * age, as well as product-related fields like pricing, category, and availability.
+ */
 @Service
 public class ValidationServiceImpl implements ValidationService {
 
-  // Simple regex for email validation
+  /** Regular expression pattern for validating standard email formats. */
   private static final Pattern EMAIL_PATTERN =
       Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
 
-  // Password must be at least 8 characters, contain letters and numbers
+  /** Regular expression pattern for validating strong passwords (minimum 8 characters, letters, and numbers). */
   private static final Pattern PASSWORD_PATTERN =
       Pattern.compile("^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{8,}$");
 
-  /** Validates a user's email format. */
+  /**
+   * Validates that an email string is in a proper format.
+   *
+   * @param email The email address to validate.
+   * @return {@code true} if the email matches the expected pattern; {@code false} otherwise.
+   */
   @Override
   public boolean validateEmail(String email) {
     if (email == null || email.isEmpty()) {
@@ -27,7 +39,14 @@ public class ValidationServiceImpl implements ValidationService {
     return EMAIL_PATTERN.matcher(email).matches();
   }
 
-  /** Validates a user's password strength. */
+  /**
+   * Validates the strength of a user's password.
+   *
+   * <p>Passwords must be at least 8 characters long and contain both letters and digits.
+   *
+   * @param password The password to validate.
+   * @return {@code true} if the password meets the required criteria; {@code false} otherwise.
+   */
   @Override
   public boolean validatePassword(String password) {
     if (password == null || password.isEmpty()) {
@@ -36,7 +55,12 @@ public class ValidationServiceImpl implements ValidationService {
     return PASSWORD_PATTERN.matcher(password).matches();
   }
 
-  /** Validates that a user is of legal drinking age (21+). */
+  /**
+   * Validates that a user meets the legal drinking age requirement (21 years or older).
+   *
+   * @param user The {@link User} whose age will be validated.
+   * @return {@code true} if the user is 21 or older; {@code false} if underage or data is missing.
+   */
   @Override
   public boolean validateAge(User user) {
     if (user == null || user.getDateOfBirth() == null) {
@@ -48,7 +72,14 @@ public class ValidationServiceImpl implements ValidationService {
     return age.getYears() >= legalAge;
   }
 
-  /** Validates that a product has valid data. */
+  /**
+   * Validates that a product contains valid and complete information.
+   *
+   * <p>Checks that the product name is provided, price is non-negative, and category is defined.
+   *
+   * @param product The {@link Product} to validate.
+   * @return {@code true} if the product data is valid; {@code false} otherwise.
+   */
   @Override
   public boolean validateProduct(Product product) {
     if (product == null) {
@@ -60,14 +91,18 @@ public class ValidationServiceImpl implements ValidationService {
     if (product.getPrice() == null || product.getPrice().compareTo(BigDecimal.ZERO) < 0) {
       return false;
     }
-
     if (product.getCategory() == null || product.getCategory().getName().isEmpty()) {
       return false;
     }
     return true;
   }
 
-  /** Validates if a product is available for ordering. */
+  /**
+   * Validates whether a product is currently available for ordering.
+   *
+   * @param product The {@link Product} to check.
+   * @return {@code true} if the product is available; {@code false} otherwise.
+   */
   @Override
   public boolean validateProductAvailability(Product product) {
     if (product == null) {
