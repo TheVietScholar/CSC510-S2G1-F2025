@@ -14,6 +14,7 @@ import com.boozebuddies.entity.User;
 import com.boozebuddies.mapper.ProductMapper;
 import com.boozebuddies.model.Role;
 import com.boozebuddies.security.JwtAuthenticationFilter;
+import com.boozebuddies.service.MerchantService;
 import com.boozebuddies.service.PermissionService;
 import com.boozebuddies.service.ProductService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -51,6 +52,7 @@ public class ProductControllerTest {
   @MockBean private ProductService productService;
   @MockBean private ProductMapper productMapper;
   @MockBean private PermissionService permissionService;
+  @MockBean private MerchantService merchantService;
 
   private Product testProduct;
   private ProductDTO testProductDTO;
@@ -77,7 +79,7 @@ public class ProductControllerTest {
             .id(1L)
             .name("Test Beer")
             .price(new BigDecimal("8.99"))
-            .available(true)
+            .isAvailable(true)
             .merchantId(1L)
             .build();
 
@@ -327,7 +329,7 @@ public class ProductControllerTest {
     Product unavailableProduct =
         Product.builder().id(2L).name("Unavailable Beer").available(false).build();
     ProductDTO unavailableDTO =
-        ProductDTO.builder().id(2L).name("Unavailable Beer").available(false).build();
+        ProductDTO.builder().id(2L).name("Unavailable Beer").isAvailable(false).build();
 
     when(productService.getAllProducts()).thenReturn(List.of(testProduct, unavailableProduct));
     when(productMapper.toDTO(testProduct)).thenReturn(testProductDTO);
@@ -427,7 +429,8 @@ public class ProductControllerTest {
   void addProduct_AdminSuccess() throws Exception {
     when(permissionService.getAuthenticatedUser(any())).thenReturn(adminUser);
     when(productMapper.toEntity(any(CreateProductRequest.class))).thenReturn(testProduct);
-    when(productService.addProduct(testProduct)).thenReturn(testProduct);
+    when(merchantService.getMerchantById(1L)).thenReturn(testMerchant);
+    when(productService.addProduct(any(Product.class))).thenReturn(testProduct);
     when(productMapper.toDTO(testProduct)).thenReturn(testProductDTO);
 
     mockMvc
@@ -446,7 +449,8 @@ public class ProductControllerTest {
   void addProduct_MerchantAdminOwnMerchant() throws Exception {
     when(permissionService.getAuthenticatedUser(any())).thenReturn(merchantAdminUser);
     when(productMapper.toEntity(any(CreateProductRequest.class))).thenReturn(testProduct);
-    when(productService.addProduct(testProduct)).thenReturn(testProduct);
+    when(merchantService.getMerchantById(1L)).thenReturn(testMerchant);
+    when(productService.addProduct(any(Product.class))).thenReturn(testProduct);
     when(productMapper.toDTO(testProduct)).thenReturn(testProductDTO);
 
     mockMvc
@@ -462,18 +466,24 @@ public class ProductControllerTest {
   @DisplayName(
       "POST /api/products should return 403 when merchant admin tries to add to other merchant")
   void addProduct_MerchantAdminAccessDenied() throws Exception {
-    Merchant otherMerchant = Merchant.builder().id(999L).name("Other Merchant").build();
-    Product productForOtherMerchant = Product.builder().merchant(otherMerchant).build();
+    CreateProductRequest otherMerchantRequest =
+        CreateProductRequest.builder()
+            .name("New Beer")
+            .price(new BigDecimal("7.99"))
+            .isAlcohol(true)
+            .alcoholContent(5.5)
+            .merchantId(999L)
+            .build();
 
     when(permissionService.getAuthenticatedUser(any())).thenReturn(merchantAdminUser);
-    when(productMapper.toEntity(any(CreateProductRequest.class)))
-        .thenReturn(productForOtherMerchant);
+    when(productMapper.toEntity(any(CreateProductRequest.class))).thenReturn(testProduct);
+    when(merchantService.getMerchantById(999L)).thenReturn(Merchant.builder().id(999L).build());
 
     mockMvc
         .perform(
             post("/api/products")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(testCreateRequest)))
+                .content(objectMapper.writeValueAsString(otherMerchantRequest)))
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$.success").value(false))
         .andExpect(
@@ -484,40 +494,20 @@ public class ProductControllerTest {
   }
 
   @Test
-  @DisplayName("POST /api/products should return 403 when product has null merchant")
-  void addProduct_NullMerchant() throws Exception {
-    Product productWithNullMerchant = Product.builder().merchant(null).build();
-
-    when(permissionService.getAuthenticatedUser(any())).thenReturn(merchantAdminUser);
-    when(productMapper.toEntity(any(CreateProductRequest.class)))
-        .thenReturn(productWithNullMerchant);
+  @DisplayName("POST /api/products should return 400 when merchant not found")
+  void addProduct_MerchantNotFound() throws Exception {
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(adminUser);
+    when(productMapper.toEntity(any(CreateProductRequest.class))).thenReturn(testProduct);
+    when(merchantService.getMerchantById(1L)).thenReturn(null);
 
     mockMvc
         .perform(
             post("/api/products")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(testCreateRequest)))
-        .andExpect(status().isForbidden())
-        .andExpect(jsonPath("$.success").value(false));
-  }
-
-  @Test
-  @DisplayName("POST /api/products should return 403 when merchant ID is null")
-  void addProduct_NullMerchantId() throws Exception {
-    Merchant merchantWithNullId = Merchant.builder().id(null).build();
-    Product productWithNullMerchantId = Product.builder().merchant(merchantWithNullId).build();
-
-    when(permissionService.getAuthenticatedUser(any())).thenReturn(merchantAdminUser);
-    when(productMapper.toEntity(any(CreateProductRequest.class)))
-        .thenReturn(productWithNullMerchantId);
-
-    mockMvc
-        .perform(
-            post("/api/products")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(testCreateRequest)))
-        .andExpect(status().isForbidden())
-        .andExpect(jsonPath("$.success").value(false));
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(jsonPath("$.message").value("Merchant not found"));
   }
 
   @Test
@@ -525,7 +515,9 @@ public class ProductControllerTest {
   void addProduct_Exception() throws Exception {
     when(permissionService.getAuthenticatedUser(any())).thenReturn(adminUser);
     when(productMapper.toEntity(any(CreateProductRequest.class))).thenReturn(testProduct);
-    when(productService.addProduct(testProduct)).thenThrow(new RuntimeException("Database error"));
+    when(merchantService.getMerchantById(1L)).thenReturn(testMerchant);
+    when(productService.addProduct(any(Product.class)))
+        .thenThrow(new RuntimeException("Database error"));
 
     mockMvc
         .perform(

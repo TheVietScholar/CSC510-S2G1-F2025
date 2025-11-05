@@ -66,9 +66,7 @@ CREATE TABLE categories (
   id          BIGINT PRIMARY KEY AUTO_INCREMENT,
   name        VARCHAR(160) NOT NULL UNIQUE,
   description VARCHAR(500) NULL,
-  image_url   VARCHAR(512) NULL,
-  merchant_id BIGINT       NULL,
-  CONSTRAINT fk_categories_merchant FOREIGN KEY (merchant_id) REFERENCES merchants(id) ON DELETE SET NULL
+  image_url   VARCHAR(512) NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ============= PRODUCTS =================

@@ -190,25 +190,24 @@ class ProductServiceImplTest {
     verify(productRepository, never()).save(any());
   }
 
-  @Test
-  void testDeleteProduct_CallsRepositoryDelete() {
+    @Test
+    void testDeleteProduct_CallsRepositoryDelete() {
+        Product testProduct =
+            Product.builder()
+                .id(1L)
+                .name("To Be Deleted")
+                .price(new BigDecimal("4.99"))
+                .merchant(testMerchant)
+                .category(testCategory)
+                .available(true)
+                .build();
 
-    Product testProduct =
-        Product.builder()
-            .id(1L)
-            .name("To Be Deleted")
-            .price(new BigDecimal("4.99"))
-            .merchant(testMerchant)
-            .category(testCategory)
-            .available(true)
-            .build();
+        when(productRepository.findById(1L)).thenReturn(Optional.of(testProduct));
 
-    when(productRepository.findById(1L)).thenReturn(Optional.of(testProduct));
+        productService.deleteProduct(1L);
 
-    productService.deleteProduct(1L);
-
-    verify(productRepository, times(1)).save(testProduct);
-  }
+        verify(productRepository, times(1)).deleteById(1L);
+    }
 
   @Test
   void testSearchProducts_WithKeyword_ReturnsMatchingProducts() {

@@ -34,16 +34,19 @@ public class Product {
   @JoinColumn(name = "merchant_id", nullable = false)
   private Merchant merchant;
 
-  @Builder.Default
   @Column(name = "is_alcohol")
-  private boolean isAlcohol = false;
+  private boolean isAlcohol;
+
+  public boolean isAlcohol() {  // This should be the getter name
+    return isAlcohol;
+  }
+
+  public void setAlcohol(boolean alcohol) {  // Setter
+    this.isAlcohol = alcohol;
+  }
 
   @Column(name = "alcohol_content")
   private Double alcoholContent;
-
-  // @Builder.Default
-  // @Column(name = "stock_quantity")
-  // private Integer stockQuantity = 0;
 
   @Builder.Default private boolean available = true;
 

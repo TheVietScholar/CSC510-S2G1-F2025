@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Plus, Trash2, LogOut, Package, Beer, Wine, RefreshCw } from 'lucide-react'
 import { products } from '../services/api' // Import from your api barrel
 
-const MerchantHome = ({ onLogout }) => {
+const MerchantHome = ({ user, onLogout }) => { // Add user to props
   const [productsList, setProductsList] = useState([])
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
@@ -17,8 +17,8 @@ const MerchantHome = ({ onLogout }) => {
     category: 'Beer'
   })
 
-  // This would normally come from auth context or props
-  const currentMerchantId = user.merchantId; 
+  // Get merchantId from user prop
+  const currentMerchantId = user?.merchantId || 1; // Fallback to 1 for safety 
 
   // Load products on component mount
   useEffect(() => {
@@ -66,10 +66,13 @@ const MerchantHome = ({ onLogout }) => {
         price: parseFloat(newProduct.price),
         category: newProduct.category,
         merchantId: currentMerchantId,
-        isAlcohol: newProduct.isAlcohol,
+        isAlcohol: newProduct.isAlcohol, 
         alcoholContent: newProduct.isAlcohol ? (parseFloat(newProduct.alcoholContent) || 5.0) : 0.0,
+        isAvailable: true,
         imageUrl: '/default-product.jpg'
       }
+      
+      console.log('DEBUG - Frontend sending:', JSON.stringify(productData, null, 2))
       
       const response = await products.create(productData)
       console.log('Create product response:', response)
@@ -109,6 +112,29 @@ const MerchantHome = ({ onLogout }) => {
     } catch (err) {
       setError('Failed to delete product. Please try again.')
       console.error('Error deleting product:', err)
+    }
+  }
+
+  const handleToggleAvailability = async (id, newAvailability) => {
+    try {
+      setError('')
+      // Call your update product endpoint
+      const response = await products.update(id, { available: newAvailability })
+      console.log('Toggle availability response:', response)
+      
+      // Update local state
+      setProductsList(prev => 
+        prev.map(product => 
+          product.id === id 
+            ? { ...product, available: newAvailability }
+            : product
+        )
+      )
+      
+      alert(`Product ${newAvailability ? 'made available' : 'marked unavailable'}!`)
+    } catch (err) {
+      setError('Failed to update product availability. Please try again.')
+      console.error('Error toggling availability:', err)
     }
   }
 
@@ -311,32 +337,38 @@ const MerchantHome = ({ onLogout }) => {
                               <span className="bg-gray-700 text-gray-300 px-2 py-1 rounded text-sm">
                                 {product.category}
                               </span>
-                              {product.alcohol && (
+                              {product.isAlcohol && (
                                 <span className="bg-red-600 text-white px-2 py-1 rounded text-sm flex items-center">
                                   <Beer className="w-3 h-3 mr-1" />
                                   {product.alcoholContent}% ABV
                                 </span>
                               )}
-                              <span className={`px-2 py-1 rounded text-sm ${
-                                product.available 
-                                  ? 'bg-green-600 text-white' 
-                                  : 'bg-red-600 text-white'
-                              }`}>
-                                {product.available ? 'Available' : 'Out of Stock'}
-                              </span>
+                              {/* AVAILABILITY TOGGLE */}
+                              <button
+                                onClick={() => handleToggleAvailability(product.id, !product.available)}
+                                className={`px-3 py-1 rounded text-sm font-semibold transition duration-200 ${
+                                  product.available 
+                                    ? 'bg-green-600 hover:bg-green-700 text-white' 
+                                    : 'bg-red-600 hover:bg-red-700 text-white'
+                                }`}
+                              >
+                                {product.available ? 'Available' : 'Unavailable'}
+                              </button>
                             </div>
                             <p className="text-gray-600 text-xs mt-2">ID: {product.id}</p>
                           </div>
                         </div>
                       </div>
-                      <button
-                        onClick={() => handleDeleteProduct(product.id)}
-                        disabled={creating}
-                        className="text-red-500 hover:text-red-400 transition duration-200 p-2 ml-4 disabled:opacity-50 disabled:cursor-not-allowed"
-                        title="Delete product"
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
+                      <div className="flex flex-col space-y-2">
+                        <button
+                          onClick={() => handleDeleteProduct(product.id)}
+                          disabled={creating}
+                          className="text-red-500 hover:text-red-400 transition duration-200 p-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Delete product"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -348,12 +380,12 @@ const MerchantHome = ({ onLogout }) => {
         {/* Stats */}
         <div className="mt-8 grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="bg-gray-900 border border-gray-700 rounded-lg p-6 text-center">
-            <div className="text-2xl font-bold text-red-600">{products.length}</div>
+            <div className="text-2xl font-bold text-red-600">{productsList.length}</div>
             <div className="text-gray-400">Total Products</div>
           </div>
           <div className="bg-gray-900 border border-gray-700 rounded-lg p-6 text-center">
             <div className="text-2xl font-bold text-red-600">
-              {products.filter(p => p.category === 'Beer').length}
+              {productsList.filter(p => p.category === 'Beer').length}
             </div>
             <div className="text-gray-400 flex items-center justify-center">
               <Beer className="w-4 h-4 mr-1" /> Beers
@@ -361,7 +393,7 @@ const MerchantHome = ({ onLogout }) => {
           </div>
           <div className="bg-gray-900 border border-gray-700 rounded-lg p-6 text-center">
             <div className="text-2xl font-bold text-red-600">
-              {products.filter(p => p.category === 'Wine').length}
+              {productsList.filter(p => p.category === 'Wine').length}
             </div>
             <div className="text-gray-400 flex items-center justify-center">
               <Wine className="w-4 h-4 mr-1" /> Wines
@@ -369,7 +401,7 @@ const MerchantHome = ({ onLogout }) => {
           </div>
           <div className="bg-gray-900 border border-gray-700 rounded-lg p-6 text-center">
             <div className="text-2xl font-bold text-red-600">
-              {products.filter(p => !p.alcohol).length}
+              {productsList.filter(p => !p.isAlcohol).length}
             </div>
             <div className="text-gray-400">Non-Alcoholic</div>
           </div>
