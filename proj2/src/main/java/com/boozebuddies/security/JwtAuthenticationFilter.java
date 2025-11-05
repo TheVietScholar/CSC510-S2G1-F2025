@@ -21,8 +21,24 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 /**
- * Filter that validates JWT from the Authorization header and sets the SecurityContext. Runs once
- * per request before Spring Security checks authorization.
+ * A Spring Security filter that validates and processes JWTs (JSON Web Tokens)
+ * from the {@code Authorization} header on each HTTP request.
+ *
+ * <p>This filter runs once per request, before any authorization logic executes.
+ * It extracts a JWT, validates it, and if valid, sets the corresponding
+ * authenticated {@link org.springframework.security.core.Authentication}
+ * object into the {@link SecurityContextHolder}.
+ *
+ * <p>Public endpoints (such as login or registration) are automatically excluded
+ * from filtering for efficiency.
+ *
+ * <p>Typical request flow:
+ * <ol>
+ *   <li>Client sends an HTTP request with {@code Authorization: Bearer <token>}</li>
+ *   <li>The filter extracts and validates the token</li>
+ *   <li>If valid, the user is authenticated and the SecurityContext is populated</li>
+ *   <li>If invalid, the request proceeds unauthenticated (secured endpoints will reject it)</li>
+ * </ol>
  */
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -35,11 +51,31 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
   private final JwtUtil jwtUtil;
   private final UserService userService;
 
+  /**
+   * Constructs a {@code JwtAuthenticationFilter} with the required dependencies.
+   *
+   * @param jwtUtil      utility class for JWT generation, extraction, and validation
+   * @param userService  service for retrieving user details from the database
+   */
   public JwtAuthenticationFilter(JwtUtil jwtUtil, UserService userService) {
     this.jwtUtil = jwtUtil;
     this.userService = userService;
   }
 
+  /**
+   * Core filtering logic that executes once per request.
+   *
+   * <p>Extracts the JWT from the Authorization header, validates it,
+   * and if valid, builds an authentication object to set in the security context.
+   * If the token is missing or invalid, the filter simply passes the request along
+   * without setting authentication (allowing public endpoints to function).
+   *
+   * @param request     the current HTTP request
+   * @param response    the current HTTP response
+   * @param filterChain the filter chain to continue execution
+   * @throws ServletException if a servlet-specific error occurs
+   * @throws IOException if an input/output error occurs
+   */
   @Override
   protected void doFilterInternal(
       @NonNull HttpServletRequest request,
@@ -62,7 +98,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     filterChain.doFilter(request, response);
   }
 
-  /** Extract JWT token from Authorization header */
+  /**
+   * Extracts the JWT token from the {@code Authorization} header.
+   *
+   * <p>Expected header format:
+   * {@code Authorization: Bearer <token>}
+   *
+   * @param request the current HTTP request
+   * @return the extracted JWT token, or {@code null} if not present or improperly formatted
+   */
   private String extractJwtFromRequest(HttpServletRequest request) {
     String bearerToken = request.getHeader(AUTHORIZATION_HEADER);
     if (bearerToken != null && bearerToken.startsWith(BEARER_PREFIX)) {
@@ -71,34 +115,50 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     return null;
   }
 
+  /**
+   * Validates a JWT and sets the authentication context if valid.
+   *
+   * <p>This method extracts the username and roles from the token, optionally checks
+   * the user record in the database for activeness, and validates the token's signature.
+   * Upon success, an authenticated {@link UsernamePasswordAuthenticationToken}
+   * is placed into the {@link SecurityContextHolder}.
+   *
+   * @param token   the JWT to authenticate
+   * @param request the current HTTP request
+   */
   private void authenticateToken(String token, HttpServletRequest request) {
     String username = jwtUtil.extractUsername(token);
     if (username == null) return;
 
-    // Extract roles directly from token
+    // Extract roles from token claims
     Set<String> roles = jwtUtil.extractRoles(token);
 
-    // Build authorities
+    // Map role names to Spring Security authorities
     Set<SimpleGrantedAuthority> authorities =
         roles.stream()
             .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
             .collect(Collectors.toSet());
 
-    // You can skip DB lookup if you trust the token
-    // Optional: verify the user still exists / active
+    // Optionally verify user is active in the system
     User user = userService.findByEmail(username).orElse(null);
     if (user == null || !user.isActive() || !jwtUtil.validateToken(token, user)) {
       log.debug("JWT invalid or user inactive");
       return;
     }
 
+    // Build authentication token and set security context
     UsernamePasswordAuthenticationToken authentication =
         new UsernamePasswordAuthenticationToken(user, null, authorities);
     authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
     SecurityContextHolder.getContext().setAuthentication(authentication);
   }
 
-  /** Build Spring Security authorities from user roles */
+  /**
+   * Constructs a set of {@link SimpleGrantedAuthority} objects from the user’s roles.
+   *
+   * @param user the {@link User} entity containing assigned roles
+   * @return a set of authorities prefixed with {@code ROLE_}, or an empty set if none
+   */
   private Set<SimpleGrantedAuthority> buildAuthorities(User user) {
     if (user.getRoles() == null || user.getRoles().isEmpty()) {
       return Collections.emptySet();
@@ -109,11 +169,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         .collect(Collectors.toSet());
   }
 
-  /** Skip JWT filter for public endpoints (optional optimization) */
+  /**
+   * Determines whether the filter should skip processing for the given request.
+   *
+   * <p>Used to bypass JWT validation for public or system endpoints such as login,
+   * registration, health checks, and database consoles.
+   *
+   * @param request the current HTTP request
+   * @return {@code true} if the request path matches a public endpoint; otherwise {@code false}
+   */
   @Override
   protected boolean shouldNotFilter(HttpServletRequest request) {
     String path = request.getRequestURI();
-    // Skip filter for public auth endpoints
+    // Skip filter for public authentication and monitoring endpoints
     return path.startsWith("/api/auth/login")
         || path.startsWith("/api/auth/register")
         || path.startsWith("/api/auth/refresh")
