@@ -19,23 +19,51 @@ import org.springframework.web.context.request.WebRequest;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+  /**
+   * Handles UserAlreadyExistsException.
+   *
+   * @param ex the exception
+   * @param request the web request
+   * @return error response with HTTP 409 CONFLICT
+   */
   @ExceptionHandler(UserAlreadyExistsException.class)
   public ResponseEntity<Object> handleUserAlreadyExists(
       UserAlreadyExistsException ex, WebRequest request) {
     return buildErrorResponse(ex.getMessage(), HttpStatus.CONFLICT, request);
   }
 
+  /**
+   * Handles UserNotFoundException.
+   *
+   * @param ex the exception
+   * @param request the web request
+   * @return error response with HTTP 404 NOT FOUND
+   */
   @ExceptionHandler(UserNotFoundException.class)
   public ResponseEntity<Object> handleUserNotFound(UserNotFoundException ex, WebRequest request) {
     return buildErrorResponse(ex.getMessage(), HttpStatus.NOT_FOUND, request);
   }
 
+  /**
+   * Handles InvalidCredentialsException.
+   *
+   * @param ex the exception
+   * @param request the web request
+   * @return error response with HTTP 401 UNAUTHORIZED
+   */
   @ExceptionHandler(InvalidCredentialsException.class)
   public ResponseEntity<Object> handleInvalidCredentials(
       InvalidCredentialsException ex, WebRequest request) {
     return buildErrorResponse(ex.getMessage(), HttpStatus.UNAUTHORIZED, request);
   }
 
+  /**
+   * Handles InvalidTokenException.
+   *
+   * @param ex the exception
+   * @param request the web request
+   * @return error response with HTTP 401 UNAUTHORIZED
+   */
   @ExceptionHandler(InvalidTokenException.class)
   public ResponseEntity<Object> handleInvalidToken(InvalidTokenException ex, WebRequest request) {
     return buildErrorResponse(ex.getMessage(), HttpStatus.UNAUTHORIZED, request);
@@ -43,16 +71,37 @@ public class GlobalExceptionHandler {
 
   // ==================== NEW HANDLERS FOR ROLE MANAGEMENT ====================
 
+  /**
+   * Handles ValidationException.
+   *
+   * @param ex the exception
+   * @param request the web request
+   * @return error response with HTTP 400 BAD REQUEST
+   */
   @ExceptionHandler(ValidationException.class)
   public ResponseEntity<Object> handleValidation(ValidationException ex, WebRequest request) {
     return buildErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST, request);
   }
 
+  /**
+   * Handles UnauthorizedException.
+   *
+   * @param ex the exception
+   * @param request the web request
+   * @return error response with HTTP 403 FORBIDDEN
+   */
   @ExceptionHandler(UnauthorizedException.class)
   public ResponseEntity<Object> handleUnauthorized(UnauthorizedException ex, WebRequest request) {
     return buildErrorResponse(ex.getMessage(), HttpStatus.FORBIDDEN, request);
   }
 
+  /**
+   * Handles AccessDeniedException.
+   *
+   * @param ex the exception
+   * @param request the web request
+   * @return error response with HTTP 403 FORBIDDEN
+   */
   @ExceptionHandler(AccessDeniedException.class)
   public ResponseEntity<Object> handleAccessDenied(AccessDeniedException ex, WebRequest request) {
     return buildErrorResponse("Access denied: " + ex.getMessage(), HttpStatus.FORBIDDEN, request);
@@ -60,24 +109,52 @@ public class GlobalExceptionHandler {
 
   // ==================== GENERIC HANDLERS ====================
 
+  /**
+   * Handles IllegalArgumentException.
+   *
+   * @param ex the exception
+   * @param request the web request
+   * @return error response with HTTP 400 BAD REQUEST
+   */
   @ExceptionHandler(IllegalArgumentException.class)
   public ResponseEntity<Object> handleIllegalArgument(
       IllegalArgumentException ex, WebRequest request) {
     return buildErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST, request);
   }
 
+  /**
+   * Handles HttpMessageNotReadableException.
+   *
+   * @param ex the exception
+   * @param request the web request
+   * @return error response with HTTP 400 BAD REQUEST
+   */
   @ExceptionHandler(HttpMessageNotReadableException.class)
   public ResponseEntity<Object> handleHttpMessageNotReadable(
       HttpMessageNotReadableException ex, WebRequest request) {
     return buildErrorResponse("Invalid or missing request body", HttpStatus.BAD_REQUEST, request);
   }
 
+  /**
+   * Handles HttpMediaTypeNotSupportedException.
+   *
+   * @param ex the exception
+   * @param request the web request
+   * @return error response with HTTP 400 BAD REQUEST
+   */
   @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
   public ResponseEntity<Object> handleMediaTypeNotSupported(
       HttpMediaTypeNotSupportedException ex, WebRequest request) {
     return buildErrorResponse("Content type not supported", HttpStatus.BAD_REQUEST, request);
   }
 
+  /**
+   * Handles all other exceptions not specifically handled.
+   *
+   * @param ex the exception
+   * @param request the web request
+   * @return error response with HTTP 500 INTERNAL SERVER ERROR
+   */
   @ExceptionHandler(Exception.class)
   public ResponseEntity<Object> handleGlobalException(Exception ex, WebRequest request) {
     return buildErrorResponse(
@@ -86,7 +163,14 @@ public class GlobalExceptionHandler {
         request);
   }
 
-  /** Builds a standardized error response. */
+  /**
+   * Builds a standardized error response.
+   *
+   * @param message the error message
+   * @param status the HTTP status
+   * @param request the web request
+   * @return the error response entity
+   */
   private ResponseEntity<Object> buildErrorResponse(
       String message, HttpStatus status, WebRequest request) {
     Map<String, Object> body = new LinkedHashMap<>();
