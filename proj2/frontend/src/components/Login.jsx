@@ -28,57 +28,41 @@ const Login = ({ onLogin }) => {
           dateOfBirth: dateOfBirth || null,
         }
         const response = await auth.register(registerData)
-        
-        // Ensure we have response data
-        const responseData = response?.data || response
-        
-        if (responseData) {
+        if (response.data && response.data.user) {
           // Store tokens from registration response
-          if (responseData.token) {
-            localStorage.setItem('bb_token', responseData.token)
-            console.log('Token stored:', responseData.token.substring(0, 20) + '...')
-          } else {
-            console.warn('No token in registration response')
+          if (response.data.token) {
+            localStorage.setItem('bb_token', response.data.token)
           }
-          
-          if (responseData.refreshToken) {
-            localStorage.setItem('bb_refresh_token', responseData.refreshToken)
+          if (response.data.refreshToken) {
+            localStorage.setItem('bb_refresh_token', response.data.refreshToken)
           }
-          
-          // Verify token is stored before proceeding
-          const storedToken = localStorage.getItem('bb_token')
-          if (!storedToken) {
-            throw new Error('Failed to store authentication token')
-          }
-          
-          onLogin(responseData)
+          onLogin(response.data)
         } else {
-          throw new Error('Invalid registration response')
+          // Auto-login after successful registration if tokens not in response
+          const loginResponse = await auth.login({ email, password })
+          if (loginResponse.data) {
+            // Store tokens from login response
+            if (loginResponse.data.token) {
+              localStorage.setItem('bb_token', loginResponse.data.token)
+            }
+            if (loginResponse.data.refreshToken) {
+              localStorage.setItem('bb_refresh_token', loginResponse.data.refreshToken)
+            }
+            onLogin(loginResponse.data)
+          }
         }
       } else {
         // Sign in
         const response = await auth.login({ email, password })
-        const responseData = response?.data || response
-        
-        if (responseData) {
+        if (response.data) {
           // Store tokens in localStorage
-          if (responseData.token) {
-            localStorage.setItem('bb_token', responseData.token)
-            console.log('Login token stored')
+          if (response.data.token) {
+            localStorage.setItem('bb_token', response.data.token)
           }
-          if (responseData.refreshToken) {
-            localStorage.setItem('bb_refresh_token', responseData.refreshToken)
+          if (response.data.refreshToken) {
+            localStorage.setItem('bb_refresh_token', response.data.refreshToken)
           }
-          
-          // Verify token is stored
-          const storedToken = localStorage.getItem('bb_token')
-          if (!storedToken) {
-            throw new Error('Failed to store authentication token')
-          }
-          
-          onLogin(responseData)
-        } else {
-          throw new Error('Invalid login response')
+          onLogin(response.data)
         }
       }
     } catch (err) {
