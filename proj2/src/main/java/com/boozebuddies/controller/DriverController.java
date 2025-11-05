@@ -19,6 +19,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * REST controller for managing drivers and driver operations.
+ */
 @RestController
 @RequestMapping("/api/drivers")
 @RequiredArgsConstructor
@@ -30,6 +33,12 @@ public class DriverController {
 
   // ==================== ADMIN ENDPOINTS ====================
 
+  /**
+   * Registers a new driver. Admin only.
+   *
+   * @param driverDTO the driver data
+   * @return the registered driver
+   */
   @PostMapping("/register")
   @IsAdmin
   public ResponseEntity<ApiResponse<DriverDTO>> registerDriver(@RequestBody DriverDTO driverDTO) {
@@ -49,6 +58,13 @@ public class DriverController {
     }
   }
 
+  /**
+   * Updates a driver's certification status. Admin only.
+   *
+   * @param driverId the driver ID
+   * @param status the new certification status
+   * @return the updated driver
+   */
   @PutMapping("/{driverId}/certification")
   @IsAdmin
   public ResponseEntity<ApiResponse<DriverDTO>> updateCertificationStatus(
@@ -67,6 +83,11 @@ public class DriverController {
     }
   }
 
+  /**
+   * Retrieves all available drivers. Admin only.
+   *
+   * @return a list of available drivers
+   */
   @GetMapping("/available")
   @IsAdmin
   public ResponseEntity<ApiResponse<List<DriverDTO>>> getAvailableDrivers() {
@@ -83,6 +104,12 @@ public class DriverController {
     }
   }
 
+  /**
+   * Retrieves a driver by ID. Admin only.
+   *
+   * @param driverId the driver ID
+   * @return the driver with the specified ID
+   */
   @GetMapping("/{driverId}")
   @IsAdmin
   public ResponseEntity<ApiResponse<DriverDTO>> getDriverById(@PathVariable Long driverId) {
@@ -102,6 +129,11 @@ public class DriverController {
     }
   }
 
+  /**
+   * Retrieves all drivers. Admin only.
+   *
+   * @return a list of all drivers
+   */
   @GetMapping
   @IsAdmin
   public ResponseEntity<ApiResponse<List<DriverDTO>>> getAllDrivers() {
@@ -119,6 +151,12 @@ public class DriverController {
 
   // ==================== DRIVER ENDPOINTS ====================
 
+  /**
+   * Retrieves the authenticated driver's profile.
+   *
+   * @param authentication the authentication object
+   * @return the driver's profile
+   */
   @GetMapping("/my-profile")
   @IsSelfOrAdmin
   public ResponseEntity<ApiResponse<DriverDTO>> getMyProfile(Authentication authentication) {
@@ -128,6 +166,13 @@ public class DriverController {
     return ResponseEntity.ok(ApiResponse.success(driverDTO, "Your profile retrieved successfully"));
   }
 
+  /**
+   * Updates the authenticated driver's availability status.
+   *
+   * @param available whether the driver is available for deliveries
+   * @param authentication the authentication object
+   * @return the updated driver profile
+   */
   @PutMapping("/my-profile/availability")
   @IsSelfOrAdmin
   public ResponseEntity<ApiResponse<DriverDTO>> updateMyAvailability(
@@ -151,6 +196,14 @@ public class DriverController {
     }
   }
 
+  /**
+   * Updates the authenticated driver's current location.
+   *
+   * @param latitude the current latitude
+   * @param longitude the current longitude
+   * @param authentication the authentication object
+   * @return the updated driver profile
+   */
   @PutMapping("/my-profile/location")
   @IsDriver
   public ResponseEntity<ApiResponse<DriverDTO>> updateMyLocation(

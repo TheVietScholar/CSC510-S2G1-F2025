@@ -9,23 +9,43 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * REST controller for handling authentication operations.
+ */
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
 
   private final AuthenticationService authenticationService;
 
+  /**
+   * Constructor injection for the authentication service.
+   *
+   * @param authenticationService the authentication service
+   */
   @Autowired
   public AuthController(AuthenticationService authenticationService) {
     this.authenticationService = authenticationService;
   }
 
+  /**
+   * Registers a new user.
+   *
+   * @param request the registration request containing user details
+   * @return the authentication response with JWT tokens
+   */
   @PostMapping("/register")
   public ResponseEntity<AuthenticationResponse> register(@RequestBody RegisterUserRequest request) {
     AuthenticationResponse resp = authenticationService.register(request);
     return ResponseEntity.ok(resp);
   }
 
+  /**
+   * Authenticates a user and returns JWT tokens.
+   *
+   * @param request the authentication request with email and password
+   * @return the authentication response with JWT tokens
+   */
   @PostMapping("/login")
   public ResponseEntity<AuthenticationResponse> login(@RequestBody AuthenticationRequest request) {
     // Removed unreachable "request == null" check - Spring handles this via
@@ -38,6 +58,11 @@ public class AuthController {
     return ResponseEntity.ok(resp);
   }
 
+  /**
+   * Authentication method for logging in as driver
+   * @param request the refresh token request
+   * @return the authentication response with new JWT tokens 
+   */
   @PostMapping("/driver/login")
   public ResponseEntity<AuthenticationResponse> driverLogin(
       @RequestBody AuthenticationRequest request) {
@@ -49,12 +74,24 @@ public class AuthController {
     return ResponseEntity.ok(resp);
   }
 
+  /**
+   * Refreshes an expired access token using a refresh token.
+   *
+   * @param request the refresh token request
+   * @return the authentication response with new JWT tokens
+   */
   @PostMapping("/refresh")
   public ResponseEntity<AuthenticationResponse> refresh(@RequestBody RefreshTokenRequest request) {
     AuthenticationResponse resp = authenticationService.refreshToken(request);
     return ResponseEntity.ok(resp);
   }
 
+  /**
+   * Logs out a user by invalidating their tokens.
+   *
+   * @param userId the ID of the user to log out
+   * @return a no content response
+   */
   @PostMapping("/logout/{userId}")
   public ResponseEntity<Void> logout(@PathVariable Long userId) {
     authenticationService.logout(userId);
