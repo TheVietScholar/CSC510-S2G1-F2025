@@ -5,10 +5,18 @@ import com.boozebuddies.dto.ProductDTO;
 import com.boozebuddies.entity.Product;
 import org.springframework.stereotype.Component;
 
+/**
+ * Mapper for converting between Product entities and Product-related DTO objects.
+ */
 @Component
 public class ProductMapper {
 
-  /** Convert a Product entity to a ProductDTO for API responses. */
+  /**
+   * Convert a Product entity to a ProductDTO for API responses.
+   *
+   * @param product the product entity to convert
+   * @return the ProductDTO, or null if the input is null
+   */
   public ProductDTO toDTO(Product product) {
     return ProductDTO.builder()
         .id(product.getId())
@@ -26,8 +34,11 @@ public class ProductMapper {
   }
 
   /**
-   * Convert a ProductDTO to a Product entity. (Relationships like category/merchant should be set
-   * in the service layer.)
+   * Convert a ProductDTO to a Product entity. Relationships like category/merchant should be set
+   * in the service layer.
+   *
+   * @param dto the ProductDTO to convert
+   * @return the Product entity, or null if the input is null
    */
   public Product toEntity(ProductDTO dto) {
     if (dto == null) return null;
@@ -45,7 +56,10 @@ public class ProductMapper {
   }
 
   /**
-   * Convert a CreateProductRequest to a Product entity. (Used for creating new products via API.)
+   * Convert a CreateProductRequest to a Product entity. Used for creating new products via API.
+   *
+   * @param request the CreateProductRequest to convert
+   * @return the Product entity, or null if the input is null
    */
   public Product toEntity(CreateProductRequest request) {
     if (request == null) return null;
