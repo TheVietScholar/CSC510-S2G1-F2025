@@ -13,34 +13,93 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+/**
+ * Repository interface for managing {@link Payment} entities within the BoozeBuddies platform.
+ * <p>
+ * Extends {@link JpaRepository} to provide standard CRUD operations, along with custom query
+ * methods for retrieving and analyzing payment records based on user, order, status,
+ * and transaction data.
+ * </p>
+ *
+ * <p>This repository supports both paginated and non-paginated queries for use in
+ * reporting dashboards, user billing history, and back-office analytics.</p>
+ *
+ * <p>Common use cases include:</p>
+ * <ul>
+ *   <li>Retrieving payments by associated order or user</li>
+ *   <li>Filtering transactions by {@link PaymentStatus}</li>
+ *   <li>Aggregating payment totals for financial summaries</li>
+ *   <li>Tracking refunds, failed payments, and pending authorizations</li>
+ * </ul>
+ */
 @Repository
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
-  // Find by associated order id
+  /**
+   * Retrieves the payment associated with a specific order.
+   *
+   * @param orderId the ID of the related order
+   * @return an {@link Optional} containing the associated {@link Payment}, if found
+   */
   @Query("SELECT p FROM Payment p WHERE p.order.id = :orderId")
   Optional<Payment> findByOrder_Id(Long orderId);
 
-  // Find payments for a user with pagination
+  /**
+   * Retrieves a paginated list of payments associated with a specific user.
+   *
+   * @param userId   the ID of the user
+   * @param pageable pagination and sorting configuration
+   * @return a {@link Page} of payments made by the user
+   */
   @Query("SELECT p FROM Payment p WHERE p.user.id = :userId")
   Page<Payment> findByUser_Id(Long userId, Pageable pageable);
 
-  // Find by payment status
+  /**
+   * Retrieves all payments matching the specified {@link PaymentStatus}.
+   *
+   * @param status the status to filter payments by
+   * @return a list of payments with the given status
+   */
   @Query("SELECT p FROM Payment p WHERE p.status = :status")
   List<Payment> findAllByStatus(PaymentStatus status);
 
-  // Find by status with paging
+  /**
+   * Retrieves a paginated list of payments filtered by {@link PaymentStatus}.
+   *
+   * @param status   the payment status to filter by
+   * @param pageable pagination and sorting configuration
+   * @return a {@link Page} of payments matching the given status
+   */
   @Query("SELECT p FROM Payment p WHERE p.status = :status")
   Page<Payment> findByStatus(PaymentStatus status, Pageable pageable);
 
-  // Find payments in a date range
+  /**
+   * Retrieves a paginated list of payments created within a specified date range.
+   *
+   * @param start     the start of the date range
+   * @param end       the end of the date range
+   * @param pageable  pagination and sorting configuration
+   * @return a {@link Page} of payments created between the given timestamps
+   */
   @Query("SELECT p FROM Payment p WHERE p.createdAt BETWEEN :start AND :end")
   Page<Payment> findByCreatedAtBetween(LocalDateTime start, LocalDateTime end, Pageable pageable);
 
-  // Find by transaction id
+  /**
+   * Retrieves a payment by its unique transaction identifier.
+   *
+   * @param transactionId the external or internal transaction ID
+   * @return an {@link Optional} containing the {@link Payment} if it exists
+   */
   @Query("SELECT p FROM Payment p WHERE p.transactionId = :transactionId")
   Optional<Payment> findByTransactionId(String transactionId);
 
-  // Sum of amounts for a given status (returns zero when no rows)
+  /**
+   * Calculates the total sum of payment amounts for a given {@link PaymentStatus}.
+   * <p>Returns {@code 0} if no matching payments exist.</p>
+   *
+   * @param status the payment status to filter by
+   * @return the total monetary value of payments with the given status
+   */
   @Query("SELECT COALESCE(SUM(p.amount), 0) FROM Payment p WHERE p.status = :status")
   BigDecimal sumAmountByStatus(@Param("status") PaymentStatus status);
 }
