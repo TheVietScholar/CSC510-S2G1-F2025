@@ -1,7 +1,15 @@
 package com.boozebuddies.model;
 
+/**
+ * Enum representing the certification status of a driver.
+ */
 public enum CertificationStatus {
-  PENDING, // Driver has applied but not yet approved
-  APPROVED, // Driver is certified and approved
-  REVOKED // Certification has been revoked
+  /** Driver has applied but not yet approved */
+  PENDING,
+  
+  /** Driver is certified and approved */
+  APPROVED,
+  
+  /** Certification has been revoked */
+  REVOKED
 }
