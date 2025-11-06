@@ -25,6 +25,8 @@
     <google.java.format.version>1.23.0</google.java.format.version>
     <checkstyle.plugin.version>3.3.1</checkstyle.plugin.version>
     <!-- <checkstyle.version>10.17.0</checkstyle.version> -->
+    <!-- Lombok version managed by Spring Boot parent -->
+    <lombok.version>1.18.34</lombok.version>
     <!-- Flyway Maven plugin properties (defaults for Docker) -->
     <flyway.url>
       jdbc:mysql://127.0.0.1:3307/boozebuddies?allowPublicKeyRetrieval=true&amp;useSSL=false</flyway.url>

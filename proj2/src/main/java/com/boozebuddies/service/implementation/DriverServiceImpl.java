@@ -110,12 +110,6 @@ public class DriverServiceImpl implements DriverService {
     return driverRepository.findByUserId(userId);
   }
 
-  /** Retrieves a driver by their associated user ID. */
-  @Override
-  public Optional<Driver> getDriverByUserId(Long userId) {
-    return driverRepository.findByUserId(userId);
-  }
-
   /**
    * Retrieves all registered drivers in the system.
    *
