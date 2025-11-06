@@ -76,6 +76,11 @@ public class OrderController {
       }
 
       User user = permissionService.getAuthenticatedUser(authentication);
+      if (user == null) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            .body(ApiResponse.error("Authentication required"));
+      }
+
       Optional<Order> orderOpt = orderService.getOrderById(orderId);
 
       if (orderOpt.isEmpty()) {

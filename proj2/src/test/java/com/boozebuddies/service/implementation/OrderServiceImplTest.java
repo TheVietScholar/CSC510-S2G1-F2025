@@ -18,6 +18,9 @@ import com.boozebuddies.repository.OrderRepository;
 import com.boozebuddies.repository.UserRepository;
 import com.boozebuddies.service.NotificationService;
 import com.boozebuddies.service.PaymentService;
+import com.boozebuddies.service.ProductService;
+import com.boozebuddies.service.UserService;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,36 +34,60 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class OrderServiceImplTest {
 
-  @Mock private OrderRepository orderRepository;
-  @Mock private UserRepository userRepository;
-  @Mock private MerchantRepository merchantRepository;
-  @Mock private DeliveryRepository deliveryRepository;
-  @Mock private PaymentService paymentService;
-  @Mock private NotificationService notificationService;
+  @Mock
+  private OrderRepository orderRepository;
+  @Mock
+  private UserRepository userRepository;
+  @Mock
+  private MerchantRepository merchantRepository;
+  @Mock
+  private DeliveryRepository deliveryRepository;
+  @Mock
+  private PaymentService paymentService;
+  @Mock
+  private NotificationService notificationService;
+  @Mock
+  private ProductService productService;
+  @Mock
+  private UserService userService;
 
-  @InjectMocks private OrderServiceImpl orderService;
+  @InjectMocks
+  private OrderServiceImpl orderService;
 
   private User user;
   private Merchant merchant;
-  private OrderItem item;
   private Product product;
 
   @BeforeEach
   public void setupCommonMocks() {
     user = mock(User.class);
     merchant = mock(Merchant.class);
-    item = mock(OrderItem.class);
     product = mock(Product.class);
-    // when(item.getProduct()).thenReturn(product);
   }
 
   @Test
   public void createOrder_success_savesProcessesPaymentAndCreatesDelivery() {
     Order order = mock(Order.class);
+    Long productId = 1L;
+    BigDecimal productPrice = new BigDecimal("19.99");
+    Integer quantity = 2;
+
+    // Use a real OrderItem object so setUnitPrice actually stores the value
+    OrderItem realItem = OrderItem.builder()
+        .product(product)
+        .quantity(quantity)
+        .build();
+
+    // Setup product mocks
+    when(product.getId()).thenReturn(productId);
+    when(product.getPrice()).thenReturn(productPrice);
+    when(product.getName()).thenReturn("Test Product");
+    when(product.isAlcohol()).thenReturn(false);
+    when(productService.getProductById(productId)).thenReturn(product);
 
     when(order.getUser()).thenReturn(user);
     when(order.getMerchant()).thenReturn(merchant);
-    when(order.getItems()).thenReturn(List.of(item));
+    when(order.getItems()).thenReturn(List.of(realItem));
     when(order.getTotalAmount()).thenReturn(null);
     when(orderRepository.save(order)).thenReturn(order);
     // Make deliveryRepository.save return the same delivery instance passed
@@ -76,8 +103,8 @@ public class OrderServiceImplTest {
     verify(order).getTotalAmount();
     verify(order).calculateTotal();
 
-    // payment processed and notification sent
-    verify(paymentService).processPayment(order, null);
+    // payment processed with test_payment method
+    verify(paymentService).processPayment(order, "test_payment");
     ArgumentCaptor<Delivery> deliveryCaptor = ArgumentCaptor.forClass(Delivery.class);
     verify(deliveryRepository).save(deliveryCaptor.capture());
     Delivery savedDelivery = deliveryCaptor.getValue();
@@ -87,20 +114,46 @@ public class OrderServiceImplTest {
 
     // ensure initial status was set to PENDING
     verify(order).setStatus(OrderStatus.PENDING);
+
+    // verify order item initialization - check the real item
+    assertEquals(1, realItem.getLineNo());
+    assertEquals(order, realItem.getOrder());
+    assertEquals(productPrice, realItem.getUnitPrice());
+    assertEquals("Test Product", realItem.getName());
+    assertNotNull(realItem.getSubtotal());
   }
 
   @Test
   public void createOrder_failsWhenAlcoholAndUserNotAgeVerified() {
     Order order = mock(Order.class);
+    Long productId = 1L;
+    Long userId = 1L;
+    BigDecimal productPrice = new BigDecimal("19.99");
+    Integer quantity = 2;
+
+    // Use a real OrderItem object so setUnitPrice actually stores the value
+    OrderItem realItem = OrderItem.builder()
+        .product(product)
+        .quantity(quantity)
+        .build();
+
+    // Setup user mocks
+    when(user.getId()).thenReturn(userId);
+    when(user.isAgeVerified()).thenReturn(false);
+    when(userService.findById(userId)).thenReturn(user);
+
+    // Setup product mocks
+    when(product.getId()).thenReturn(productId);
+    when(product.getPrice()).thenReturn(productPrice);
+    when(product.getName()).thenReturn("Test Beer");
+    when(product.isAlcohol()).thenReturn(true);
+    when(productService.getProductById(productId)).thenReturn(product);
+
     when(order.getUser()).thenReturn(user);
     when(order.getMerchant()).thenReturn(merchant);
-    when(order.getItems()).thenReturn(List.of(item));
-    when(item.getProduct()).thenReturn(product);
-    when(product.isAlcohol()).thenReturn(true);
-    when(user.isAgeVerified()).thenReturn(false);
+    when(order.getItems()).thenReturn(List.of(realItem));
 
-    RuntimeException ex =
-        assertThrows(RuntimeException.class, () -> orderService.createOrder(order));
+    RuntimeException ex = assertThrows(RuntimeException.class, () -> orderService.createOrder(order));
     assertEquals(ex.getMessage(), "User must be age verified for alcohol orders");
     verify(orderRepository, never()).save(any());
   }
@@ -147,8 +200,7 @@ public class OrderServiceImplTest {
     when(orderRepository.findById(id)).thenReturn(Optional.of(order));
     when(order.isValidStatusTransition(any())).thenReturn(false);
 
-    RuntimeException ex =
-        assertThrows(RuntimeException.class, () -> orderService.updateOrderStatus(id, "COMPLETED"));
+    RuntimeException ex = assertThrows(RuntimeException.class, () -> orderService.updateOrderStatus(id, "COMPLETED"));
     assertTrue(ex.getMessage().contains("Invalid status transition"));
     verify(orderRepository).findById(id);
     verify(orderRepository, never()).save(any());
@@ -178,10 +230,11 @@ public class OrderServiceImplTest {
   public void getOrderById_delegatesToRepository() {
     Long id = 5L;
     Order order = mock(Order.class);
-    when(orderRepository.findById(id)).thenReturn(Optional.of(order));
+    when(orderRepository.findByIdWithRelationships(id)).thenReturn(Optional.of(order));
     Optional<Order> found = orderService.getOrderById(id);
     assertTrue(found.isPresent());
     assertSame(order, found.get());
+    verify(orderRepository).findByIdWithRelationships(id);
   }
 
   @Test
@@ -206,8 +259,7 @@ public class OrderServiceImplTest {
     Order order = mock(Order.class);
     when(order.getUser()).thenReturn(null);
 
-    RuntimeException ex =
-        assertThrows(RuntimeException.class, () -> orderService.createOrder(order));
+    RuntimeException ex = assertThrows(RuntimeException.class, () -> orderService.createOrder(order));
     assertEquals("User is required", ex.getMessage());
     verify(orderRepository, never()).save(any());
   }
@@ -218,8 +270,7 @@ public class OrderServiceImplTest {
     when(order.getUser()).thenReturn(user);
     when(order.getMerchant()).thenReturn(null);
 
-    RuntimeException ex =
-        assertThrows(RuntimeException.class, () -> orderService.createOrder(order));
+    RuntimeException ex = assertThrows(RuntimeException.class, () -> orderService.createOrder(order));
     assertEquals("Merchant is required", ex.getMessage());
     verify(orderRepository, never()).save(any());
   }
@@ -231,8 +282,7 @@ public class OrderServiceImplTest {
     when(order.getMerchant()).thenReturn(merchant);
     when(order.getItems()).thenReturn(List.of());
 
-    RuntimeException ex =
-        assertThrows(RuntimeException.class, () -> orderService.createOrder(order));
+    RuntimeException ex = assertThrows(RuntimeException.class, () -> orderService.createOrder(order));
     assertEquals("Order must contain at least one item", ex.getMessage());
     verify(orderRepository, never()).save(any());
   }
@@ -271,9 +321,8 @@ public class OrderServiceImplTest {
     Order order = mock(Order.class);
     when(orderRepository.findById(id)).thenReturn(Optional.of(order));
 
-    RuntimeException ex =
-        assertThrows(
-            RuntimeException.class, () -> orderService.updateOrderStatus(id, "INVALID_STATUS"));
+    RuntimeException ex = assertThrows(
+        RuntimeException.class, () -> orderService.updateOrderStatus(id, "INVALID_STATUS"));
     assertTrue(ex instanceof IllegalArgumentException);
     verify(orderRepository, never()).save(any());
   }
@@ -283,8 +332,7 @@ public class OrderServiceImplTest {
     Long id = 99L;
     when(orderRepository.findById(id)).thenReturn(Optional.empty());
 
-    RuntimeException ex =
-        assertThrows(RuntimeException.class, () -> orderService.updateOrderStatus(id, "CONFIRMED"));
+    RuntimeException ex = assertThrows(RuntimeException.class, () -> orderService.updateOrderStatus(id, "CONFIRMED"));
     assertEquals("Order not found", ex.getMessage());
     verify(orderRepository, never()).save(any());
   }
