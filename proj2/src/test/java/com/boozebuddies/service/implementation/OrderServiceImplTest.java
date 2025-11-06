@@ -35,29 +35,35 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class OrderServiceImplTest {
 
-  @Mock private OrderRepository orderRepository;
-  @Mock private UserRepository userRepository;
-  @Mock private MerchantRepository merchantRepository;
-  @Mock private DeliveryRepository deliveryRepository;
-  @Mock private PaymentService paymentService;
-  @Mock private NotificationService notificationService;
-  @Mock private ProductService productService;
-  @Mock private UserService userService;
+  @Mock
+  private OrderRepository orderRepository;
+  @Mock
+  private UserRepository userRepository;
+  @Mock
+  private MerchantRepository merchantRepository;
+  @Mock
+  private DeliveryRepository deliveryRepository;
+  @Mock
+  private PaymentService paymentService;
+  @Mock
+  private NotificationService notificationService;
+  @Mock
+  private ProductService productService;
+  @Mock
+  private UserService userService;
 
-  @InjectMocks private OrderServiceImpl orderService;
+  @InjectMocks
+  private OrderServiceImpl orderService;
 
   private User user;
   private Merchant merchant;
-  private OrderItem item;
   private Product product;
 
   @BeforeEach
   public void setupCommonMocks() {
     user = mock(User.class);
     merchant = mock(Merchant.class);
-    item = mock(OrderItem.class);
     product = mock(Product.class);
-    // when(item.getProduct()).thenReturn(product);
   }
 
   @Test
@@ -80,7 +86,7 @@ public class OrderServiceImplTest {
 
     when(order.getUser()).thenReturn(user);
     when(order.getMerchant()).thenReturn(merchant);
-    when(order.getItems()).thenReturn(List.of(item));
+    when(order.getItems()).thenReturn(List.of(realItem));
     when(order.getTotalAmount()).thenReturn(null);
     when(orderRepository.save(order)).thenReturn(order);
 
@@ -101,6 +107,13 @@ public class OrderServiceImplTest {
     assertEquals(DeliveryStatus.PENDING, savedDelivery.getStatus());
     verify(notificationService).sendOrderConfirmation(savedDelivery);
     verify(order).setStatus(OrderStatus.PENDING);
+
+    // verify order item initialization - check the real item
+    assertEquals(1, realItem.getLineNo());
+    assertEquals(order, realItem.getOrder());
+    assertEquals(productPrice, realItem.getUnitPrice());
+    assertEquals("Test Product", realItem.getName());
+    assertNotNull(realItem.getSubtotal());
   }
 
   @Test
@@ -129,8 +142,9 @@ public class OrderServiceImplTest {
     when(user.isAgeVerified()).thenReturn(false);
     when(userService.findById(1L)).thenReturn(user); // Service fetches fresh user data
 
-    RuntimeException ex =
-        assertThrows(RuntimeException.class, () -> orderService.createOrder(order));
+    RuntimeException ex = assertThrows(RuntimeException.class, () -> orderService.createOrder(order));
+    assertEquals(ex.getMessage(), "User must be age verified for alcohol orders");
+    RuntimeException ex = assertThrows(RuntimeException.class, () -> orderService.createOrder(order));
     assertEquals("User must be age verified for alcohol orders", ex.getMessage());
     verify(orderRepository, never()).save(any());
   }
@@ -177,8 +191,7 @@ public class OrderServiceImplTest {
     when(orderRepository.findById(id)).thenReturn(Optional.of(order));
     when(order.isValidStatusTransition(any())).thenReturn(false);
 
-    RuntimeException ex =
-        assertThrows(RuntimeException.class, () -> orderService.updateOrderStatus(id, "COMPLETED"));
+    RuntimeException ex = assertThrows(RuntimeException.class, () -> orderService.updateOrderStatus(id, "COMPLETED"));
     assertTrue(ex.getMessage().contains("Invalid status transition"));
     verify(orderRepository).findById(id);
     verify(orderRepository, never()).save(any());
@@ -208,10 +221,11 @@ public class OrderServiceImplTest {
   public void getOrderById_delegatesToRepository() {
     Long id = 5L;
     Order order = mock(Order.class);
-    when(orderRepository.findById(id)).thenReturn(Optional.of(order));
+    when(orderRepository.findByIdWithRelationships(id)).thenReturn(Optional.of(order));
     Optional<Order> found = orderService.getOrderById(id);
     assertTrue(found.isPresent());
     assertSame(order, found.get());
+    verify(orderRepository).findByIdWithRelationships(id);
   }
 
   @Test
@@ -236,8 +250,7 @@ public class OrderServiceImplTest {
     Order order = mock(Order.class);
     when(order.getUser()).thenReturn(null);
 
-    RuntimeException ex =
-        assertThrows(RuntimeException.class, () -> orderService.createOrder(order));
+    RuntimeException ex = assertThrows(RuntimeException.class, () -> orderService.createOrder(order));
     assertEquals("User is required", ex.getMessage());
     verify(orderRepository, never()).save(any());
   }
@@ -248,8 +261,7 @@ public class OrderServiceImplTest {
     when(order.getUser()).thenReturn(user);
     when(order.getMerchant()).thenReturn(null);
 
-    RuntimeException ex =
-        assertThrows(RuntimeException.class, () -> orderService.createOrder(order));
+    RuntimeException ex = assertThrows(RuntimeException.class, () -> orderService.createOrder(order));
     assertEquals("Merchant is required", ex.getMessage());
     verify(orderRepository, never()).save(any());
   }
@@ -261,8 +273,7 @@ public class OrderServiceImplTest {
     when(order.getMerchant()).thenReturn(merchant);
     when(order.getItems()).thenReturn(List.of());
 
-    RuntimeException ex =
-        assertThrows(RuntimeException.class, () -> orderService.createOrder(order));
+    RuntimeException ex = assertThrows(RuntimeException.class, () -> orderService.createOrder(order));
     assertEquals("Order must contain at least one item", ex.getMessage());
     verify(orderRepository, never()).save(any());
   }
@@ -301,9 +312,8 @@ public class OrderServiceImplTest {
     Order order = mock(Order.class);
     when(orderRepository.findById(id)).thenReturn(Optional.of(order));
 
-    RuntimeException ex =
-        assertThrows(
-            RuntimeException.class, () -> orderService.updateOrderStatus(id, "INVALID_STATUS"));
+    RuntimeException ex = assertThrows(
+        RuntimeException.class, () -> orderService.updateOrderStatus(id, "INVALID_STATUS"));
     assertTrue(ex instanceof IllegalArgumentException);
     verify(orderRepository, never()).save(any());
   }
@@ -313,8 +323,7 @@ public class OrderServiceImplTest {
     Long id = 99L;
     when(orderRepository.findById(id)).thenReturn(Optional.empty());
 
-    RuntimeException ex =
-        assertThrows(RuntimeException.class, () -> orderService.updateOrderStatus(id, "CONFIRMED"));
+    RuntimeException ex = assertThrows(RuntimeException.class, () -> orderService.updateOrderStatus(id, "CONFIRMED"));
     assertEquals("Order not found", ex.getMessage());
     verify(orderRepository, never()).save(any());
   }
@@ -431,8 +440,7 @@ public class OrderServiceImplTest {
 
     when(order.getItems()).thenReturn(List.of(item));
 
-    RuntimeException ex =
-        assertThrows(RuntimeException.class, () -> orderService.createOrder(order));
+    RuntimeException ex = assertThrows(RuntimeException.class, () -> orderService.createOrder(order));
     assertEquals("Product not found with id: 999", ex.getMessage());
     verify(orderRepository, never()).save(any());
   }
@@ -445,8 +453,7 @@ public class OrderServiceImplTest {
     when(order.getMerchant()).thenReturn(merchant);
     when(order.getItems()).thenReturn(null);
 
-    RuntimeException ex =
-        assertThrows(RuntimeException.class, () -> orderService.createOrder(order));
+    RuntimeException ex = assertThrows(RuntimeException.class, () -> orderService.createOrder(order));
     assertEquals("Order must contain at least one item", ex.getMessage());
     verify(orderRepository, never()).save(any());
   }
@@ -713,7 +720,8 @@ public class OrderServiceImplTest {
     verify(orderRepository).findByDriverId(driverId);
   }
 
-  // ==================== UPDATE ORDER STATUS - ADDITIONAL STATUS TESTS ====================
+  // ==================== UPDATE ORDER STATUS - ADDITIONAL STATUS TESTS
+  // ====================
 
   @Test
   public void updateOrderStatus_readyForPickup_noNotification() {
@@ -1219,8 +1227,7 @@ public class OrderServiceImplTest {
     when(order.isValidStatusTransition(OrderStatus.COMPLETED)).thenReturn(false);
     when(order.getStatus()).thenReturn(OrderStatus.PENDING);
 
-    RuntimeException ex =
-        assertThrows(RuntimeException.class, () -> orderService.updateOrderStatus(id, "COMPLETED"));
+    RuntimeException ex = assertThrows(RuntimeException.class, () -> orderService.updateOrderStatus(id, "COMPLETED"));
 
     assertTrue(ex.getMessage().contains("Invalid status transition"));
     assertTrue(ex.getMessage().contains("PENDING"));
