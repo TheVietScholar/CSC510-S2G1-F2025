@@ -19,4 +19,7 @@ public interface AuthenticationService {
 
   /** Logout user by revoking refresh token. */
   void logout(Long userId);
+
+  /** Authenticate driver and return JWT tokens. */
+  AuthenticationResponse driverLogin(AuthenticationRequest request);
 }

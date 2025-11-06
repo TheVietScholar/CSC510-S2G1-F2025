@@ -38,6 +38,17 @@ public class AuthController {
     return ResponseEntity.ok(resp);
   }
 
+  @PostMapping("/driver/login")
+  public ResponseEntity<AuthenticationResponse> driverLogin(
+      @RequestBody AuthenticationRequest request) {
+    if (request.getEmail() == null || request.getPassword() == null) {
+      throw new IllegalArgumentException("Email and password are required");
+    }
+
+    AuthenticationResponse resp = authenticationService.driverLogin(request);
+    return ResponseEntity.ok(resp);
+  }
+
   @PostMapping("/refresh")
   public ResponseEntity<AuthenticationResponse> refresh(@RequestBody RefreshTokenRequest request) {
     AuthenticationResponse resp = authenticationService.refreshToken(request);

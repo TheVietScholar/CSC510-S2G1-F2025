@@ -79,6 +79,54 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     if (request == null || request.getEmail() == null || request.getPassword() == null) {
       throw new InvalidCredentialsException("Email and password are required");
     }
+     
+
+    // Find user by email
+    User user =
+        userService
+            .findByEmail(request.getEmail())
+            .orElseThrow(() -> new InvalidCredentialsException("Invalid email or password"));
+
+    // Verify password
+    if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
+      throw new InvalidCredentialsException("Invalid email or password");
+    }
+
+    // Check if account is active
+    if (!user.isActive()) {
+      throw new InvalidCredentialsException("Account is deactivated. Please contact support.");
+    }
+
+    // Update last login timestamp
+    userService.updateLastLogin(user.getId());
+
+    // Generate tokens
+    String accessToken = jwtUtil.generateToken(user);
+    String refreshToken = jwtUtil.generateToken(user);
+    LocalDateTime refreshExpiry =
+        Instant.now()
+            .plusMillis(refreshExpirationMs)
+            .atZone(ZoneId.systemDefault())
+            .toLocalDateTime();
+
+    // Save refresh token
+    userService.saveRefreshToken(user.getId(), refreshToken, refreshExpiry);
+
+    return AuthenticationResponse.builder()
+        .token(accessToken)
+        .refreshToken(refreshToken)
+        .user(userMapper.toDTO(user))
+        .message("Login successful")
+        .build();
+  }
+
+  @Override
+  @Transactional
+  public AuthenticationResponse driverLogin(AuthenticationRequest request) {
+    // Validate request
+    if (request == null || request.getEmail() == null || request.getPassword() == null) {
+      throw new InvalidCredentialsException("Email and password are required");
+    }
 
     // Find user by email
     User user =
