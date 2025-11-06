@@ -278,4 +278,245 @@ class UserServiceImplTest {
     boolean result = userService.deleteUser(1L);
     assertFalse(result);
   }
+
+    // ==================== registerUser - Additional Coverage ====================
+
+  @Test
+  void testRegisterUser_NameNull() {
+      testRequest.setName(null);
+      assertThrows(IllegalArgumentException.class, () -> userService.registerUser(testRequest));
+  }
+
+  @Test
+  void testRegisterUser_NameEmpty() {
+      testRequest.setName("");
+      assertThrows(IllegalArgumentException.class, () -> userService.registerUser(testRequest));
+  }
+
+  @Test
+  void testRegisterUser_PhoneNull() {
+      testRequest.setPhone(null);
+      assertThrows(IllegalArgumentException.class, () -> userService.registerUser(testRequest));
+  }
+
+  @Test
+  void testRegisterUser_PhoneEmpty() {
+      testRequest.setPhone("");
+      assertThrows(IllegalArgumentException.class, () -> userService.registerUser(testRequest));
+  }
+
+  @Test
+  void testRegisterUser_DateOfBirthNull() {
+      testRequest.setDateOfBirth(null);
+      assertThrows(IllegalArgumentException.class, () -> userService.registerUser(testRequest));
+  }
+
+  @Test
+  void testRegisterUser_InvalidPassword() {
+      when(validationService.validateEmail(anyString())).thenReturn(true);
+      when(validationService.validatePassword(anyString())).thenReturn(false);
+      
+      assertThrows(IllegalArgumentException.class, () -> userService.registerUser(testRequest));
+  }
+
+  // ==================== updateUser - Complete Coverage ====================
+
+  @Test
+  void testUpdateUser_Success_AllFields() {
+      User updatedData = User.builder()
+          .name("Updated Name")
+          .email("newemail@example.com")
+          .phone("9999999999")
+          .dateOfBirth(LocalDate.of(1995, 6, 10))
+          .address("123 New Street")
+          .build();
+
+      when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+      when(userRepository.existsByEmailIgnoreCase("newemail@example.com")).thenReturn(false);
+      when(validationService.validateAge(any(User.class))).thenReturn(true);
+      when(userRepository.save(any(User.class))).thenReturn(testUser);
+
+      User result = userService.updateUser(1L, updatedData);
+
+      assertNotNull(result);
+      verify(userRepository, times(1)).save(any(User.class));
+  }
+
+  @Test
+  void testUpdateUser_OnlyName() {
+      User updatedData = User.builder().name("Only Name Changed").build();
+
+      when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+      when(userRepository.save(any(User.class))).thenReturn(testUser);
+
+      User result = userService.updateUser(1L, updatedData);
+
+      assertNotNull(result);
+      assertEquals("Only Name Changed", testUser.getName());
+  }
+
+  @Test
+  void testUpdateUser_OnlyEmail() {
+      User updatedData = User.builder().email("newemail@example.com").build();
+
+      when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+      when(userRepository.existsByEmailIgnoreCase("newemail@example.com")).thenReturn(false);
+      when(userRepository.save(any(User.class))).thenReturn(testUser);
+
+      User result = userService.updateUser(1L, updatedData);
+
+      assertNotNull(result);
+      assertEquals("newemail@example.com", testUser.getEmail());
+      assertFalse(testUser.isEmailVerified()); // Email verification reset
+  }
+
+  @Test
+  void testUpdateUser_EmailAlreadyExists() {
+      User updatedData = User.builder().email("existing@example.com").build();
+
+      when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+      when(userRepository.existsByEmailIgnoreCase("existing@example.com")).thenReturn(true);
+
+      assertThrows(UserAlreadyExistsException.class, 
+          () -> userService.updateUser(1L, updatedData));
+  }
+
+  @Test
+  void testUpdateUser_SameEmail_NoError() {
+      // User updating with their own email should not throw error
+      User updatedData = User.builder()
+          .email("john@example.com") // Same as testUser's email
+          .name("Updated Name")
+          .build();
+
+      when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+      when(userRepository.save(any(User.class))).thenReturn(testUser);
+
+      User result = userService.updateUser(1L, updatedData);
+
+      assertNotNull(result);
+      // Email should remain verified since it's the same email
+  }
+
+  @Test
+  void testUpdateUser_OnlyPhone() {
+      User updatedData = User.builder().phone("1111111111").build();
+
+      when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+      when(userRepository.save(any(User.class))).thenReturn(testUser);
+
+      User result = userService.updateUser(1L, updatedData);
+
+      assertNotNull(result);
+      assertEquals("1111111111", testUser.getPhone());
+  }
+
+  @Test
+  void testUpdateUser_OnlyDateOfBirth() {
+      User updatedData = User.builder().dateOfBirth(LocalDate.of(2000, 1, 1)).build();
+
+      when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+      when(validationService.validateAge(any(User.class))).thenReturn(false);
+      when(userRepository.save(any(User.class))).thenReturn(testUser);
+
+      User result = userService.updateUser(1L, updatedData);
+
+      assertNotNull(result);
+      assertEquals(LocalDate.of(2000, 1, 1), testUser.getDateOfBirth());
+      assertFalse(testUser.isAgeVerified()); // Age verification updated
+  }
+
+  @Test
+  void testUpdateUser_OnlyAddress() {
+      User updatedData = User.builder().address("456 Updated St").build();
+
+      when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+      when(userRepository.save(any(User.class))).thenReturn(testUser);
+
+      User result = userService.updateUser(1L, updatedData);
+
+      assertNotNull(result);
+      assertEquals("456 Updated St", testUser.getAddress());
+  }
+
+  @Test
+  void testUpdateUser_NullUser() {
+      assertThrows(IllegalArgumentException.class, 
+          () -> userService.updateUser(1L, null));
+  }
+
+  @Test
+  void testUpdateUser_UserNotFound() {
+      User updatedData = User.builder().name("Test").build();
+      
+      when(userRepository.findById(999L)).thenReturn(Optional.empty());
+
+      assertThrows(UserNotFoundException.class, 
+          () -> userService.updateUser(999L, updatedData));
+  }
+
+  @Test
+  void testUpdateUser_EmptyName_NotUpdated() {
+      User updatedData = User.builder().name("").build();
+
+      when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+      when(userRepository.save(any(User.class))).thenReturn(testUser);
+
+      User result = userService.updateUser(1L, updatedData);
+
+      // Empty name should not update
+      assertEquals("John Doe", testUser.getName());
+  }
+
+  @Test
+  void testUpdateUser_EmptyEmail_NotUpdated() {
+      User updatedData = User.builder().email("").build();
+
+      when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+      when(userRepository.save(any(User.class))).thenReturn(testUser);
+
+      User result = userService.updateUser(1L, updatedData);
+
+      // Empty email should not update
+      assertEquals("john@example.com", testUser.getEmail());
+  }
+
+  @Test
+  void testUpdateUser_EmptyPhone_NotUpdated() {
+      User updatedData = User.builder().phone("").build();
+
+      when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+      when(userRepository.save(any(User.class))).thenReturn(testUser);
+
+      User result = userService.updateUser(1L, updatedData);
+
+      // Empty phone should not update
+      assertEquals("1234567890", testUser.getPhone());
+  }
+
+  // ==================== isRefreshTokenValid - Additional Coverage ====================
+
+  @Test
+  void testIsRefreshTokenValid_False_UserInactive() {
+      testUser.setActive(false);
+      testUser.setRefreshTokenExpiryDate(LocalDateTime.now().plusDays(1));
+      when(userRepository.findByRefreshToken("token")).thenReturn(Optional.of(testUser));
+
+      boolean result = userService.isRefreshTokenValid("token");
+
+      assertFalse(result);
+  }
+
+  @Test
+  void testIsRefreshTokenValid_False_NullExpiryDate() {
+      testUser.setActive(true);
+      testUser.setRefreshTokenExpiryDate(null);
+      when(userRepository.findByRefreshToken("token")).thenReturn(Optional.of(testUser));
+
+      boolean result = userService.isRefreshTokenValid("token");
+
+      assertFalse(result);
+  }
+
+
 }
