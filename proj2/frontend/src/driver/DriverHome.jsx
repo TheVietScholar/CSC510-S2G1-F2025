@@ -8,16 +8,22 @@ const DriverHome = ({ user, onLogout }) => {
     const [isOnline, setIsOnline] = useState(false);
     const [availableOrders, setAvailableOrders] = useState([]);
     const [assignedOrders, setAssignedOrders] = useState([]);
-    const [driverLocation, setDriverLocation] = useState({ lat: 37.7749, lng: -122.4194 });
+    const [driverLocation, setDriverLocation] = useState(null);
     const [filter, setFilter] = useState("all");
 
     const driverId = user.id
 
     useEffect(() => {
-        // Fetch initial available orders from server
-        fetchAvailableOrders();
+        // Fetch driver profile first to get location, then fetch orders
         fetchDriverProfile();
     }, [driverId]);
+
+    useEffect(() => {
+        // Fetch available orders when driver location is available
+        if (driverLocation) {
+            fetchAvailableOrders();
+        }
+    }, [driverLocation]);
 
     const fetchDriverProfile = async () => {
         try {
@@ -26,17 +32,40 @@ const DriverHome = ({ user, onLogout }) => {
             const response = await drivers.getMyProfile()
             console.log('My Driver Profile response:', response)
 
-            if(response.data && response.data.data) {
+            const driverData = response.data?.data || response.data;
+            if (driverData) {
+                // Update driver location from profile
+                if (driverData.currentLatitude != null && driverData.currentLongitude != null) {
+                    setDriverLocation({ 
+                        lat: driverData.currentLatitude, 
+                        lng: driverData.currentLongitude 
+                    });
+                    console.log('Driver location set from profile:', driverData.currentLatitude, driverData.currentLongitude);
+                } else {
+                    // Default to Raleigh if driver location not set in database
+                    setDriverLocation({ lat: 35.7800, lng: -78.6380 });
+                    console.warn('No driver location found in profile, using default Raleigh location. Please update your location.');
+                }
+                // Update online status if available
+                if (driverData.isAvailable !== undefined) {
+                    setIsOnline(driverData.isAvailable);
+                }
             }
 
         } catch(err) {
-
+            console.error('Error fetching driver profile:', err);
+            // Set default location on error
+            setDriverLocation({ lat: 35.7800, lng: -78.6380 });
         } finally {
-
+            setLoading(false);
         }
     }
 
     const fetchAvailableOrders = async () => {
+        if (!driverLocation) {
+            console.warn('Cannot fetch orders: driver location not set');
+            return;
+        }
         try {
             setLoading(true)
             setError('')
@@ -102,7 +131,11 @@ const DriverHome = ({ user, onLogout }) => {
         return true;
     });
 
-    
+    function formatDistance(km) {
+        if (km == null) return "N/A";
+        if (km < 1) return `${(km * 1000).toFixed(0)}m`;
+        return `${km.toFixed(1)}km`;
+    }
 
     return (
         <div>
@@ -152,14 +185,21 @@ const DriverHome = ({ user, onLogout }) => {
 
                         <div>
                             {filteredAvailable.length === 0 && <div>No available orders at the moment.</div>}
-                            {filteredAvailable.map(order => (
+                            {filteredAvailable.map(order => {
+                                const itemNames = order.items && Array.isArray(order.items) 
+                                    ? order.items
+                                        .filter(item => item != null) // Filter out null items
+                                        .map(item => item.productName || item.name || 'Unknown')
+                                        .join(", ")
+                                    : "No items";
+                                return (
                                 <div key={order.id}>
                                     <div>
-                                        <div style={{ fontWeight: 700 }}>{order.restaurant}</div>
-                                        <div style={{ color: "#6b7280", fontSize: 13 }}>{order.items.join(", ")}</div>
+                                        <div style={{ fontWeight: 700 }}>{order.merchantName || "Unknown Merchant"}</div>
+                                        <div style={{ color: "#6b7280", fontSize: 13 }}>{itemNames}</div>
                                         <div style={{ display: "flex", gap: 8, marginTop: 6, alignItems: "center" }}>
-                                            <div >{formatDistance(order.distanceKm)}</div>
-                                            <div >{order.etaMin} min</div>
+                                            <div>{order.distanceKm != null ? formatDistance(order.distanceKm) : "N/A"}</div>
+                                            <div>{order.etaMin != null ? `${order.etaMin} min` : "N/A"}</div>
                                         </div>
                                     </div>
 
@@ -176,13 +216,23 @@ const DriverHome = ({ user, onLogout }) => {
                                             Accept
                                         </button>
                                         <button
-                                            onClick={() => alert(`Order details:\nRestaurant: ${order.restaurant}\nCustomer: ${order.customer}\nItems: ${order.items.join(", ")}`)}
+                                            onClick={() => {
+                                                const details = `Order #${order.id}\n` +
+                                                    `Restaurant: ${order.merchantName || "Unknown"}\n` +
+                                                    `Customer: ${order.customerName || "Unknown"}\n` +
+                                                    `Address: ${order.deliveryAddress || "N/A"}\n` +
+                                                    `Items: ${itemNames}\n` +
+                                                    `Total: $${order.totalAmount || "0.00"}\n` +
+                                                    `Distance: ${order.distanceKm != null ? formatDistance(order.distanceKm) : "N/A"}\n` +
+                                                    `ETA: ${order.etaMin != null ? `${order.etaMin} min` : "N/A"}`;
+                                                alert(details);
+                                            }}
                                         >
                                             Details
                                         </button>
                                     </div>
                                 </div>
-                            ))}
+                            )})}
                         </div>
                     </div>
 
@@ -190,16 +240,23 @@ const DriverHome = ({ user, onLogout }) => {
                         <div>Your Assigned Deliveries</div>
                         <div>
                             {assignedOrders.length === 0 && <div>You have no assigned deliveries.</div>}
-                            {assignedOrders.map(order => (
+                            {assignedOrders.map(order => {
+                                const itemNames = order.items && Array.isArray(order.items)
+                                    ? order.items
+                                        .filter(item => item != null) // Filter out null items
+                                        .map(item => item.productName || item.name || 'Unknown')
+                                        .join(", ")
+                                    : "No items";
+                                return (
                                 <div key={order.id} >
                                     <div>
-                                        <div style={{ fontWeight: 700 }}>{order.restaurant} → {order.customer}</div>
-                                        <div style={{ color: "#6b7280", fontSize: 13 }}>{order.items.join(", ")}</div>
+                                        <div style={{ fontWeight: 700 }}>{order.merchantName || "Unknown"} → {order.customerName || "Unknown"}</div>
+                                        <div style={{ color: "#6b7280", fontSize: 13 }}>{itemNames}</div>
                                         <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
                                             <div >
-                                                {order.status.replace("_", " ")}
+                                                {order.status ? order.status.replace("_", " ") : "Unknown"}
                                             </div>
-                                            <div style={{ color: "#6b7280", fontSize: 13 }}>{order.distanceKm ? formatDistance(order.distanceKm) : ""}</div>
+                                            <div style={{ color: "#6b7280", fontSize: 13 }}>{order.distanceKm != null ? formatDistance(order.distanceKm) : ""}</div>
                                         </div>
                                     </div>
 
@@ -219,12 +276,12 @@ const DriverHome = ({ user, onLogout }) => {
                                                 Complete
                                             </button>
                                         )}
-                                        <button onClick={() => alert(`Contact ${order.customer}`)}>
+                                        <button onClick={() => alert(`Contact ${order.customerName || "Customer"}`)}>
                                             Contact
                                         </button>
                                     </div>
                                 </div>
-                            ))}
+                            )})}
                         </div>
                     </div>
                 </div>
@@ -238,13 +295,37 @@ const DriverHome = ({ user, onLogout }) => {
                         <div style={{ marginTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                             <div>
                                 <div style={{ fontSize: 13, color: "#6b7280" }}>Current location</div>
-                                <div style={{ fontWeight: 700 }}>{driverLocation.lat.toFixed(4)}, {driverLocation.lng.toFixed(4)}</div>
+                                <div style={{ fontWeight: 700 }}>
+                                    {driverLocation ? `${driverLocation.lat.toFixed(4)}, ${driverLocation.lng.toFixed(4)}` : 'Loading...'}
+                                </div>
                             </div>
                             <div>
                                 <button
-                                    onClick={() =>
-                                        setDriverLocation({ lat: driverLocation.lat + (Math.random() - 0.5) * 0.01, lng: driverLocation.lng + (Math.random() - 0.5) * 0.01 })
-                                    }
+                                    onClick={async () => {
+                                        if (navigator.geolocation) {
+                                            navigator.geolocation.getCurrentPosition(
+                                                async (position) => {
+                                                    const newLocation = {
+                                                        lat: position.coords.latitude,
+                                                        lng: position.coords.longitude
+                                                    };
+                                                    setDriverLocation(newLocation);
+                                                    // Update location on server
+                                                    try {
+                                                        await drivers.updateLocation(newLocation.lat, newLocation.lng);
+                                                    } catch (err) {
+                                                        console.error('Failed to update location on server:', err);
+                                                    }
+                                                },
+                                                (error) => {
+                                                    console.error('Geolocation error:', error);
+                                                    alert('Unable to get your location. Please enable location services.');
+                                                }
+                                            );
+                                        } else {
+                                            alert('Geolocation is not supported by your browser.');
+                                        }
+                                    }}
                                 >
                                     Update Location
                                 </button>

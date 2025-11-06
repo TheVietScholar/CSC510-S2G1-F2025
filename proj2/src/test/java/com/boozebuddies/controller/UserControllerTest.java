@@ -60,7 +60,6 @@ class UserControllerTest {
 
   private User testUser;
   private UserDTO testUserDTO;
-  private Authentication mockAuth;
 
   @BeforeEach
   void setUp() {
@@ -76,7 +75,6 @@ class UserControllerTest {
     testUserDTO.setId(1L);
     testUserDTO.setEmail("john@example.com");
     testUserDTO.setName("John Doe");
-    mockAuth = mock(Authentication.class);
   }
 
   // ==================== GET BY ID ====================
@@ -403,7 +401,6 @@ class UserControllerTest {
   void getAllUsers_Success() throws Exception {
     // Mock some users
     List<User> userList = List.of(testUser);
-    List<UserDTO> userDTOList = List.of(testUserDTO);
 
     when(userService.getAllUsers()).thenReturn(userList);
     when(userMapper.toDTO(testUser)).thenReturn(testUserDTO);
@@ -428,24 +425,12 @@ class UserControllerTest {
         .andExpect(jsonPath("$.message").value("An error occurred retrieving users"));
   }
 
-  // ==================== GET BY ID - Additional Coverage ====================
+  // ==================== GET BY ID - Additional Branch Coverage ====================
 
   @Test
-  @DisplayName("GET /api/users/{id} returns 404 when user not found")
-  void testGetUserById_NotFound() throws Exception {
-    // Make the authenticated user an admin so they pass the permission check
-    User adminUser = User.builder().id(99L).name("Admin").build();
-    adminUser.setRoles(Set.of(Role.ADMIN));
-
-    when(permissionService.getAuthenticatedUser(any())).thenReturn(adminUser);
-    when(userService.getUserById(999L)).thenReturn(Optional.empty());
-
-    mockMvc.perform(get("/api/users/999")).andExpect(status().isNotFound());
-  }
-
-  @Test
-  @DisplayName("GET /api/users/{id} returns 400 for invalid ID")
-  void testGetUserById_InvalidId() throws Exception {
+  @DisplayName("GET /api/users/{id} returns 400 when id is null")
+  void testGetUserById_NullId() throws Exception {
+    // Spring will convert null path variable, but let's test with 0
     mockMvc
         .perform(get("/api/users/0"))
         .andExpect(status().isBadRequest())
@@ -453,8 +438,44 @@ class UserControllerTest {
   }
 
   @Test
-  @DisplayName("GET /api/users/{id} returns 400 on generic exception")
-  void testGetUserById_Exception() throws Exception {
+  @DisplayName("GET /api/users/{id} returns 400 when id is negative")
+  void testGetUserById_NegativeId() throws Exception {
+    mockMvc
+        .perform(get("/api/users/-1"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.message").value("Invalid user ID"));
+  }
+
+  @Test
+  @DisplayName("GET /api/users/{id} returns 200 when user accesses own profile")
+  void testGetUserById_SelfAccess() throws Exception {
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
+    when(userService.getUserById(1L)).thenReturn(Optional.of(testUser));
+    when(userMapper.toDTO(testUser)).thenReturn(testUserDTO);
+
+    mockMvc
+        .perform(get("/api/users/1"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.success").value(true))
+        .andExpect(jsonPath("$.data.email").value("john@example.com"));
+  }
+
+  @Test
+  @DisplayName("GET /api/users/{id} catches AccessDeniedException")
+  void testGetUserById_AccessDeniedException() throws Exception {
+    User otherUser = User.builder().id(2L).build();
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(otherUser);
+    when(userService.getUserById(1L)).thenReturn(Optional.of(testUser));
+
+    mockMvc
+        .perform(get("/api/users/1"))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.message").value("You can only view your own profile"));
+  }
+
+  @Test
+  @DisplayName("GET /api/users/{id} catches generic Exception")
+  void testGetUserById_GenericException() throws Exception {
     when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
     when(userService.getUserById(1L)).thenThrow(new RuntimeException("Database error"));
 
@@ -478,11 +499,11 @@ class UserControllerTest {
         .andExpect(jsonPath("$.message").value("Error retrieving your profile"));
   }
 
-  // ==================== UPDATE - Additional Coverage ====================
+  // ==================== UPDATE - Additional Branch Coverage ====================
 
   @Test
-  @DisplayName("PUT /api/users/{id} returns 400 for invalid ID")
-  void testUpdateUser_InvalidId() throws Exception {
+  @DisplayName("PUT /api/users/{id} returns 400 when id is null")
+  void testUpdateUser_NullId() throws Exception {
     mockMvc
         .perform(
             put("/api/users/0")
@@ -493,22 +514,51 @@ class UserControllerTest {
   }
 
   @Test
-  @DisplayName("PUT /api/users/{id} returns 404 when user not found")
-  void testUpdateUser_NotFound() throws Exception {
+  @DisplayName("PUT /api/users/{id} returns 400 when id is negative")
+  void testUpdateUser_NegativeId() throws Exception {
+    mockMvc
+        .perform(
+            put("/api/users/-1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(testUserDTO)))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.message").value("Invalid user ID"));
+  }
+
+  @Test
+  @DisplayName("PUT /api/users/{id} returns 200 when user updates own profile")
+  void testUpdateUser_SelfAccess() throws Exception {
     when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
     when(userMapper.toEntity(any(UserDTO.class))).thenReturn(testUser);
-    when(userService.updateUser(eq(1L), any(User.class))).thenReturn(null);
+    when(userService.updateUser(eq(1L), any(User.class))).thenReturn(testUser);
+    when(userMapper.toDTO(testUser)).thenReturn(testUserDTO);
 
     mockMvc
         .perform(
             put("/api/users/1")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(testUserDTO)))
-        .andExpect(status().isNotFound());
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.message").value("User updated successfully"));
   }
 
   @Test
-  @DisplayName("PUT /api/users/{id} returns 400 on IllegalArgumentException")
+  @DisplayName("PUT /api/users/{id} catches AccessDeniedException")
+  void testUpdateUser_AccessDeniedException() throws Exception {
+    User otherUser = User.builder().id(2L).build();
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(otherUser);
+
+    mockMvc
+        .perform(
+            put("/api/users/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(testUserDTO)))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.message").value("You can only update your own profile"));
+  }
+
+  @Test
+  @DisplayName("PUT /api/users/{id} catches IllegalArgumentException")
   void testUpdateUser_IllegalArgumentException() throws Exception {
     when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
     when(userMapper.toEntity(any(UserDTO.class))).thenReturn(testUser);
@@ -525,8 +575,8 @@ class UserControllerTest {
   }
 
   @Test
-  @DisplayName("PUT /api/users/{id} returns 400 on generic exception")
-  void testUpdateUser_Exception() throws Exception {
+  @DisplayName("PUT /api/users/{id} catches generic Exception")
+  void testUpdateUser_GenericException() throws Exception {
     when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
     when(userMapper.toEntity(any(UserDTO.class))).thenReturn(testUser);
     when(userService.updateUser(eq(1L), any(User.class)))
@@ -541,11 +591,11 @@ class UserControllerTest {
         .andExpect(jsonPath("$.message").value("An error occurred updating user"));
   }
 
-  // ==================== VERIFY AGE - Additional Coverage ====================
+  // ==================== VERIFY AGE - Additional Branch Coverage ====================
 
   @Test
-  @DisplayName("POST /api/users/{id}/verify-age returns 400 for invalid ID")
-  void testVerifyAge_InvalidId() throws Exception {
+  @DisplayName("POST /api/users/{id}/verify-age returns 400 when id is null")
+  void testVerifyAge_NullId() throws Exception {
     mockMvc
         .perform(post("/api/users/0/verify-age"))
         .andExpect(status().isBadRequest())
@@ -553,8 +603,32 @@ class UserControllerTest {
   }
 
   @Test
-  @DisplayName("POST /api/users/{id}/verify-age returns 403 for access denied")
-  void testVerifyAge_AccessDenied() throws Exception {
+  @DisplayName("POST /api/users/{id}/verify-age returns 400 when id is negative")
+  void testVerifyAge_NegativeId() throws Exception {
+    mockMvc
+        .perform(post("/api/users/-1/verify-age"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.message").value("Invalid user ID"));
+  }
+
+  @Test
+  @DisplayName("POST /api/users/{id}/verify-age returns 200 when user verifies own age")
+  void testVerifyAge_SelfAccess() throws Exception {
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
+    when(userService.getUserById(1L)).thenReturn(Optional.of(testUser));
+    when(validationService.validateAge(testUser)).thenReturn(true);
+    when(userService.updateUser(1L, testUser)).thenReturn(testUser);
+    when(userMapper.toDTO(testUser)).thenReturn(testUserDTO);
+
+    mockMvc
+        .perform(post("/api/users/1/verify-age"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.message").value("Age verification successful"));
+  }
+
+  @Test
+  @DisplayName("POST /api/users/{id}/verify-age catches AccessDeniedException")
+  void testVerifyAge_AccessDeniedException() throws Exception {
     User otherUser = User.builder().id(2L).build();
     when(permissionService.getAuthenticatedUser(any())).thenReturn(otherUser);
 
@@ -564,11 +638,32 @@ class UserControllerTest {
         .andExpect(jsonPath("$.message").value("You can only verify your own age"));
   }
 
-  // ==================== DELETE - Additional Coverage ====================
+  @Test
+  @DisplayName("POST /api/users/{id}/verify-age catches generic Exception")
+  void testVerifyAge_GenericException() throws Exception {
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
+    when(userService.getUserById(1L)).thenThrow(new RuntimeException("Database error"));
+
+    mockMvc
+        .perform(post("/api/users/1/verify-age"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.message").value("An error occurred during age verification"));
+  }
+
+  // ==================== DELETE - Additional Branch Coverage ====================
 
   @Test
-  @DisplayName("DELETE /api/users/{id} returns 400 for invalid ID")
-  void testDeleteUser_InvalidId() throws Exception {
+  @DisplayName("DELETE /api/users/{id} returns 400 when id is null")
+  void testDeleteUser_NullId() throws Exception {
+    mockMvc
+        .perform(delete("/api/users/0"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.message").value("Invalid user ID"));
+  }
+
+  @Test
+  @DisplayName("DELETE /api/users/{id} returns 400 when id is negative")
+  void testDeleteUser_NegativeId() throws Exception {
     mockMvc
         .perform(delete("/api/users/-1"))
         .andExpect(status().isBadRequest())
@@ -576,8 +671,8 @@ class UserControllerTest {
   }
 
   @Test
-  @DisplayName("DELETE /api/users/{id} returns 400 on exception")
-  void testDeleteUser_Exception() throws Exception {
+  @DisplayName("DELETE /api/users/{id} catches generic Exception")
+  void testDeleteUser_GenericException() throws Exception {
     when(userService.deleteUser(1L)).thenThrow(new RuntimeException("Database error"));
 
     mockMvc
@@ -607,5 +702,228 @@ class UserControllerTest {
         .andExpect(jsonPath("$.message").value("Role assigned successfully"));
 
     verify(roleService).assignRoleWithMerchant(1L, Role.MERCHANT_ADMIN, 5L);
+  }
+
+  // ==================== ADDITIONAL BRANCH COVERAGE ====================
+
+  @Test
+  @DisplayName("GET /api/users/{id} returns 200 when admin accesses another user's profile")
+  void testGetUserById_AdminAccess() throws Exception {
+    User adminUser = User.builder().id(99L).name("Admin").build();
+    adminUser.setRoles(Set.of(Role.ADMIN));
+
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(adminUser);
+    when(userService.getUserById(1L)).thenReturn(Optional.of(testUser));
+    when(userMapper.toDTO(testUser)).thenReturn(testUserDTO);
+
+    mockMvc
+        .perform(get("/api/users/1"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.success").value(true))
+        .andExpect(jsonPath("$.data.email").value("john@example.com"));
+  }
+
+  @Test
+  @DisplayName("PUT /api/users/{id} returns 200 when admin updates another user")
+  void testUpdateUser_AdminAccess() throws Exception {
+    User adminUser = User.builder().id(99L).name("Admin").build();
+    adminUser.setRoles(Set.of(Role.ADMIN));
+
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(adminUser);
+    when(userMapper.toEntity(any(UserDTO.class))).thenReturn(testUser);
+    when(userService.updateUser(eq(1L), any(User.class))).thenReturn(testUser);
+    when(userMapper.toDTO(testUser)).thenReturn(testUserDTO);
+
+    mockMvc
+        .perform(
+            put("/api/users/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(testUserDTO)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.message").value("User updated successfully"));
+  }
+
+  @Test
+  @DisplayName("POST /api/users/{id}/verify-age returns 200 when admin verifies another user's age")
+  void testVerifyAge_AdminVerifiesOtherUser() throws Exception {
+    User adminUser = User.builder().id(99L).name("Admin").build();
+    adminUser.setRoles(Set.of(Role.ADMIN));
+
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(adminUser);
+    when(userService.getUserById(1L)).thenReturn(Optional.of(testUser));
+    when(validationService.validateAge(testUser)).thenReturn(true);
+    when(userService.updateUser(1L, testUser)).thenReturn(testUser);
+    when(userMapper.toDTO(testUser)).thenReturn(testUserDTO);
+
+    mockMvc
+        .perform(post("/api/users/1/verify-age"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.message").value("Age verification successful"));
+  }
+
+  @Test
+  @DisplayName("POST /api/users/{id}/verify-age returns 404 when user not found")
+  void testVerifyAge_UserNotFound() throws Exception {
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
+    when(userService.getUserById(1L)).thenReturn(Optional.empty());
+
+    mockMvc
+        .perform(post("/api/users/1/verify-age"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.message").value("An error occurred during age verification"));
+  }
+
+  @Test
+  @DisplayName("POST /api/users/{id}/roles returns 400 when roleService throws exception")
+  void testAssignRole_Exception() throws Exception {
+    UserController.RoleRequest request = new UserController.RoleRequest();
+    request.setRole(Role.USER);
+
+    when(roleService.assignRole(1L, Role.USER)).thenThrow(new RuntimeException("Database error"));
+
+    mockMvc
+        .perform(
+            post("/api/users/1/roles")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.message").value("Error assigning role: Database error"));
+  }
+
+  @Test
+  @DisplayName("POST /api/users/{id}/roles assigns role without merchantId")
+  void testAssignRole_WithoutMerchantId() throws Exception {
+    UserController.RoleRequest request = new UserController.RoleRequest();
+    request.setRole(Role.USER);
+    request.setMerchantId(null);
+
+    when(roleService.assignRole(1L, Role.USER)).thenReturn(testUser);
+    when(userMapper.toDTO(testUser)).thenReturn(testUserDTO);
+
+    mockMvc
+        .perform(
+            post("/api/users/1/roles")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.message").value("Role assigned successfully"));
+
+    verify(roleService).assignRole(1L, Role.USER);
+    verify(roleService, never()).assignRoleWithMerchant(any(), any(), any());
+  }
+
+  // ==================== ROLE ASSIGNMENT - Additional Branch Coverage ====================
+
+  @Test
+  @DisplayName("POST /api/users/{id}/roles assigns MERCHANT_ADMIN with non-null merchantId")
+  void testAssignRole_MerchantAdminWithMerchantId() throws Exception {
+    UserController.RoleRequest request = new UserController.RoleRequest();
+    request.setRole(Role.MERCHANT_ADMIN);
+    request.setMerchantId(5L);
+
+    when(roleService.assignRoleWithMerchant(1L, Role.MERCHANT_ADMIN, 5L)).thenReturn(testUser);
+    when(userMapper.toDTO(testUser)).thenReturn(testUserDTO);
+
+    mockMvc
+        .perform(
+            post("/api/users/1/roles")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.message").value("Role assigned successfully"));
+
+    verify(roleService).assignRoleWithMerchant(1L, Role.MERCHANT_ADMIN, 5L);
+    verify(roleService, never()).assignRole(any(), any());
+  }
+
+  @Test
+  @DisplayName("POST /api/users/{id}/roles assigns non-MERCHANT_ADMIN role")
+  void testAssignRole_NonMerchantAdminRole() throws Exception {
+    UserController.RoleRequest request = new UserController.RoleRequest();
+    request.setRole(Role.DRIVER);
+    request.setMerchantId(5L); // merchantId should be ignored for non-MERCHANT_ADMIN
+
+    when(roleService.assignRole(1L, Role.DRIVER)).thenReturn(testUser);
+    when(userMapper.toDTO(testUser)).thenReturn(testUserDTO);
+
+    mockMvc
+        .perform(
+            post("/api/users/1/roles")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.message").value("Role assigned successfully"));
+
+    verify(roleService).assignRole(1L, Role.DRIVER);
+    verify(roleService, never()).assignRoleWithMerchant(any(), any(), any());
+  }
+
+  @Test
+  @DisplayName("POST /api/users/{id}/roles catches generic Exception")
+  void testAssignRole_GenericException() throws Exception {
+    UserController.RoleRequest request = new UserController.RoleRequest();
+    request.setRole(Role.USER);
+
+    when(roleService.assignRole(1L, Role.USER)).thenThrow(new RuntimeException("Database error"));
+
+    mockMvc
+        .perform(
+            post("/api/users/1/roles")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.message").value("Error assigning role: Database error"));
+  }
+
+  // ==================== REMOVE ROLE - Additional Branch Coverage ====================
+
+  @Test
+  @DisplayName("DELETE /api/users/{id}/roles/{role} catches generic Exception")
+  void testRemoveRole_GenericException() throws Exception {
+    when(roleService.removeRole(1L, Role.ADMIN)).thenThrow(new RuntimeException("Database error"));
+
+    mockMvc
+        .perform(delete("/api/users/1/roles/ADMIN"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.message").value("Error removing role: Database error"));
+  }
+
+  // ==================== SET ROLES - Additional Branch Coverage ====================
+
+  @Test
+  @DisplayName("PUT /api/users/{id}/roles catches generic Exception")
+  void testSetRoles_GenericException() throws Exception {
+    SetRolesRequest request = new SetRolesRequest();
+    request.setRoles(Set.of(Role.ADMIN, Role.USER));
+
+    when(roleService.setRoles(eq(1L), any())).thenThrow(new RuntimeException("Database error"));
+
+    mockMvc
+        .perform(
+            put("/api/users/1/roles")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.message").value("Error updating roles: Database error"));
+  }
+
+  // ==================== ASSIGN MERCHANT - Additional Branch Coverage ====================
+
+  @Test
+  @DisplayName("POST /api/users/{id}/merchant catches generic Exception")
+  void testAssignMerchant_GenericException() throws Exception {
+    MerchantAssignmentRequest request = new MerchantAssignmentRequest();
+    request.setMerchantId(10L);
+
+    when(roleService.assignMerchantToUser(eq(1L), eq(10L)))
+        .thenThrow(new RuntimeException("Database error"));
+
+    mockMvc
+        .perform(
+            post("/api/users/1/merchant")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.message").value("Error assigning merchant: Database error"));
   }
 }

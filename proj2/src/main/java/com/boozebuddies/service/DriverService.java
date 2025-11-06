@@ -77,30 +77,30 @@ public interface DriverService {
   Driver updateDriver(Driver driver);
 
   /**
-   * Retrieves the driver profile associated with a given user account.
+   * Retrieves the profile of a driver based on the associated user.
    *
-   * @param user The user whose driver profile is being retrieved.
-   * @return The corresponding Driver object, or null if the user is not registered as a driver.
+   * @param user The user associated with the driver.
+   * @return The Driver profile
    */
   Driver getDriverProfile(User user);
 
   /**
-   * Retrieves a list of nearby available drivers based on a geographic location.
+   * Finds nearby available drivers within a specified radius.
    *
-   * @param latitude The latitude coordinate to search from.
-   * @param longitude The longitude coordinate to search from.
-   * @param radiusMeters The radius (in meters) within which to search for available drivers.
-   * @return A list of nearby drivers who are available for delivery.
+   * @param latitude origin latitude
+   * @param longitude origin longitude
+   * @param radiusMeters search radius in meters
+   * @return List of nearby available drivers
    */
   List<Driver> getNearbyAvailableDrivers(Double latitude, Double longitude, Double radiusMeters);
 
   /**
-   * Updates the current geographic location of a driver.
+   * Updates the current location of a driver.
    *
-   * @param userId The ID of the user associated with the driver.
-   * @param latitude The driver's current latitude.
-   * @param longitude The driver's current longitude.
-   * @return The updated Driver object with the new location.
+   * @param userId the user ID of the driver
+   * @param latitude Updated latitude
+   * @param longitude Updated longitude
+   * @return The updated Driver object
    */
   Driver updateDriverLocation(Long userId, Double latitude, Double longitude);
 }

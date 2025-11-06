@@ -1,6 +1,7 @@
 package com.boozebuddies.mapper;
 
 import com.boozebuddies.dto.CreateOrderRequest;
+import com.boozebuddies.dto.DriverOrderDTO;
 import com.boozebuddies.dto.OrderDTO;
 import com.boozebuddies.dto.OrderItemDTO;
 import com.boozebuddies.dto.OrderItemRequest;
@@ -84,18 +85,58 @@ public class OrderMapper {
   }
 
   /**
-   * Converts an OrderItem entity to an OrderItemDTO.
+   * Convert Order to DriverOrderDTO with distance and ETA calculations.
    *
-   * @param orderItem the order item entity to convert
-   * @return the OrderItemDTO, or null if the input is null
+   * @param order The order entity
+   * @param distanceKm Distance from driver to merchant in kilometers (calculated externally)
+   * @return DriverOrderDTO with distance and ETA
    */
+  public DriverOrderDTO toDriverDTO(Order order, Double distanceKm) {
+    if (order == null) return null;
+
+    // Calculate ETA: assume average speed of 30 km/h in urban areas
+    // ETA = distance / speed * 60 (convert to minutes)
+    // Add 5 minutes for pickup time
+    Integer etaMin = null;
+    if (distanceKm != null) {
+      etaMin = (int) Math.ceil((distanceKm / 30.0) * 60) + 5;
+    }
+
+    return DriverOrderDTO.builder()
+        .id(order.getId())
+        .userId(order.getUser() != null ? order.getUser().getId() : null)
+        .merchantId(order.getMerchant() != null ? order.getMerchant().getId() : null)
+        .merchantName(order.getMerchant() != null ? order.getMerchant().getName() : null)
+        .customerName(order.getUser() != null ? order.getUser().getName() : null)
+        .deliveryAddress(order.getDeliveryAddress())
+        .totalAmount(order.getTotalAmount())
+        .status(order.getStatus().name())
+        .items(
+            order.getItems() != null
+                ? order.getItems().stream().map(this::orderItemToDTO).collect(Collectors.toList())
+                : null)
+        .distanceKm(distanceKm)
+        .etaMin(etaMin)
+        .createdAt(order.getCreatedAt())
+        .updatedAt(order.getUpdatedAt())
+        .estimatedDeliveryTime(order.getEstimatedDeliveryTime())
+        .build();
+  }
+
   private OrderItemDTO orderItemToDTO(OrderItem orderItem) {
     if (orderItem == null) return null;
 
+    // Use snapshot name if available, otherwise try to get from product
+    String productName = orderItem.getName();
+    if (productName == null && orderItem.getProduct() != null) {
+      productName = orderItem.getProduct().getName();
+    }
+
     return OrderItemDTO.builder()
         .id(orderItem.getId())
+        .orderId(orderItem.getOrder() != null ? orderItem.getOrder().getId() : null)
         .productId(orderItem.getProduct() != null ? orderItem.getProduct().getId() : null)
-        .productName(orderItem.getProduct() != null ? orderItem.getProduct().getName() : null)
+        .productName(productName)
         .quantity(orderItem.getQuantity())
         .unitPrice(orderItem.getUnitPrice())
         .subtotal(orderItem.getSubtotal())

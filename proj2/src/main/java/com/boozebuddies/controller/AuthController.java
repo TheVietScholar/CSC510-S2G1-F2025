@@ -56,12 +56,6 @@ public class AuthController {
     return ResponseEntity.ok(resp);
   }
 
-  /**
-   * Authentication method for logging in as driver
-   *
-   * @param request the refresh token request
-   * @return the authentication response with new JWT tokens
-   */
   @PostMapping("/driver/login")
   public ResponseEntity<AuthenticationResponse> driverLogin(
       @RequestBody AuthenticationRequest request) {
@@ -73,12 +67,6 @@ public class AuthController {
     return ResponseEntity.ok(resp);
   }
 
-  /**
-   * Refreshes an expired access token using a refresh token.
-   *
-   * @param request the refresh token request
-   * @return the authentication response with new JWT tokens
-   */
   @PostMapping("/refresh")
   public ResponseEntity<AuthenticationResponse> refresh(@RequestBody RefreshTokenRequest request) {
     AuthenticationResponse resp = authenticationService.refreshToken(request);

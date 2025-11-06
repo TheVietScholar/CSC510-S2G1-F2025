@@ -167,7 +167,7 @@ public class DriverServiceImpl implements DriverService {
   @Override
   public Driver getDriverProfile(User user) {
     return driverRepository
-        .findById(user.getId())
+        .findByUserId(user.getId())
         .orElseThrow(() -> new IllegalArgumentException("Driver not found"));
   }
 

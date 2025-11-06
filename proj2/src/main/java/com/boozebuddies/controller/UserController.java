@@ -13,6 +13,7 @@ import com.boozebuddies.service.ValidationService;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -318,20 +319,20 @@ public class UserController {
   // ==================== REQUEST DTOs ====================
 
   /** Request DTO for assigning a role to a user. */
-  @lombok.Data
+  @Data
   public static class RoleRequest {
     private Role role;
     private Long merchantId; // Optional, only for MERCHANT_ADMIN
   }
 
   /** Request DTO for setting all roles for a user. */
-  @lombok.Data
+  @Data
   public static class SetRolesRequest {
     private Set<Role> roles;
   }
 
   /** Request DTO for assigning a merchant to a user. */
-  @lombok.Data
+  @Data
   public static class MerchantAssignmentRequest {
     private Long merchantId;
   }

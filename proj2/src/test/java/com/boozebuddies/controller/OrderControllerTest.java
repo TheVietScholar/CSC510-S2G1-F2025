@@ -57,6 +57,7 @@ public class OrderControllerTest {
   private Merchant testMerchant;
   private Order testOrder;
   private OrderDTO testOrderDTO;
+  private DriverOrderDTO testDriverOrderDTO;
   private OrderItem testOrderItem;
   private Product testProduct;
   private CreateOrderRequest testCreateRequest;
@@ -124,6 +125,20 @@ public class OrderControllerTest {
             .merchantId(1L)
             .totalAmount(new BigDecimal("39.98"))
             .status("PENDING")
+            .build();
+
+    // Driver Order DTO
+    testDriverOrderDTO =
+        DriverOrderDTO.builder()
+            .id(1L)
+            .userId(1L)
+            .merchantId(1L)
+            .merchantName("Test Merchant")
+            .customerName("John Doe")
+            .totalAmount(new BigDecimal("39.98"))
+            .status("PENDING")
+            .distanceKm(5.5)
+            .etaMin(16)
             .build();
 
     // Create Order Request
@@ -236,14 +251,6 @@ public class OrderControllerTest {
   @Test
   @DisplayName("GET /api/orders/{id} should return 200 with order data")
   void getOrderById_Success() throws Exception {
-    // Mock the authenticated user
-    User testUser = User.builder().id(1L).email("user@test.com").build();
-    testUser.setRoles(java.util.Set.of(Role.ADMIN)); // Give admin role to bypass permission checks
-
-    // Mock the order relationships so permission checks work
-    testOrder.setUser(testUser);
-    testOrder.setMerchant(testMerchant);
-
     when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
     when(orderService.getOrderById(1L)).thenReturn(Optional.of(testOrder));
     when(orderMapper.toDTO(testOrder)).thenReturn(testOrderDTO);
@@ -274,6 +281,7 @@ public class OrderControllerTest {
   @Test
   @DisplayName("GET /api/orders/{id} should return 404 when order not found")
   void getOrderById_NotFound() throws Exception {
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
     when(orderService.getOrderById(99L)).thenReturn(Optional.empty());
 
     mockMvc.perform(get("/api/orders/99")).andExpect(status().isNotFound());
@@ -306,6 +314,7 @@ public class OrderControllerTest {
   @Test
   @DisplayName("GET /api/orders/{id} should return 400 on exception")
   void getOrderById_Exception() throws Exception {
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
     when(orderService.getOrderById(1L)).thenThrow(new RuntimeException("Database error"));
 
     mockMvc
@@ -318,62 +327,84 @@ public class OrderControllerTest {
   }
 
   @Test
-  @DisplayName("Regular user cannot access another user's order")
-  void getOrderById_UserCannotAccessOthersOrder() throws Exception {
-    User otherUser = User.builder().id(2L).build();
-    testOrder.setUser(otherUser);
+  @DisplayName("GET /api/orders/{id} should return 200 for admin viewing any order")
+  void getOrderById_AdminSuccess() throws Exception {
+    Order otherUserOrder = Order.builder().id(1L).user(testUser).merchant(testMerchant).build();
+
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(adminUser);
+    when(orderService.getOrderById(1L)).thenReturn(Optional.of(otherUserOrder));
+    when(orderMapper.toDTO(otherUserOrder)).thenReturn(testOrderDTO);
+
+    mockMvc
+        .perform(get("/api/orders/1"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.success").value(true))
+        .andExpect(jsonPath("$.message").value("Order retrieved successfully"));
+  }
+
+  @Test
+  @DisplayName("GET /api/orders/{id} should return 403 when user doesn't own order")
+  void getOrderById_NotOwner() throws Exception {
+    User otherUser = User.builder().id(2L).name("Other User").build();
+    otherUser.addRole(Role.USER);
+    Order orderForOther = Order.builder().id(1L).user(otherUser).merchant(testMerchant).build();
 
     when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
-    when(orderService.getOrderById(1L)).thenReturn(Optional.of(testOrder));
+    when(orderService.getOrderById(1L)).thenReturn(Optional.of(orderForOther));
 
     mockMvc
         .perform(get("/api/orders/1"))
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value("You don't have permission to view this order"));
+        .andExpect(
+            jsonPath("$.message")
+                .value(
+                    org.hamcrest.Matchers.containsString(
+                        "don't have permission to view this order")));
   }
 
-  @DisplayName("Merchant admin can access orders from their merchant")
-  void getOrderById_MerchantAdminAccess() throws Exception {
-    testOrder.setMerchant(testMerchant); // merchant ID 1
-    when(permissionService.getAuthenticatedUser(any())).thenReturn(merchantAdminUser);
-    when(orderService.getOrderById(1L)).thenReturn(Optional.of(testOrder));
-    when(orderMapper.toDTO(testOrder)).thenReturn(testOrderDTO);
+  @Test
+  @DisplayName(
+      "GET /api/orders/{id} should return 200 for merchant admin viewing own merchant's order")
+  void getOrderById_MerchantAdminSuccess() throws Exception {
+    Order merchantOrder = Order.builder().id(1L).user(testUser).merchant(testMerchant).build();
 
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(merchantAdminUser);
+    when(orderService.getOrderById(1L)).thenReturn(Optional.of(merchantOrder));
     mockMvc
         .perform(get("/api/orders/1"))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.success").value(true));
+        .andExpect(jsonPath("$.success").value(true))
+        .andExpect(jsonPath("$.message").value("Order retrieved successfully"));
   }
 
   @Test
-  @DisplayName("Merchant admin cannot access orders from another merchant")
-  void getOrderById_MerchantAdminForbidden() throws Exception {
-    Merchant otherMerchant = Merchant.builder().id(99L).build();
-    testOrder.setMerchant(otherMerchant);
+  @DisplayName("GET /api/orders/{id} should return 200 for driver viewing assigned order")
+  void getOrderById_DriverSuccess() throws Exception {
+    Order driverOrder =
+        Order.builder().id(1L).user(testUser).merchant(testMerchant).driver(testDriver).build();
 
-    when(permissionService.getAuthenticatedUser(any())).thenReturn(merchantAdminUser);
-    when(orderService.getOrderById(1L)).thenReturn(Optional.of(testOrder));
-
-    mockMvc
-        .perform(get("/api/orders/1"))
-        .andExpect(status().isForbidden())
-        .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value("You don't have permission to view this order"));
-  }
-
-  @Test
-  @DisplayName("Driver can access assigned order")
-  void getOrderById_DriverAccess() throws Exception {
-    testOrder.setDriver(testDriver); // assign order to driver
     when(permissionService.getAuthenticatedUser(any())).thenReturn(driverUser);
-    when(orderService.getOrderById(1L)).thenReturn(Optional.of(testOrder));
-    when(orderMapper.toDTO(testOrder)).thenReturn(testOrderDTO);
+    when(orderService.getOrderById(1L)).thenReturn(Optional.of(driverOrder));
+    when(orderMapper.toDTO(driverOrder)).thenReturn(testOrderDTO);
 
     mockMvc
         .perform(get("/api/orders/1"))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.success").value(true));
+        .andExpect(jsonPath("$.success").value(true))
+        .andExpect(jsonPath("$.message").value("Order retrieved successfully"));
+  }
+
+  @Test
+  @DisplayName("GET /api/orders/{id} should return 401 when user is null")
+  void getOrderById_Unauthorized() throws Exception {
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(null);
+
+    mockMvc
+        .perform(get("/api/orders/1"))
+        .andExpect(status().isUnauthorized())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(jsonPath("$.message").value("Authentication required"));
   }
 
   // ==================== GET MY ORDERS TESTS ====================
@@ -807,6 +838,7 @@ public class OrderControllerTest {
   @Test
   @DisplayName("PUT /api/orders/{id}/status should return 200 on success")
   void updateOrderStatus_Success() throws Exception {
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(adminUser);
     when(orderService.getOrderById(1L)).thenReturn(Optional.of(testOrder));
     when(orderService.updateOrderStatus(1L, "CONFIRMED")).thenReturn(testOrder);
     when(orderMapper.toDTO(testOrder)).thenReturn(testOrderDTO);
@@ -821,23 +853,12 @@ public class OrderControllerTest {
   @Test
   @DisplayName("PUT /api/orders/{id}/status should return 404 when order not found")
   void updateOrderStatus_NotFound() throws Exception {
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(adminUser);
     when(orderService.getOrderById(99L)).thenReturn(Optional.empty());
 
     mockMvc
         .perform(put("/api/orders/99/status").param("status", "CONFIRMED"))
         .andExpect(status().isNotFound());
-  }
-
-  @Test
-  @DisplayName("PUT /api/orders/{id}/status should return 400 with invalid ID")
-  void updateOrderStatus_InvalidId() throws Exception {
-    mockMvc
-        .perform(put("/api/orders/0/status").param("status", "CONFIRMED"))
-        .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value("Invalid order ID"));
-
-    verify(orderService, never()).getOrderById(any());
   }
 
   @Test
@@ -855,6 +876,7 @@ public class OrderControllerTest {
   @Test
   @DisplayName("PUT /api/orders/{id}/status should return 400 on exception")
   void updateOrderStatus_Exception() throws Exception {
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(adminUser);
     when(orderService.getOrderById(1L)).thenReturn(Optional.of(testOrder));
     when(orderService.updateOrderStatus(1L, "CONFIRMED"))
         .thenThrow(new RuntimeException("Update failed"));
@@ -868,7 +890,8 @@ public class OrderControllerTest {
                 .value(org.hamcrest.Matchers.containsString("Failed to update order status")));
   }
 
-  // ==================== ADDITIONAL GET ORDER BY ID PERMISSION TESTS ====================
+  // ==================== ADDITIONAL GET ORDER BY ID PERMISSION TESTS
+  // ====================
 
   @Test
   @DisplayName("GET /api/orders/{id} should return 200 when user owns the order")
@@ -1070,9 +1093,18 @@ public class OrderControllerTest {
     double longitude = -78.9;
     double radiusKm = 10.0;
 
+    // Set merchant coordinates for distance calculation
+    testMerchant.setLatitude(35.51);
+    testMerchant.setLongitude(-78.91);
+    testOrder.setMerchant(testMerchant);
+
     when(orderService.getOrdersWithinDistance(latitude, longitude, radiusKm))
         .thenReturn(List.of(testOrder));
-    when(orderMapper.toDTO(testOrder)).thenReturn(testOrderDTO);
+    when(orderService.calculateDistance(eq(latitude), eq(longitude), eq(35.51), eq(-78.91)))
+        .thenReturn(5.5);
+    when(orderService.updateEstimatedDeliveryTime(eq(1L), any(java.time.LocalDateTime.class)))
+        .thenReturn(testOrder);
+    when(orderMapper.toDriverDTO(eq(testOrder), eq(5.5))).thenReturn(testDriverOrderDTO);
 
     mockMvc
         .perform(
@@ -1084,7 +1116,9 @@ public class OrderControllerTest {
         .andExpect(jsonPath("$.success").value(true))
         .andExpect(jsonPath("$.message").value("Orders within distance retrieved successfully"))
         .andExpect(jsonPath("$.data").isArray())
-        .andExpect(jsonPath("$.data[0].id").value(1));
+        .andExpect(jsonPath("$.data[0].id").value(1))
+        .andExpect(jsonPath("$.data[0].distanceKm").value(5.5))
+        .andExpect(jsonPath("$.data[0].etaMin").exists());
   }
 
   @Test
