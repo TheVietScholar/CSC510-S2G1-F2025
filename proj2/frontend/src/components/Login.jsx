@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import auth from '../services/auth'
 
-const Login = ({ onLogin }) => {
+const Login = ({ onLogin, onGoToDriverLogin }) => {
   const [isSignUp, setIsSignUp] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -248,6 +248,9 @@ const Login = ({ onLogin }) => {
             {loading ? 'Processing...' : isSignUp ? 'Sign Up' : 'Sign In'}
           </button>
         </form>
+
+        
+
         
         {!isSignUp && (
           <div className="mt-6 text-center text-sm text-gray-600">
@@ -257,6 +260,17 @@ const Login = ({ onLogin }) => {
             <p className="font-mono">Merchant: merchant1@boozebuddies.com / password</p>
           </div>
         )}
+        
+        {/* Driver login redirect button */}
+        <div className="mt-4 text-center">
+          <button
+            type="button"
+            onClick={() => onGoToDriverLogin && onGoToDriverLogin()}
+            className="inline-block mt-2 px-4 py-2 border border-transparent text-sm font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 transition"
+          >
+            Driver login
+          </button>
+        </div>
       </div>
     </div>
   )
