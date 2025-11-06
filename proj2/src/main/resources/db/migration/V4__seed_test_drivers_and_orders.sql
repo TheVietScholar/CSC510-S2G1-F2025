@@ -76,7 +76,19 @@ VALUES
 -- Create orders with different statuses at various locations
 -- Orders are placed at different distances from driver locations to test filtering
 
--- Get user and merchant IDs
+-- Ensure test user exists (created by DataInitializer, but may not exist on fresh DB)
+INSERT INTO users (name, email, password_hash, phone, is_active, is_email_verified, age_verified, latitude, longitude, created_at, updated_at)
+SELECT 'User', 'user@boozebuddies.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '(555) 111-2222', TRUE, TRUE, TRUE, 35.7830, -78.6380, NOW(), NOW()
+WHERE NOT EXISTS (SELECT 1 FROM users WHERE email = 'user@boozebuddies.com');
+
+-- Ensure test user has USER role
+INSERT INTO user_roles (user_id, role)
+SELECT id, 'USER'
+FROM users
+WHERE email = 'user@boozebuddies.com'
+  AND id NOT IN (SELECT user_id FROM user_roles WHERE role = 'USER' AND user_id = (SELECT id FROM users WHERE email = 'user@boozebuddies.com'));
+
+-- Get user and merchant IDs (user should exist after the INSERT above)
 SET @test_user_id = (SELECT id FROM users WHERE email = 'user@boozebuddies.com' LIMIT 1);
 SET @merchant1_id = (SELECT id FROM merchants WHERE name = 'Red Dragon Brewery' LIMIT 1);
 SET @merchant2_id = (SELECT id FROM merchants WHERE name = 'Black Label Bar' LIMIT 1);
