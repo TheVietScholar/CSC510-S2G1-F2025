@@ -10,7 +10,6 @@ import com.boozebuddies.model.CertificationStatus;
 import com.boozebuddies.security.annotation.RoleAnnotations.*;
 import com.boozebuddies.service.DriverService;
 import com.boozebuddies.service.PermissionService;
-import jakarta.validation.Valid;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -33,7 +32,7 @@ public class DriverController {
   @PostMapping("/register")
   @IsAdmin
   public ResponseEntity<ApiResponse<DriverDTO>> registerDriver(
-      @Valid @RequestBody DriverDTO driverDTO) {
+      @RequestBody DriverDTO driverDTO) {
     try {
       Driver driver = driverMapper.toEntity(driverDTO);
       Driver registeredDriver = driverService.registerDriver(driver);

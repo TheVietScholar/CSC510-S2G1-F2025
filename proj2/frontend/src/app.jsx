@@ -37,7 +37,6 @@ function App() {
     console.log('Login userData:', userData)
     setUser(userData.user)
     
-    // Check if user has ADMIN or MERCHANT_ADMIN role
     if (userData.user && userData.user.roles && userData.user.roles.includes('DRIVER')) {
       console.log('User is DRIVER, redirecting to driver-home')
       setCurrentPage('driver-home')
@@ -111,6 +110,8 @@ function App() {
     switch (currentPage) {
       case 'login':
         return <Login onLogin={handleLogin} onGoToDriverLogin={() => setCurrentPage('driver-login')} />
+      case 'driver-login':
+        return <DriverLogin onDriverLogin={handleDriverLogin} />
       case 'home':
         return <Home onSelectRestaurant={handleSelectRestaurant} onOpenSettings={() => setCurrentPage('settings')} onLogout={handleLogout} />
       case 'menu':
@@ -152,10 +153,8 @@ function App() {
       case 'merchant-home':
         console.log('Rendering: MerchantHome')
         return <MerchantHome user={user} onLogout={handleLogout} /> // Add user prop
-      case 'driver-login':
-        return <DriverLogin onDriverLogin={handleDriverLogin} />
       default:
-        return <Login onLogin={handleLogin} />
+        return <Login onLogin={handleLogin} onGoToDriverLogin={() => setCurrentPage('driver-login') } />
     }
   }
 
