@@ -69,4 +69,6 @@ public interface OrderService {
    * @return The updated order.
    */
   Order updateOrderStatus(Long orderId, String status);
+
+  List<Order> getOrdersWithinDistance(double latitude, double longitude, double distanceKm);
 }

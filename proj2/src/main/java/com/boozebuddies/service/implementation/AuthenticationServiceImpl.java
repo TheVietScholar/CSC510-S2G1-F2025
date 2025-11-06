@@ -171,7 +171,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         .token(accessToken)
         .refreshToken(refreshToken)
         .user(userMapper.toDTO(user))
-        .message("Login successful")
+        .message("Driver login successful")
         .build();
   }
 

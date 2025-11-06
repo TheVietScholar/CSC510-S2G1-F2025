@@ -254,4 +254,17 @@ public class OrderServiceImpl implements OrderService {
         break;
     }
   }
+
+  @Override
+  public List<Order> getOrdersWithinDistance(double latitude, double longitude, double distanceKm) {
+    List<Order> availOrders = orderRepository.findAvailableForAssignment();
+
+    for (Order order : availOrders) {
+      if( order.isWithinDistance(latitude, longitude, distanceKm)) {
+        return List.of(order);
+      }
+    }
+
+    return null; // To be implemented: filter availOrders by distance to (latitude, longitude)
+  }
 }

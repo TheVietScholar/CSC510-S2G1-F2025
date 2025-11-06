@@ -1,91 +1,32 @@
-import React, { useEffect, useState } from "react";
+import React, { use, useEffect, useState } from "react"
+import {orders} from "../services/api"
 
-/**
- * DriverHome.jsx
- * Home page for drivers in the Food Delivery App
- *
- * - Toggle online/offline
- * - See available orders (mock data)
- * - Accept orders, start pickup, complete delivery
- * - Simple status badges and actions
- * - Minimal inline styles so this can be dropped into the project quickly
- */
-
-const styles = {
-    container: { padding: 20, fontFamily: "Inter, Arial, sans-serif", maxWidth: 1100, margin: "0 auto" },
-    header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
-    title: { fontSize: 24, fontWeight: 700 },
-    statusButton: isOnline => ({
-        padding: "8px 14px",
-        borderRadius: 8,
-        cursor: "pointer",
-        border: "none",
-        color: "white",
-        background: isOnline ? "#16a34a" : "#ef4444",
-    }),
-    columns: { display: "grid", gridTemplateColumns: "1fr 420px", gap: 16 },
-    panel: { background: "#fff", borderRadius: 8, padding: 12, boxShadow: "0 1px 3px rgba(0,0,0,0.06)" },
-    sectionTitle: { fontSize: 16, marginBottom: 8, fontWeight: 600 },
-    list: { display: "flex", flexDirection: "column", gap: 10 },
-    orderCard: { border: "1px solid #e5e7eb", padding: 12, borderRadius: 8, display: "flex", justifyContent: "space-between", alignItems: "center" },
-    meta: { display: "flex", flexDirection: "column", gap: 4 },
-    actions: { display: "flex", gap: 8, alignItems: "center" },
-    btn: { padding: "6px 10px", borderRadius: 6, cursor: "pointer", border: "none" },
-    acceptBtn: { background: "#2563eb", color: "white" },
-    neutralBtn: { background: "#f3f4f6" },
-    mapPlaceholder: { height: 260, background: "#f8fafc", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", color: "#9ca3af" },
-    smallBadge: bg => ({ background: bg, color: "white", padding: "4px 8px", borderRadius: 999, fontSize: 12 }),
-    empty: { color: "#6b7280", fontStyle: "italic" }
-};
-
-function formatDistance(km) {
-    return `${km.toFixed(1)} km`;
-}
-
-function uuid() {
-    return Math.random().toString(36).slice(2, 9);
-}
-
-export default function DriverHome() {
+const DriverHome = ({ user, onLogout }) => {
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
     const [isOnline, setIsOnline] = useState(false);
     const [availableOrders, setAvailableOrders] = useState([]);
     const [assignedOrders, setAssignedOrders] = useState([]);
     const [driverLocation, setDriverLocation] = useState({ lat: 37.7749, lng: -122.4194 });
     const [filter, setFilter] = useState("all");
 
-    // Mock: seed some available orders when component mounts
+    const driverId = user.id
+
     useEffect(() => {
-        const seed = [
-            {
-                id: uuid(),
-                restaurant: "Pho Corner",
-                customer: "Anna B.",
-                items: ["Beef Pho", "Spring Rolls"],
-                distanceKm: 1.4,
-                etaMin: 12,
-                status: "available",
-            },
-            {
-                id: uuid(),
-                restaurant: "Taqueria Azul",
-                customer: "Jake P.",
-                items: ["Carne Asada Tacos x3"],
-                distanceKm: 3.2,
-                etaMin: 20,
-                status: "available",
-            },
-            {
-                id: uuid(),
-                restaurant: "Green Bowl",
-                customer: "Maya R.",
-                items: ["Buddha Bowl"],
-                distanceKm: 0.9,
-                etaMin: 9,
-                status: "available",
-            },
-        ];
-        setAvailableOrders(seed);
-    }, []);
+        // Fetch initial available orders from server
+        fetchAvailableOrders();
+    }, driverId);
+
+    const fetchAvailableOrders = async () => {
+        try {
+            setLoading(true)
+            setError('')
+            const response = orders.;
+            }
+
+    const handleToggleOnline = () => {
+        setIsOnline(!isOnline);
+    }
 
     // Simulate receiving a new nearby order when online
     useEffect(() => {
@@ -302,3 +243,5 @@ export default function DriverHome() {
         </div>
     );
 }
+
+export default DriverHome

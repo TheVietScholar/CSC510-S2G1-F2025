@@ -8,6 +8,7 @@ import Checkout from './components/Checkout'
 import UserSettings from './components/UserSettings'
 import AdminHome from './admin/AdminHome'
 import MerchantHome from './admin/MerchantHome'
+import DriverHome from './driver/DriverHome'
 import './App.css'
 
 function App() {
