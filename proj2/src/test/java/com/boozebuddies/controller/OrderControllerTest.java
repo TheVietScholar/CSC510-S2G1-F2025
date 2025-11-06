@@ -233,9 +233,21 @@ public class OrderControllerTest {
 
   // ==================== GET ORDER BY ID TESTS ====================
 
-  @Test
-  @DisplayName("GET /api/orders/{id} should return 200 with order data")
-  void getOrderById_Success() throws Exception {
+    @Test
+    @DisplayName("GET /api/orders/{id} should return 200 with order data")
+    void getOrderById_Success() throws Exception {
+    // Mock the authenticated user
+    User testUser = User.builder()
+        .id(1L)
+        .email("user@test.com")
+        .build();
+    testUser.setRoles(java.util.Set.of(Role.ADMIN)); // Give admin role to bypass permission checks
+    
+    // Mock the order relationships so permission checks work
+    testOrder.setUser(testUser);
+    testOrder.setMerchant(testMerchant);
+    
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
     when(orderService.getOrderById(1L)).thenReturn(Optional.of(testOrder));
     when(orderMapper.toDTO(testOrder)).thenReturn(testOrderDTO);
 
@@ -245,7 +257,7 @@ public class OrderControllerTest {
         .andExpect(jsonPath("$.success").value(true))
         .andExpect(jsonPath("$.message").value("Order retrieved successfully"))
         .andExpect(jsonPath("$.data.id").value(1));
-  }
+    }
 
   @Test
   @DisplayName("GET /api/orders/{id} should return 404 when order not found")
