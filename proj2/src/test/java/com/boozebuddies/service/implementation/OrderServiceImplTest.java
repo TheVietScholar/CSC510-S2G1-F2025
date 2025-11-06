@@ -2,7 +2,6 @@ package com.boozebuddies.service.implementation;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 import com.boozebuddies.entity.Delivery;
