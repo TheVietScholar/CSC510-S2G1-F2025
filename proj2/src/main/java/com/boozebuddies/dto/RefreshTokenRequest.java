@@ -2,7 +2,9 @@ package com.boozebuddies.dto;
 
 import lombok.*;
 
-/** Data transfer object for refresh token requests. */
+/**
+ * Data transfer object for refresh token requests.
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

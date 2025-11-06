@@ -1,6 +1,8 @@
 package com.boozebuddies.exception;
 
-/** Exception thrown when a driver is not found. */
+/**
+ * Exception thrown when a driver is not found.
+ */
 public class DriverNotFoundException extends RuntimeException {
   /**
    * Constructs a new DriverNotFoundException with the specified message.

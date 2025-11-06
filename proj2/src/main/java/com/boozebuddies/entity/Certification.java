@@ -5,7 +5,9 @@ import jakarta.persistence.Embeddable;
 import java.time.LocalDate;
 import lombok.*;
 
-/** Embeddable entity representing driver certification information. */
+/**
+ * Embeddable entity representing driver certification information.
+ */
 @Embeddable
 @NoArgsConstructor
 @AllArgsConstructor

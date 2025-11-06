@@ -20,7 +20,9 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-/** REST controller for managing users and user operations. */
+/**
+ * REST controller for managing users and user operations.
+ */
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
@@ -317,20 +319,26 @@ public class UserController {
 
   // ==================== REQUEST DTOs ====================
 
-  /** Request DTO for assigning a role to a user. */
+  /**
+   * Request DTO for assigning a role to a user.
+   */
   @lombok.Data
   public static class RoleRequest {
     private Role role;
     private Long merchantId; // Optional, only for MERCHANT_ADMIN
   }
 
-  /** Request DTO for setting all roles for a user. */
+  /**
+   * Request DTO for setting all roles for a user.
+   */
   @lombok.Data
   public static class SetRolesRequest {
     private Set<Role> roles;
   }
 
-  /** Request DTO for assigning a merchant to a user. */
+  /**
+   * Request DTO for assigning a merchant to a user.
+   */
   @lombok.Data
   public static class MerchantAssignmentRequest {
     private Long merchantId;

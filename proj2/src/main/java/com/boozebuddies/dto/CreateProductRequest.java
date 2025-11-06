@@ -4,7 +4,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.math.BigDecimal;
 import lombok.*;
 
-/** Data transfer object for creating a new product. */
+/**
+ * Data transfer object for creating a new product.
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

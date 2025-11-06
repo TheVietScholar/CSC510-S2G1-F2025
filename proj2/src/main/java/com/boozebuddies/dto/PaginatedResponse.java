@@ -15,22 +15,22 @@ import lombok.*;
 public class PaginatedResponse<T> {
   /** The list of items on the current page */
   private List<T> content;
-
+  
   /** The current page number */
   private int currentPage;
-
+  
   /** The total number of pages */
   private int totalPages;
-
+  
   /** The total number of items across all pages */
   private long totalItems;
-
+  
   /** The number of items per page */
   private int pageSize;
-
+  
   /** Whether there is a next page */
   private boolean hasNext;
-
+  
   /** Whether there is a previous page */
   private boolean hasPrevious;
 }

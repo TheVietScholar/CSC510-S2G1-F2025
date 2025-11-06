@@ -9,20 +9,20 @@ import org.springframework.stereotype.Repository;
 
 /**
  * Repository interface for managing {@link Product} entities within the BoozeBuddies platform.
+ * <p>
+ * Extends {@link JpaRepository} to provide CRUD operations and adds specialized queries
+ * for retrieving, filtering, and analyzing products by availability, category, price, and merchant.
+ * </p>
  *
- * <p>Extends {@link JpaRepository} to provide CRUD operations and adds specialized queries for
- * retrieving, filtering, and analyzing products by availability, category, price, and merchant.
+ * <p>Used primarily for marketplace product listings, search, and merchant catalog management.</p>
  *
- * <p>Used primarily for marketplace product listings, search, and merchant catalog management.
- *
- * <p>Key use cases include:
- *
+ * <p>Key use cases include:</p>
  * <ul>
- *   <li>Listing available products by merchant or category
- *   <li>Keyword-based product searches (name or description)
- *   <li>Filtering products by price or alcohol content range
- *   <li>Counting available products per merchant
- *   <li>Retrieving top-selling products (future enhancement)
+ *   <li>Listing available products by merchant or category</li>
+ *   <li>Keyword-based product searches (name or description)</li>
+ *   <li>Filtering products by price or alcohol content range</li>
+ *   <li>Counting available products per merchant</li>
+ *   <li>Retrieving top-selling products (future enhancement)</li>
  * </ul>
  */
 @Repository
@@ -94,8 +94,9 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
   /**
    * Retrieves available products whose alcohol content falls within the specified range.
-   *
-   * <p>This is primarily used for filtering beverage products such as beers or wines.
+   * <p>
+   * This is primarily used for filtering beverage products such as beers or wines.
+   * </p>
    *
    * @param minAlcohol the minimum alcohol percentage (inclusive)
    * @param maxAlcohol the maximum alcohol percentage (inclusive)
@@ -109,12 +110,14 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
   /**
    * Retrieves the top-selling products based on order history.
-   *
-   * <p>This query joins the {@code order_items} table and counts product occurrences, ordering
-   * results by sales volume in descending order.
-   *
-   * <p><b>Note:</b> This query is a placeholder that depends on an {@code OrderItem} entity for
-   * full implementation.
+   * <p>
+   * This query joins the {@code order_items} table and counts product occurrences,
+   * ordering results by sales volume in descending order.
+   * </p>
+   * <p>
+   * <b>Note:</b> This query is a placeholder that depends on an {@code OrderItem} entity
+   * for full implementation.
+   * </p>
    *
    * @param limit the maximum number of top-selling products to return
    * @return a list of the most frequently purchased {@link Product} entities

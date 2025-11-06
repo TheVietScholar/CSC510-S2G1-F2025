@@ -9,8 +9,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Service implementation for managing products. Provides CRUD operations, product searches, and
- * availability checks.
+ * Service implementation for managing products.
+ * Provides CRUD operations, product searches, and availability checks.
  */
 @Service
 @RequiredArgsConstructor
@@ -50,8 +50,8 @@ public class ProductServiceImpl implements ProductService {
   }
 
   /**
-   * Searches for products based on a keyword. Returns all available products if the keyword is null
-   * or empty.
+   * Searches for products based on a keyword.
+   * Returns all available products if the keyword is null or empty.
    *
    * @param keyword the search keyword
    * @return a list of matching products

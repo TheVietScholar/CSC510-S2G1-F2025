@@ -11,21 +11,21 @@ import org.springframework.stereotype.Repository;
 
 /**
  * Repository interface for managing {@link Order} entities within the BoozeBuddies platform.
+ * <p>
+ * Provides CRUD operations through {@link JpaRepository}, along with custom query
+ * methods to retrieve, search, and analyze order data for customers, merchants, and drivers.
+ * </p>
  *
- * <p>Provides CRUD operations through {@link JpaRepository}, along with custom query methods to
- * retrieve, search, and analyze order data for customers, merchants, and drivers.
+ * <p>Custom queries support filtering by status, merchant, and driver assignments,
+ * as well as aggregating financial data for reporting and analytics.</p>
  *
- * <p>Custom queries support filtering by status, merchant, and driver assignments, as well as
- * aggregating financial data for reporting and analytics.
- *
- * <p>Key use cases include:
- *
+ * <p>Key use cases include:</p>
  * <ul>
- *   <li>Fetching customer order history by user ID
- *   <li>Merchant dashboards with active and past orders
- *   <li>Driver delivery management
- *   <li>Search across orders by keyword or merchant name
- *   <li>Reporting total delivered order amounts per merchant
+ *   <li>Fetching customer order history by user ID</li>
+ *   <li>Merchant dashboards with active and past orders</li>
+ *   <li>Driver delivery management</li>
+ *   <li>Search across orders by keyword or merchant name</li>
+ *   <li>Reporting total delivered order amounts per merchant</li>
  * </ul>
  */
 @Repository
@@ -62,7 +62,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
    * Retrieves a paginated list of orders placed with a specific merchant.
    *
    * @param merchantId the ID of the merchant
-   * @param pageable pagination and sorting configuration
+   * @param pageable   pagination and sorting configuration
    * @return a paginated list of merchant orders
    */
   @Query("SELECT o FROM Order o WHERE o.merchant.id = :merchantId")
@@ -70,8 +70,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
   /**
    * Retrieves all orders for a specific merchant, sorted by creation date in descending order.
-   *
-   * <p>Non-paginated version used by service-level logic.
+   * <p>Non-paginated version used by service-level logic.</p>
    *
    * @param merchantId the ID of the merchant
    * @return a list of orders for the given merchant
@@ -89,11 +88,11 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
   List<Order> findByDriverId(@Param("driverId") Long driverId);
 
   /**
-   * Retrieves active (non-delivered) orders for a merchant that match the provided list of
-   * statuses. Typically used for dispatch and kitchen board displays.
+   * Retrieves active (non-delivered) orders for a merchant that match the provided list of statuses.
+   * Typically used for dispatch and kitchen board displays.
    *
    * @param merchantId the ID of the merchant
-   * @param statuses a list of statuses considered "active" (e.g., PENDING, PREPARING)
+   * @param statuses   a list of statuses considered "active" (e.g., PENDING, PREPARING)
    * @return a list of active orders for the merchant
    */
   @Query(
@@ -105,7 +104,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
    * Searches orders by item name or merchant name, supporting partial matches (case-insensitive).
    * Useful for customer and merchant order search features.
    *
-   * @param keyword the keyword to search by
+   * @param keyword  the keyword to search by
    * @param pageable pagination and sorting configuration
    * @return a paginated list of matching orders
    */
@@ -120,9 +119,10 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
   /**
    * Retrieves a specific order along with its related items and product details.
-   *
-   * <p>Uses a {@code LEFT JOIN FETCH} to eagerly load items and products, preventing multiple
-   * roundtrips when rendering detailed order views.
+   * <p>
+   * Uses a {@code LEFT JOIN FETCH} to eagerly load items and products,
+   * preventing multiple roundtrips when rendering detailed order views.
+   * </p>
    *
    * @param id the ID of the order
    * @return an optional containing the order and its items, if found

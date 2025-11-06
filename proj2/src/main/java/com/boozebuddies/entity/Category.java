@@ -5,7 +5,9 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.*;
 
-/** Entity representing a product category. */
+/**
+ * Entity representing a product category.
+ */
 @Entity
 @Table(name = "categories")
 @NoArgsConstructor

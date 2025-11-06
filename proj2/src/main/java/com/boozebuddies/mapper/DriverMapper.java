@@ -5,7 +5,9 @@ import com.boozebuddies.entity.Driver;
 import com.boozebuddies.model.CertificationStatus;
 import org.springframework.stereotype.Component;
 
-/** Mapper for converting between Driver entities and DriverDTO objects. */
+/**
+ * Mapper for converting between Driver entities and DriverDTO objects.
+ */
 @Component
 public class DriverMapper {
 

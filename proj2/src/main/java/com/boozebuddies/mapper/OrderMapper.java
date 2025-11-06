@@ -12,7 +12,9 @@ import com.boozebuddies.entity.User;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
 
-/** Mapper for converting between Order entities and Order-related DTO objects. */
+/**
+ * Mapper for converting between Order entities and Order-related DTO objects.
+ */
 @Component
 public class OrderMapper {
 

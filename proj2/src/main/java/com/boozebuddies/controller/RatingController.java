@@ -17,7 +17,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-/** REST controller for managing ratings for products, drivers, and merchants. */
+/**
+ * REST controller for managing ratings for products, drivers, and merchants.
+ */
 @RestController
 @RequestMapping("/api/ratings")
 @RequiredArgsConstructor

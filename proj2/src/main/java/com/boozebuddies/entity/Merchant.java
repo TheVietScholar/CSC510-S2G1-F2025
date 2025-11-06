@@ -6,7 +6,9 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.*;
 
-/** Entity representing a merchant that sells products. */
+/**
+ * Entity representing a merchant that sells products.
+ */
 @Entity
 @Table(name = "merchants")
 @NoArgsConstructor

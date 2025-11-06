@@ -21,7 +21,9 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-/** REST controller for managing products and product operations. */
+/**
+ * REST controller for managing products and product operations.
+ */
 @RestController
 @RequestMapping("/api/products")
 @RequiredArgsConstructor

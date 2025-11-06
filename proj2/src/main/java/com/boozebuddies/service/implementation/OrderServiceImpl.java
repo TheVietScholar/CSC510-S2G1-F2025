@@ -27,13 +27,12 @@ import org.springframework.transaction.annotation.Transactional;
  * notification components to ensure end-to-end order management.
  *
  * <p>Responsibilities include:
- *
  * <ul>
- *   <li>Validating order creation and updating timestamps
- *   <li>Managing order lifecycle transitions
- *   <li>Handling payment processing and refunds
- *   <li>Creating and updating delivery records
- *   <li>Sending relevant notifications to users and merchants
+ *   <li>Validating order creation and updating timestamps</li>
+ *   <li>Managing order lifecycle transitions</li>
+ *   <li>Handling payment processing and refunds</li>
+ *   <li>Creating and updating delivery records</li>
+ *   <li>Sending relevant notifications to users and merchants</li>
  * </ul>
  */
 @Service
@@ -81,6 +80,13 @@ public class OrderServiceImpl implements OrderService {
     return savedOrder;
   }
 
+  
+  /**
+   * Retrieves an order by its unique identifier.
+   *
+   * @param id the order ID
+   * @return an {@link Optional} containing the order if found
+   */
   @Override
   @Transactional(readOnly = true)
   public Optional<Order> getOrderById(Long id) {

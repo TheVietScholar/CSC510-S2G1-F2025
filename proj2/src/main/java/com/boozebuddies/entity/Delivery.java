@@ -5,7 +5,9 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import lombok.*;
 
-/** Entity representing a delivery for an order. */
+/**
+ * Entity representing a delivery for an order.
+ */
 @Entity
 @Table(name = "deliveries")
 @NoArgsConstructor
@@ -113,7 +115,9 @@ public class Delivery {
   @Column(name = "updated_at")
   private LocalDateTime updatedAt = LocalDateTime.now();
 
-  /** Updates the updatedAt timestamp before persisting changes. */
+  /**
+   * Updates the updatedAt timestamp before persisting changes.
+   */
   @PreUpdate
   public void preUpdate() {
     this.updatedAt = LocalDateTime.now();

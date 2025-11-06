@@ -10,34 +10,28 @@ import org.springframework.stereotype.Repository;
 
 /**
  * Repository interface for managing {@link Driver} entities within the BoozeBuddies system.
+ * <p>
+ * This interface provides CRUD operations through {@link JpaRepository} and includes
+ * custom query methods for retrieving, filtering, and validating driver information.
+ * </p>
  *
- * <p>This interface provides CRUD operations through {@link JpaRepository} and includes custom
- * query methods for retrieving, filtering, and validating driver information.
- *
- * <p>Custom query methods include:
- *
+ * <p>Custom query methods include:</p>
  * <ul>
- *   <li>{@link #findByEmail(String)} - Retrieves a driver by their email address.
- *   <li>{@link #findByPhone(String)} - Retrieves a driver by their phone number.
- *   <li>{@link #findByIsAvailable(boolean)} - Finds drivers based on their availability status.
- *   <li>{@link #findByVehicleType(String)} - Finds drivers by their vehicle type (e.g., car, van,
- *       bike).
- *   <li>{@link #findAvailableCertifiedDrivers()} - Retrieves all available drivers with approved
- *       certification.
- *   <li>{@link #findAvailableDriversByRating()} - Finds all available drivers sorted by rating in
- *       descending order.
- *   <li>{@link #findNearbyAvailableDrivers(Double, Double, Double)} - Finds available drivers
- *       within a specific radius using geolocation.
- *   <li>{@link #findByMinDeliveries(Integer)} - Retrieves drivers who have completed a minimum
- *       number of deliveries.
- *   <li>{@link #existsByEmail(String)} - Checks if a driver exists with the specified email.
- *   <li>{@link #existsByPhone(String)} - Checks if a driver exists with the specified phone number.
- *   <li>{@link #existsByLicensePlate(String)} - Checks if a driver exists with the specified
- *       license plate.
+ *   <li>{@link #findByEmail(String)} - Retrieves a driver by their email address.</li>
+ *   <li>{@link #findByPhone(String)} - Retrieves a driver by their phone number.</li>
+ *   <li>{@link #findByIsAvailable(boolean)} - Finds drivers based on their availability status.</li>
+ *   <li>{@link #findByVehicleType(String)} - Finds drivers by their vehicle type (e.g., car, van, bike).</li>
+ *   <li>{@link #findAvailableCertifiedDrivers()} - Retrieves all available drivers with approved certification.</li>
+ *   <li>{@link #findAvailableDriversByRating()} - Finds all available drivers sorted by rating in descending order.</li>
+ *   <li>{@link #findNearbyAvailableDrivers(Double, Double, Double)} - Finds available drivers within a specific radius using geolocation.</li>
+ *   <li>{@link #findByMinDeliveries(Integer)} - Retrieves drivers who have completed a minimum number of deliveries.</li>
+ *   <li>{@link #existsByEmail(String)} - Checks if a driver exists with the specified email.</li>
+ *   <li>{@link #existsByPhone(String)} - Checks if a driver exists with the specified phone number.</li>
+ *   <li>{@link #existsByLicensePlate(String)} - Checks if a driver exists with the specified license plate.</li>
  * </ul>
  *
- * <p>This repository supports driver management, assignment logic, and analytics features across
- * the BoozeBuddies platform.
+ * <p>This repository supports driver management, assignment logic,
+ * and analytics features across the BoozeBuddies platform.</p>
  */
 @Repository
 public interface DriverRepository extends JpaRepository<Driver, Long> {
@@ -66,10 +60,9 @@ public interface DriverRepository extends JpaRepository<Driver, Long> {
   List<Driver> findAvailableDriversByRating();
 
   /**
-   * Finds available drivers within a specific radius from a given location using geospatial
-   * distance.
+   * Finds available drivers within a specific radius from a given location using geospatial distance.
    *
-   * @param latitude the latitude of the reference point
+   * @param latitude  the latitude of the reference point
    * @param longitude the longitude of the reference point
    * @param radiusInMeters the search radius in meters
    * @return a list of nearby available drivers within the specified distance

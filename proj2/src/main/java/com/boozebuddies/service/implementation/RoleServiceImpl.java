@@ -51,12 +51,13 @@ public class RoleServiceImpl implements RoleService {
   }
 
   /**
-   * Assigns a role to a user along with a merchant association, used primarily for assigning {@link
-   * Role#MERCHANT_ADMIN}.
+   * Assigns a role to a user along with a merchant association, used primarily for assigning
+   * {@link Role#MERCHANT_ADMIN}.
    *
    * @param userId the ID of the user
    * @param role the role to assign
-   * @param merchantId the ID of the merchant associated with the user (required for MERCHANT_ADMIN)
+   * @param merchantId the ID of the merchant associated with the user (required for
+   *     MERCHANT_ADMIN)
    * @return the updated {@link User} with assigned role and merchant
    * @throws ValidationException if the merchant ID is missing or invalid for the role
    */
@@ -202,8 +203,8 @@ public class RoleServiceImpl implements RoleService {
   }
 
   /**
-   * Determines the primary (highest-level) role of a user based on role hierarchy: ADMIN >
-   * MERCHANT_ADMIN > DRIVER > USER.
+   * Determines the primary (highest-level) role of a user based on role hierarchy:
+   * ADMIN > MERCHANT_ADMIN > DRIVER > USER.
    *
    * @param user the user to evaluate
    * @return the highest-priority {@link Role} the user holds

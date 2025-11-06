@@ -9,14 +9,16 @@ import org.springframework.stereotype.Service;
 
 /**
  * Implementation of the {@link CategoryService} interface.
- *
- * <p>This service handles operations related to product or drink categories in the BoozeBuddies
- * system, including retrieval, creation, and validation of category data.
+ * <p>
+ * This service handles operations related to product or drink categories in the BoozeBuddies system,
+ * including retrieval, creation, and validation of category data.
+ * </p>
  */
 @Service
 public class CategoryServiceImpl implements CategoryService {
 
-  @Autowired private CategoryRepository categoryRepository;
+  @Autowired 
+  private CategoryRepository categoryRepository;
 
   /**
    * Retrieves all available categories from the database.

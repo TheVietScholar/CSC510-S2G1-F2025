@@ -14,7 +14,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-/** REST controller for managing product categories. */
+/**
+ * REST controller for managing product categories.
+ */
 @RestController
 @RequestMapping("/api/categories")
 public class CategoryController {

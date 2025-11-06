@@ -17,11 +17,10 @@ import org.springframework.stereotype.Service;
  * Implementation of the {@link MerchantService} interface.
  *
  * <p>This service handles business logic related to merchant management, including registration,
- * verification, retrieval, deletion, and distance-based sorting. It also provides access to
- * merchant order histories via pagination.
+ * verification, retrieval, deletion, and distance-based sorting. It also provides access to merchant
+ * order histories via pagination.
  *
- * <p>All data persistence is delegated to the {@link MerchantRepository} and {@link
- * OrderRepository}.
+ * <p>All data persistence is delegated to the {@link MerchantRepository} and {@link OrderRepository}.
  */
 @Service
 public class MerchantServiceImpl implements MerchantService {

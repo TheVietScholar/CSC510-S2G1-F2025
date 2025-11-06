@@ -18,8 +18,8 @@ import org.springframework.stereotype.Service;
  * Implementation of the {@link PaymentService} interface that handles payment processing, refund
  * management, and revenue calculations.
  *
- * <p>This service interacts with the {@link PaymentRepository} to persist and retrieve payment
- * data. It supports creating, refunding, validating, and aggregating payment transactions.
+ * <p>This service interacts with the {@link PaymentRepository} to persist and retrieve payment data.
+ * It supports creating, refunding, validating, and aggregating payment transactions.
  *
  * <p>All payments are associated with {@link Order} and {@link User} entities and maintain their
  * corresponding {@link PaymentStatus}.
@@ -49,8 +49,8 @@ public class PaymentServiceImpl implements PaymentService {
    * @param order the order being paid for
    * @param paymentMethod the payment method used (e.g., "Credit Card", "PayPal")
    * @return the newly created {@link Payment}
-   * @throws RuntimeException if the payment method is invalid or if a payment already exists for
-   *     the order
+   * @throws RuntimeException if the payment method is invalid or if a payment already exists for the
+   *     order
    */
   @Override
   public Payment processPayment(Order order, String paymentMethod) {

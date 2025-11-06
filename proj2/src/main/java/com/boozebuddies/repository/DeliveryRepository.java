@@ -12,35 +12,28 @@ import org.springframework.stereotype.Repository;
 
 /**
  * Repository interface for managing {@link Delivery} entities in the BoozeBuddies system.
+ * <p>
+ * This interface provides built-in CRUD operations via {@link JpaRepository}
+ * and custom query methods for managing deliveries, tracking driver activity,
+ * and analyzing delivery performance.
+ * </p>
  *
- * <p>This interface provides built-in CRUD operations via {@link JpaRepository} and custom query
- * methods for managing deliveries, tracking driver activity, and analyzing delivery performance.
- *
- * <p>Custom query methods include:
- *
+ * <p>Custom query methods include:</p>
  * <ul>
- *   <li>{@link #findByOrderId(Long)} - Retrieves a delivery associated with a specific order.
- *   <li>{@link #findByDriverId(Long)} - Returns all deliveries assigned to a given driver.
- *   <li>{@link #findByStatus(DeliveryStatus)} - Retrieves deliveries filtered by their current
- *       status.
- *   <li>{@link #findByDriverIdAndStatus(Long, DeliveryStatus)} - Finds deliveries by both driver
- *       and status.
- *   <li>{@link #findByDeliveryDateBetween(LocalDateTime, LocalDateTime)} - Retrieves deliveries
- *       created within a specific date range.
- *   <li>{@link #findByDriverIdAndStatusIn(Long, List)} - Retrieves deliveries for a driver with
- *       multiple possible statuses.
- *   <li>{@link #countCompletedDeliveriesByDriverAndDateRange(Long, LocalDateTime, LocalDateTime)} -
- *       Counts completed deliveries for a driver within a given timeframe.
- *   <li>{@link #findOverdueDeliveries(LocalDateTime)} - Finds deliveries that are overdue based on
- *       their estimated delivery time.
- *   <li>{@link #findRecentDeliveriesByDriver(Long, int)} - Retrieves a limited number of recent
- *       deliveries for a driver.
- *   <li>{@link #findAverageDeliveryTimeByDriver(Long)} - Calculates the average delivery time (in
- *       minutes) for completed deliveries by a specific driver.
+ *   <li>{@link #findByOrderId(Long)} - Retrieves a delivery associated with a specific order.</li>
+ *   <li>{@link #findByDriverId(Long)} - Returns all deliveries assigned to a given driver.</li>
+ *   <li>{@link #findByStatus(DeliveryStatus)} - Retrieves deliveries filtered by their current status.</li>
+ *   <li>{@link #findByDriverIdAndStatus(Long, DeliveryStatus)} - Finds deliveries by both driver and status.</li>
+ *   <li>{@link #findByDeliveryDateBetween(LocalDateTime, LocalDateTime)} - Retrieves deliveries created within a specific date range.</li>
+ *   <li>{@link #findByDriverIdAndStatusIn(Long, List)} - Retrieves deliveries for a driver with multiple possible statuses.</li>
+ *   <li>{@link #countCompletedDeliveriesByDriverAndDateRange(Long, LocalDateTime, LocalDateTime)} - Counts completed deliveries for a driver within a given timeframe.</li>
+ *   <li>{@link #findOverdueDeliveries(LocalDateTime)} - Finds deliveries that are overdue based on their estimated delivery time.</li>
+ *   <li>{@link #findRecentDeliveriesByDriver(Long, int)} - Retrieves a limited number of recent deliveries for a driver.</li>
+ *   <li>{@link #findAverageDeliveryTimeByDriver(Long)} - Calculates the average delivery time (in minutes) for completed deliveries by a specific driver.</li>
  * </ul>
  *
- * This repository supports analytical reporting, operational dashboards, and driver performance
- * monitoring features.
+ * This repository supports analytical reporting, operational dashboards, and
+ * driver performance monitoring features.
  */
 @Repository
 public interface DeliveryRepository extends JpaRepository<Delivery, Long> {
@@ -95,8 +88,8 @@ public interface DeliveryRepository extends JpaRepository<Delivery, Long> {
       @Param("endDate") LocalDateTime endDate);
 
   /**
-   * Finds deliveries that are overdue — i.e., where the estimated delivery time has passed but the
-   * status is not {@code DELIVERED} or {@code CANCELLED}.
+   * Finds deliveries that are overdue — i.e., where the estimated delivery time
+   * has passed but the status is not {@code DELIVERED} or {@code CANCELLED}.
    *
    * @param currentTime the current system time used for comparison
    * @return a list of overdue deliveries
@@ -106,8 +99,8 @@ public interface DeliveryRepository extends JpaRepository<Delivery, Long> {
   List<Delivery> findOverdueDeliveries(@Param("currentTime") LocalDateTime currentTime);
 
   /**
-   * Retrieves a limited list of the most recent deliveries assigned to a driver. Uses a native SQL
-   * query for performance optimization.
+   * Retrieves a limited list of the most recent deliveries assigned to a driver.
+   * Uses a native SQL query for performance optimization.
    *
    * @param driverId the driver's unique identifier
    * @param limit the maximum number of records to return
@@ -121,8 +114,8 @@ public interface DeliveryRepository extends JpaRepository<Delivery, Long> {
       @Param("driverId") Long driverId, @Param("limit") int limit);
 
   /**
-   * Calculates the average delivery time (in minutes) for all completed deliveries handled by a
-   * specific driver.
+   * Calculates the average delivery time (in minutes) for all completed deliveries
+   * handled by a specific driver.
    *
    * @param driverId the driver's unique identifier
    * @return the average delivery duration in minutes, or {@code null} if no data is available
