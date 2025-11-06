@@ -8,7 +8,7 @@ export const drivers = {
   getAvailable: () => http.get('/drivers/available'),
   getById: (driverId) => http.get(`/drivers/${driverId}`),
   getAll: () => http.get('/drivers'),
-  getMyProfile: () => http.get('/drivers/my-profile'),
+  getMyProfile: (userId) => http.get(`/drivers/my-profile?id=${userId}`),
 }
 
 export default drivers
