@@ -2,6 +2,8 @@ package com.boozebuddies.mapper;
 
 import com.boozebuddies.dto.CreateProductRequest;
 import com.boozebuddies.dto.ProductDTO;
+import com.boozebuddies.entity.Category;
+import com.boozebuddies.entity.Merchant;
 import com.boozebuddies.entity.Product;
 import org.springframework.stereotype.Component;
 
@@ -16,18 +18,21 @@ public class ProductMapper {
    * @return the ProductDTO, or null if the input is null
    */
   public ProductDTO toDTO(Product product) {
+    if (product == null) return null;
+    
     return ProductDTO.builder()
         .id(product.getId())
         .name(product.getName())
         .description(product.getDescription())
         .price(product.getPrice())
-        .category(product.getCategory() != null ? product.getCategory().getName() : null)
+        .categoryId(product.getCategory() != null ? product.getCategory().getId() : null) // Map category to categoryId
         .merchantId(product.getMerchant() != null ? product.getMerchant().getId() : null)
         .merchantName(product.getMerchant() != null ? product.getMerchant().getName() : null)
         .isAlcohol(product.isAlcohol())
         .alcoholContent(product.getAlcoholContent())
-        .isAvailable(product.isAvailable())
         .imageUrl(product.getImageUrl())
+        .isAvailable(product.isAvailable())
+        .volume(product.getVolume())
         .build();
   }
 
@@ -38,19 +43,36 @@ public class ProductMapper {
    * @param dto the ProductDTO to convert
    * @return the Product entity, or null if the input is null
    */
-  public Product toEntity(ProductDTO dto) {
-    if (dto == null) return null;
-
-    return Product.builder()
-        .id(dto.getId())
-        .name(dto.getName())
-        .description(dto.getDescription())
-        .price(dto.getPrice())
-        .isAlcohol(dto.isAlcohol())
-        .alcoholContent(dto.getAlcoholContent())
-        .imageUrl(dto.getImageUrl())
-        .available(dto.isAvailable())
-        .build();
+  public Product toEntity(ProductDTO productDTO) {
+    if (productDTO == null) return null;
+    
+    Product product = new Product();
+    product.setId(productDTO.getId());
+    product.setName(productDTO.getName());
+    product.setDescription(productDTO.getDescription());
+    product.setPrice(productDTO.getPrice());
+    
+    // Handle category - you'll need to fetch the Category entity by ID
+    if (productDTO.getCategoryId() != null) {
+      Category category = new Category();
+      category.setId(productDTO.getCategoryId());
+      product.setCategory(category);
+    }
+    
+    // Handle merchant
+    if (productDTO.getMerchantId() != null) {
+      Merchant merchant = new Merchant();
+      merchant.setId(productDTO.getMerchantId());
+      product.setMerchant(merchant);
+    }
+    
+    product.setAlcohol(productDTO.isAlcohol());
+    product.setAlcoholContent(productDTO.getAlcoholContent());
+    product.setImageUrl(productDTO.getImageUrl());
+    product.setAvailable(productDTO.isAvailable());
+    product.setVolume(productDTO.getVolume());
+    
+    return product;
   }
 
   /**

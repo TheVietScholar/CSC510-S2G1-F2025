@@ -3,12 +3,14 @@ package com.boozebuddies.controller;
 import com.boozebuddies.dto.ApiResponse;
 import com.boozebuddies.dto.CreateProductRequest;
 import com.boozebuddies.dto.ProductDTO;
+import com.boozebuddies.entity.Category;
 import com.boozebuddies.entity.Merchant;
 import com.boozebuddies.entity.Product;
 import com.boozebuddies.entity.User;
 import com.boozebuddies.mapper.ProductMapper;
 import com.boozebuddies.model.Role;
 import com.boozebuddies.security.annotation.RoleAnnotations.*;
+import com.boozebuddies.service.CategoryService;
 import com.boozebuddies.service.MerchantService;
 import com.boozebuddies.service.PermissionService;
 import com.boozebuddies.service.ProductService;
@@ -31,6 +33,7 @@ public class ProductController {
   private final ProductMapper productMapper;
   private final PermissionService permissionService;
   private final MerchantService merchantService;
+  private final CategoryService categoryService; // ADD THIS
 
   // ==================== PUBLIC ENDPOINTS (No authentication required) ====================
 
@@ -196,7 +199,7 @@ public class ProductController {
   // ==================== ADMIN & MERCHANT_ADMIN ENDPOINTS ====================
 
   /**
-   * Adds a new product. Admin can add for any merchant, merchant admin can only add for their own
+   * Creates a new product. Admin can create for any merchant, merchant admin can only create for their own
    * merchant.
    *
    * @param request the product creation request
@@ -205,54 +208,54 @@ public class ProductController {
    */
   @PostMapping
   @IsAdminOrMerchantAdmin
-  public ResponseEntity<ApiResponse<ProductDTO>> addProduct(
+  public ResponseEntity<ApiResponse<ProductDTO>> createProduct(
       @RequestBody CreateProductRequest request, Authentication authentication) {
     try {
       System.out.println("DEBUG - CreateProductRequest received:");
+      System.out.println("  Name: " + request.getName());
+      System.out.println("  Category ID: " + request.getCategoryId());
+      System.out.println("  Merchant ID: " + request.getMerchantId());
       System.out.println("  isAlcohol: " + request.isAlcohol());
       System.out.println("  alcoholContent: " + request.getAlcoholContent());
 
       User user = permissionService.getAuthenticatedUser(authentication);
 
-      // Convert request to entity FIRST
-      Product product = productMapper.toEntity(request);
-
-      // Debug after mapping
-      System.out.println("DEBUG - After ProductMapper.toEntity():");
-      System.out.println("  isAlcohol: " + product.isAlcohol());
-
-      // THEN set the merchant relationship using the merchantId from request
-      Merchant merchant = merchantService.getMerchantById(request.getMerchantId());
-      if (merchant == null) {
-        return ResponseEntity.badRequest().body(ApiResponse.error("Merchant not found"));
-      }
-      product.setMerchant(merchant);
-
-      // Debug after setting merchant
-      System.out.println("DEBUG - After setting merchant:");
-      System.out.println("  isAlcohol: " + product.isAlcohol());
-
       // Validate merchant ownership for merchant admins
       if (user != null && user.hasRole(Role.MERCHANT_ADMIN)) {
         if (!user.ownsMerchant(request.getMerchantId())) {
-          throw new AccessDeniedException("You can only add products for your own merchant");
+          throw new AccessDeniedException("You can only create products for your own merchant");
         }
       }
 
-      Product savedProduct = productService.addProduct(product);
+      // Convert to ProductDTO to use the new createProduct method
+      ProductDTO productDTO = ProductDTO.builder()
+          .name(request.getName())
+          .description(request.getDescription())
+          .price(request.getPrice())
+          .categoryId(request.getCategoryId())  // This will be used by the service
+          .merchantId(request.getMerchantId())
+          .isAlcohol(request.isAlcohol())
+          .alcoholContent(request.getAlcoholContent())
+          .isAvailable(request.isAvailable())
+          .imageUrl(request.getImageUrl())
+          .build();
 
-      // Debug after saving
-      System.out.println("DEBUG - After productService.addProduct():");
-      System.out.println("  isAlcohol: " + savedProduct.isAlcohol());
+      // Use the new createProduct method that handles categories properly
+      Product createdProduct = productService.createProduct(productDTO);
+
+      System.out.println("DEBUG - After productService.createProduct():");
+      System.out.println("  Product ID: " + createdProduct.getId());
+      System.out.println("  Category: " + (createdProduct.getCategory() != null ? createdProduct.getCategory().getId() : "null"));
 
       return ResponseEntity.status(HttpStatus.CREATED)
           .body(
-              ApiResponse.success(productMapper.toDTO(savedProduct), "Product added successfully"));
+              ApiResponse.success(productMapper.toDTO(createdProduct), "Product created successfully"));
     } catch (AccessDeniedException e) {
       return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error(e.getMessage()));
     } catch (Exception e) {
+      e.printStackTrace(); // Print full stack trace for debugging
       return ResponseEntity.badRequest()
-          .body(ApiResponse.error("Failed to add product: " + e.getMessage()));
+          .body(ApiResponse.error("Failed to create product: " + e.getMessage()));
     }
   }
 
@@ -285,8 +288,8 @@ public class ProductController {
         }
       }
 
-      Product product = productMapper.toEntity(productDTO);
-      Product updatedProduct = productService.updateProduct(id, product);
+      // Use the new updateProduct method that handles DTOs
+      Product updatedProduct = productService.updateProduct(id, productDTO);
 
       if (updatedProduct == null) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)

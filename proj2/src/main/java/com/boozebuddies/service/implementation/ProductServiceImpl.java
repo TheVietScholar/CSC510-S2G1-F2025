@@ -1,6 +1,12 @@
 package com.boozebuddies.service.implementation;
 
+import com.boozebuddies.dto.ProductDTO;
+import com.boozebuddies.entity.Category;
+import com.boozebuddies.entity.Merchant;
 import com.boozebuddies.entity.Product;
+import com.boozebuddies.mapper.ProductMapper;
+import com.boozebuddies.repository.CategoryRepository;
+import com.boozebuddies.repository.MerchantRepository;
 import com.boozebuddies.repository.ProductRepository;
 import com.boozebuddies.service.ProductService;
 import java.util.List;
@@ -17,6 +23,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProductServiceImpl implements ProductService {
 
   private final ProductRepository productRepository;
+  private final CategoryRepository categoryRepository;
+  private final MerchantRepository merchantRepository;
+  private final ProductMapper productMapper;
 
   /**
    * Retrieves all products from the system.
@@ -121,6 +130,45 @@ public class ProductServiceImpl implements ProductService {
   }
 
   /**
+   * Creates a new product from a ProductDTO.
+   *
+   * @param productDTO the product data
+   * @return the created product
+   * @throws IllegalArgumentException if category or merchant not found
+   */
+  @Override
+  @Transactional
+  public Product createProduct(ProductDTO productDTO) {
+    if (productDTO == null) {
+      throw new IllegalArgumentException("ProductDTO cannot be null");
+    }
+
+    // Convert to entity first
+    Product product = productMapper.toEntity(productDTO);
+    
+    // Set managed category entity
+    if (productDTO.getCategoryId() != null) {
+      Category category = categoryRepository.findById(productDTO.getCategoryId())
+          .orElseThrow(() -> new IllegalArgumentException("Category not found with id: " + productDTO.getCategoryId()));
+      product.setCategory(category);
+    } else {
+      throw new IllegalArgumentException("Category ID is required");
+    }
+    
+    // Set managed merchant entity
+    if (productDTO.getMerchantId() != null) {
+      Merchant merchant = merchantRepository.findById(productDTO.getMerchantId())
+          .orElseThrow(() -> new IllegalArgumentException("Merchant not found with id: " + productDTO.getMerchantId()));
+      product.setMerchant(merchant);
+    } else {
+      throw new IllegalArgumentException("Merchant ID is required");
+    }
+
+    validateProduct(product);
+    return productRepository.save(product);
+  }
+
+  /**
    * Updates an existing product.
    *
    * @param id the ID of the product to update
@@ -150,6 +198,43 @@ public class ProductServiceImpl implements ProductService {
       existing.setCategory(product.getCategory());
     }
 
+    return productRepository.save(existing);
+  }
+
+  /**
+   * Updates an existing product from a ProductDTO.
+   *
+   * @param id the ID of the product to update
+   * @param productDTO the updated product data
+   * @return the saved product
+   * @throws RuntimeException if the product does not exist
+   */
+  @Override
+  @Transactional
+  public Product updateProduct(Long id, ProductDTO productDTO) {
+    Product existing = getProductById(id);
+    if (existing == null) {
+      throw new RuntimeException("Product not found with id: " + id);
+    }
+
+    // Update basic fields
+    existing.setName(productDTO.getName());
+    existing.setDescription(productDTO.getDescription());
+    existing.setPrice(productDTO.getPrice());
+    existing.setAvailable(productDTO.isAvailable());
+    existing.setImageUrl(productDTO.getImageUrl());
+    existing.setAlcohol(productDTO.isAlcohol());
+    existing.setAlcoholContent(productDTO.getAlcoholContent());
+    existing.setVolume(productDTO.getVolume());
+
+    // Update category if provided
+    if (productDTO.getCategoryId() != null) {
+      Category category = categoryRepository.findById(productDTO.getCategoryId())
+          .orElseThrow(() -> new IllegalArgumentException("Category not found with id: " + productDTO.getCategoryId()));
+      existing.setCategory(category);
+    }
+
+    validateProduct(existing);
     return productRepository.save(existing);
   }
 
