@@ -118,7 +118,8 @@ public class MerchantController {
   }
 
   /**
-   * Get all merchants sorted by distance from authenticated user's location. Authenticated users
+   * Get all merchants sorted by distance from authenticated user's location.
+   * Authenticated users
    * only - uses user's stored location.
    */
   @GetMapping("/by-distance")
@@ -140,10 +141,8 @@ public class MerchantController {
                     "User location not set. Please update your profile with your location."));
       }
 
-      List<Merchant> merchants =
-          merchantService.getMerchantsSortedByDistance(user.getLatitude(), user.getLongitude());
-      List<MerchantDTO> merchantDTOs =
-          merchants.stream().map(merchantMapper::toDTO).collect(Collectors.toList());
+      List<Merchant> merchants = merchantService.getMerchantsSortedByDistance(user.getLatitude(), user.getLongitude());
+      List<MerchantDTO> merchantDTOs = merchants.stream().map(merchantMapper::toDTO).collect(Collectors.toList());
       return ResponseEntity.ok(
           ApiResponse.success(merchantDTOs, "Merchants sorted by distance from your location"));
     } catch (Exception e) {
@@ -156,8 +155,7 @@ public class MerchantController {
   @IsAuthenticated
   public ResponseEntity<?> getAllMerchants() {
     try {
-      List<MerchantDTO> merchants =
-          merchantService.getAllMerchants().stream().map(merchantMapper::toDTO).toList();
+      List<MerchantDTO> merchants = merchantService.getAllMerchants().stream().map(merchantMapper::toDTO).toList();
       return ResponseEntity.ok(ApiResponse.success(merchants, "Merchants retrieved successfully"));
     } catch (Exception e) {
       return ResponseEntity.badRequest()
@@ -191,8 +189,7 @@ public class MerchantController {
   // ==================== ORDERS BY MERCHANT ====================
 
   @GetMapping("/{id}/orders")
-  @org.springframework.security.access.prepost.PreAuthorize(
-      "hasRole('ADMIN') or @permissionService.ownsMerchant(authentication, #id)")
+  @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN') or @permissionService.ownsMerchant(authentication, #id)")
   public ResponseEntity<?> getOrdersByMerchant(
       @PathVariable Long id,
       @RequestParam(defaultValue = "0") int page,

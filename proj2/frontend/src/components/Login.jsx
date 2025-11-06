@@ -95,13 +95,13 @@ const Login = ({ onLogin }) => {
   
   const handleHardcodedAuth = () => {
     // Simple authentication fallback for demo
-    if (email === 'user@example.com' && password === 'password') {
-      onLogin({ email: 'user@example.com', role: 'user' })
-    } else if (email === 'admin@example.com' && password === 'password') {
-      onLogin({ email: 'admin@example.com', role: 'admin' })
-    } else if (email === 'merchant1@example.com' && password === 'password') {
+    if (email === 'user@boozebuddies.com' && password === 'password') {
+      onLogin({ email: 'user@boozebuddies.com', role: 'user' })
+    } else if (email === 'admin@boozebuddies.com' && password === 'password') {
+      onLogin({ email: 'admin@boozebuddies.com', role: 'admin' })
+    } else if (email === 'merchant1@boozebuddies.com' && password === 'password') {
       onLogin({ 
-        email: 'merchant1@example.com', 
+        email: 'merchant1@boozebuddies.com', 
         role: 'merchant',
         merchantId: 1
       })
@@ -252,9 +252,9 @@ const Login = ({ onLogin }) => {
         {!isSignUp && (
           <div className="mt-6 text-center text-sm text-gray-600">
             <p>Demo credentials:</p>
-            <p className="font-mono">User: user@example.com / password</p>
-            <p className="font-mono">Admin: admin@example.com / password</p>
-            <p className="font-mono">Merchant: merchant1@example.com / password</p>
+            <p className="font-mono">User: user@boozebuddies.com / password</p>
+            <p className="font-mono">Admin: admin@boozebuddies.com / password</p>
+            <p className="font-mono">Merchant: merchant1@boozebuddies.com / password</p>
           </div>
         )}
       </div>

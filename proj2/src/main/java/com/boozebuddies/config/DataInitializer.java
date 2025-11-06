@@ -22,6 +22,34 @@ public class DataInitializer implements CommandLineRunner {
     public void run(String... args) throws Exception {
         createAdminUser();
         createMerchantAdmin();
+        createUser();
+    }
+
+    private void createUser() {
+        // Check if user already exists by email
+        Optional<User> existingUser = userRepository.findByEmailIgnoreCase("user@boozebuddies.com");
+        if (existingUser.isEmpty()) {
+            User user = User.builder()
+                    .name("User")
+                    .email("user@boozebuddies.com")
+                    .passwordHash(passwordEncoder.encode("password"))
+                    .isActive(true)
+                    .isEmailVerified(true)
+                    .ageVerified(true)
+                    .build();
+
+            // Add USER role
+            user.addRole(Role.USER);
+
+            userRepository.save(user);
+            System.out.println("=== USER CREATED ===");
+            System.out.println("Email: user@boozebuddies.com");
+            System.out.println("Password: password");
+            System.out.println("Role: USER");
+            System.out.println("==========================");
+        } else {
+            System.out.println("User already exists");
+        }
     }
 
     private void createAdminUser() {
@@ -36,10 +64,10 @@ public class DataInitializer implements CommandLineRunner {
                     .isEmailVerified(true)
                     .ageVerified(true)
                     .build();
-            
+
             // Add ADMIN role
             admin.addRole(Role.ADMIN);
-            
+
             userRepository.save(admin);
             System.out.println("=== ADMIN USER CREATED ===");
             System.out.println("Email: admin@boozebuddies.com");
@@ -64,10 +92,10 @@ public class DataInitializer implements CommandLineRunner {
                     .ageVerified(true)
                     .merchantId(1L) // Attach to merchant ID 1
                     .build();
-            
+
             // Add MERCHANT_ADMIN role
             merchantAdmin.addRole(Role.MERCHANT_ADMIN);
-            
+
             userRepository.save(merchantAdmin);
             System.out.println("=== MERCHANT ADMIN USER CREATED ===");
             System.out.println("Email: merchant1@boozebuddies.com");
