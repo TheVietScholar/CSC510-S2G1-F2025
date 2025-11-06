@@ -1287,7 +1287,7 @@ public class OrderServiceImplTest {
   public void calculateDistance_returnsCorrectDistance() {
     // Test distance between two known points
     // New York City (40.7128, -74.0060) to Philadelphia (39.9526, -75.1652)
-    // Approximate distance: ~95 km
+    // Actual distance: ~129.6 km
     double lat1 = 40.7128;
     double lon1 = -74.0060;
     double lat2 = 39.9526;
@@ -1295,7 +1295,8 @@ public class OrderServiceImplTest {
 
     double distance = orderService.calculateDistance(lat1, lon1, lat2, lon2);
 
-    assertTrue(distance > 90 && distance < 100, "Distance should be approximately 95 km");
+    assertTrue(distance > 125 && distance < 135,
+        "Distance should be approximately 129.6 km, but was " + distance);
   }
 
   @Test
@@ -1456,8 +1457,112 @@ public class OrderServiceImplTest {
     List<Order> result = orderService.getOrdersWithinDistance(latitude, longitude, radiusKm);
 
     assertNotNull(result);
-    // Should only include order within radius
-    assertTrue(result.size() <= 2);
-    assertTrue(result.contains(orderWithinRadius) || result.size() == 0);
+    // Should only include order within radius (close merchant is ~1.43km, far
+    // merchant is ~14.33km)
+    assertEquals(1, result.size(), "Should only include order within 5km radius");
+    assertTrue(result.contains(orderWithinRadius), "Result should contain order within radius");
+    assertFalse(result.contains(orderOutsideRadius), "Result should not contain order outside radius");
+  }
+
+  // ==================== ADDITIONAL COVERAGE TESTS ====================
+
+  @Test
+  public void getOrdersWithinDistance_handlesNullMerchantLatitude() {
+    double latitude = 35.5;
+    double longitude = -78.9;
+    double radiusKm = 10.0;
+
+    Order order = mock(Order.class);
+    Merchant merchant = mock(Merchant.class);
+
+    when(order.getMerchant()).thenReturn(merchant);
+    when(merchant.getLatitude()).thenReturn(null);
+    when(merchant.getLongitude()).thenReturn(-78.91);
+
+    List<OrderStatus> availableStatuses = List.of(
+        OrderStatus.PENDING,
+        OrderStatus.CONFIRMED,
+        OrderStatus.PREPARING,
+        OrderStatus.READY_FOR_PICKUP);
+    when(orderRepository.findAvailableForAssignment(availableStatuses))
+        .thenReturn(List.of(order));
+
+    List<Order> result = orderService.getOrdersWithinDistance(latitude, longitude, radiusKm);
+
+    assertNotNull(result);
+    assertTrue(result.isEmpty(), "Should filter out orders with null merchant latitude");
+  }
+
+  @Test
+  public void getOrdersWithinDistance_handlesNullMerchantLongitude() {
+    double latitude = 35.5;
+    double longitude = -78.9;
+    double radiusKm = 10.0;
+
+    Order order = mock(Order.class);
+    Merchant merchant = mock(Merchant.class);
+
+    when(order.getMerchant()).thenReturn(merchant);
+    when(merchant.getLatitude()).thenReturn(35.51);
+    when(merchant.getLongitude()).thenReturn(null);
+
+    List<OrderStatus> availableStatuses = List.of(
+        OrderStatus.PENDING,
+        OrderStatus.CONFIRMED,
+        OrderStatus.PREPARING,
+        OrderStatus.READY_FOR_PICKUP);
+    when(orderRepository.findAvailableForAssignment(availableStatuses))
+        .thenReturn(List.of(order));
+
+    List<Order> result = orderService.getOrdersWithinDistance(latitude, longitude, radiusKm);
+
+    assertNotNull(result);
+    assertTrue(result.isEmpty(), "Should filter out orders with null merchant longitude");
+  }
+
+  @Test
+  public void updateEstimatedDeliveryTime_updatesTimestamp() {
+    Long orderId = 1L;
+    LocalDateTime estimatedTime = LocalDateTime.now().plusMinutes(30);
+    Order order = mock(Order.class);
+
+    when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
+    when(orderRepository.save(order)).thenReturn(order);
+
+    Order result = orderService.updateEstimatedDeliveryTime(orderId, estimatedTime);
+
+    assertSame(order, result);
+    verify(order).setEstimatedDeliveryTime(estimatedTime);
+    verify(order).setUpdatedAt(any(LocalDateTime.class));
+    verify(orderRepository).save(order);
+  }
+
+  @Test
+  public void calculateDistance_handlesNegativeCoordinates() {
+    // Test with negative coordinates (southern hemisphere, western hemisphere)
+    double lat1 = -33.8688; // Sydney
+    double lon1 = 151.2093;
+    double lat2 = -34.9285; // Melbourne
+    double lon2 = 138.6007;
+
+    double distance = orderService.calculateDistance(lat1, lon1, lat2, lon2);
+
+    // Actual distance between Sydney and Melbourne is approximately 1162 km
+    assertTrue(distance > 1150 && distance < 1175,
+        "Distance should be approximately 1162 km, but was " + distance);
+  }
+
+  @Test
+  public void calculateDistance_handlesVerySmallDistance() {
+    // Test with very close coordinates (same building)
+    double lat = 35.7796;
+    double lon = -78.6382;
+    double lat2 = 35.7797; // ~11 meters away
+    double lon2 = -78.6383;
+
+    double distance = orderService.calculateDistance(lat, lon, lat2, lon2);
+
+    assertTrue(distance < 0.1, "Distance should be very small (< 0.1 km)");
+    assertTrue(distance > 0, "Distance should be greater than zero");
   }
 }

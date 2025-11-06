@@ -57,6 +57,7 @@ public class OrderControllerTest {
         private Merchant testMerchant;
         private Order testOrder;
         private OrderDTO testOrderDTO;
+        private DriverOrderDTO testDriverOrderDTO;
         private OrderItem testOrderItem;
         private Product testProduct;
         private CreateOrderRequest testCreateRequest;
@@ -120,6 +121,19 @@ public class OrderControllerTest {
                                 .merchantId(1L)
                                 .totalAmount(new BigDecimal("39.98"))
                                 .status("PENDING")
+                                .build();
+
+                // Driver Order DTO
+                testDriverOrderDTO = DriverOrderDTO.builder()
+                                .id(1L)
+                                .userId(1L)
+                                .merchantId(1L)
+                                .merchantName("Test Merchant")
+                                .customerName("John Doe")
+                                .totalAmount(new BigDecimal("39.98"))
+                                .status("PENDING")
+                                .distanceKm(5.5)
+                                .etaMin(16)
                                 .build();
 
                 // Create Order Request
@@ -1084,9 +1098,19 @@ public class OrderControllerTest {
                 double longitude = -78.9;
                 double radiusKm = 10.0;
 
+                // Set merchant coordinates for distance calculation
+                testMerchant.setLatitude(35.51);
+                testMerchant.setLongitude(-78.91);
+                testOrder.setMerchant(testMerchant);
+
                 when(orderService.getOrdersWithinDistance(latitude, longitude, radiusKm))
                                 .thenReturn(List.of(testOrder));
-                when(orderMapper.toDTO(testOrder)).thenReturn(testOrderDTO);
+                when(orderService.calculateDistance(eq(latitude), eq(longitude), eq(35.51), eq(-78.91)))
+                                .thenReturn(5.5);
+                when(orderService.updateEstimatedDeliveryTime(eq(1L), any(java.time.LocalDateTime.class)))
+                                .thenReturn(testOrder);
+                when(orderMapper.toDriverDTO(eq(testOrder), eq(5.5)))
+                                .thenReturn(testDriverOrderDTO);
 
                 mockMvc
                                 .perform(
@@ -1098,7 +1122,9 @@ public class OrderControllerTest {
                                 .andExpect(jsonPath("$.success").value(true))
                                 .andExpect(jsonPath("$.message").value("Orders within distance retrieved successfully"))
                                 .andExpect(jsonPath("$.data").isArray())
-                                .andExpect(jsonPath("$.data[0].id").value(1));
+                                .andExpect(jsonPath("$.data[0].id").value(1))
+                                .andExpect(jsonPath("$.data[0].distanceKm").value(5.5))
+                                .andExpect(jsonPath("$.data[0].etaMin").exists());
         }
 
         @Test

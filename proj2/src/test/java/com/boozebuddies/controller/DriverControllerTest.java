@@ -248,7 +248,19 @@ public class DriverControllerTest {
   @Test
   @DisplayName("GET /api/drivers/{id} returns 404 when not found")
   void getDriverById_notFound() throws Exception {
-    when(driverService.getDriverById(999L)).thenThrow(DriverNotFoundException.class);
+    when(driverService.getDriverById(999L)).thenReturn(Optional.empty());
+
+    mockMvc
+        .perform(get("/api/drivers/999"))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(jsonPath("$.message").value("Driver not found with ID: 999"));
+  }
+
+  @Test
+  @DisplayName("GET /api/drivers/{id} returns 404 when DriverNotFoundException thrown")
+  void getDriverById_driverNotFoundException() throws Exception {
+    when(driverService.getDriverById(999L)).thenThrow(new DriverNotFoundException("Driver not found"));
 
     mockMvc
         .perform(get("/api/drivers/999"))
@@ -319,6 +331,60 @@ public class DriverControllerTest {
         .andExpect(jsonPath("$.message").value("Your profile retrieved successfully"))
         .andExpect(jsonPath("$.data.id").value(1))
         .andExpect(jsonPath("$.data.name").value("John Doe"));
+  }
+
+  @Test
+  @DisplayName("GET /api/drivers/my-profile returns 401 when user is null")
+  void getMyProfile_nullUser_returnsUnauthorized() throws Exception {
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(null);
+
+    mockMvc
+        .perform(get("/api/drivers/my-profile"))
+        .andExpect(status().isUnauthorized())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(jsonPath("$.message").value("Authentication required"));
+  }
+
+  @Test
+  @DisplayName("GET /api/drivers/my-profile returns 403 when user doesn't have DRIVER role")
+  void getMyProfile_noDriverRole_returnsForbidden() throws Exception {
+    User nonDriverUser = User.builder().id(99L).name("Not Driver").build();
+    nonDriverUser.addRole(Role.USER);
+
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(nonDriverUser);
+
+    mockMvc
+        .perform(get("/api/drivers/my-profile"))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(jsonPath("$.message").value("User does not have DRIVER role"));
+  }
+
+  @Test
+  @DisplayName("GET /api/drivers/my-profile returns 404 when driver profile not found")
+  void getMyProfile_driverNotFound_returnsNotFound() throws Exception {
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(testDriverUser);
+    when(driverService.getDriverProfile(testDriverUser))
+        .thenThrow(new IllegalArgumentException("Driver not found"));
+
+    mockMvc
+        .perform(get("/api/drivers/my-profile"))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Driver profile not found")));
+  }
+
+  @Test
+  @DisplayName("GET /api/drivers/my-profile returns 400 on exception")
+  void getMyProfile_exception_returnsBadRequest() throws Exception {
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(testDriverUser);
+    when(driverService.getDriverProfile(testDriverUser)).thenThrow(new RuntimeException("error"));
+
+    mockMvc
+        .perform(get("/api/drivers/my-profile"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.startsWith("Failed to retrieve driver profile:")));
   }
 
   // ==================== UPDATE AVAILABILITY TESTS ====================
