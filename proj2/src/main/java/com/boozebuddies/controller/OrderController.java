@@ -340,6 +340,7 @@ public class OrderController {
       @RequestParam Double radiusKm,
       Authentication authentication) {
     try {
+
       if (latitude == null
           || longitude == null
           || radiusKm == null
@@ -351,8 +352,7 @@ public class OrderController {
         return ResponseEntity.badRequest().body(ApiResponse.error("Invalid location or radius"));
       }
 
-      List<Order> orders =
-          orderService.getOrdersWithinDistance(latitude, longitude, radiusKm);
+      List<Order> orders = orderService.getOrdersWithinDistance(latitude, longitude, radiusKm);
       List<OrderDTO> orderDTOs =
           orders.stream().map(orderMapper::toDTO).collect(Collectors.toList());
       return ResponseEntity.ok(

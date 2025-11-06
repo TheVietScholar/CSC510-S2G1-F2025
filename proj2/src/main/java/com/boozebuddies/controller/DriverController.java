@@ -120,7 +120,7 @@ public class DriverController {
   // ==================== DRIVER ENDPOINTS ====================
 
   @GetMapping("/my-profile")
-  @IsDriver
+  @IsSelfOrAdmin
   public ResponseEntity<ApiResponse<DriverDTO>> getMyProfile(Authentication authentication) {
     User user = permissionService.getAuthenticatedUser(authentication);
     Driver driver = driverService.getDriverProfile(user);
@@ -129,7 +129,7 @@ public class DriverController {
   }
 
   @PutMapping("/my-profile/availability")
-  @IsDriver
+  @IsSelfOrAdmin
   public ResponseEntity<ApiResponse<DriverDTO>> updateMyAvailability(
       @RequestParam("available") boolean available, Authentication authentication) {
     try {

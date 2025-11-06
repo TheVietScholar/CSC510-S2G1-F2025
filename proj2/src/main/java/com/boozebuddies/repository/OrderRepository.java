@@ -15,7 +15,8 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
   // Basic filters
   List<Order> findByStatus(OrderStatus status);
 
-  @Query("SELECT o FROM Order o WHERE o.status = PENDING or o.status = CONFIRMED or o.status = PREPARING or o.status = READY_FOR_PICKUP where o.driver is null")
+  @Query(
+      "SELECT o FROM Order o WHERE o.status = PENDING or o.status = CONFIRMED or o.status = PREPARING or o.status = READY_FOR_PICKUP AND o.driver is null")
   List<Order> findAvailableForAssignment();
 
   Page<Order> findByStatus(OrderStatus status, Pageable pageable);

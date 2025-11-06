@@ -10,6 +10,7 @@ import AdminHome from './admin/AdminHome'
 import MerchantHome from './admin/MerchantHome'
 import DriverHome from './driver/DriverHome'
 import './App.css'
+import DriverOrderState from './driver/DriverOrderState'
 
 function App() {
   const [currentPage, setCurrentPage] = useState('login')
@@ -35,7 +36,7 @@ function App() {
   }
 
   const handleDriverLogin = (userData) => {
-    console.log('Login userData:', userData)
+    console.log('Driver Login userData:', userData)
     setUser(userData.user)
     
     if (userData.user && userData.user.roles && userData.user.roles.includes('DRIVER')) {
@@ -154,6 +155,11 @@ function App() {
       case 'merchant-home':
         console.log('Rendering: MerchantHome')
         return <MerchantHome user={user} onLogout={handleLogout} /> // Add user prop
+      case 'driver-home':
+        console.log('Rendering Driver-Home')
+        return <DriverHome user={user} onLogout={handleLogout} />
+      case 'driver-order-status':
+        return <DriverOrderState onBack={() => setCurrentPage('driver-home')}/>
       default:
         return <Login onLogin={handleLogin} onGoToDriverLogin={() => setCurrentPage('driver-login') } />
     }

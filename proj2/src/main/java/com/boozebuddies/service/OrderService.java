@@ -70,5 +70,13 @@ public interface OrderService {
    */
   Order updateOrderStatus(Long orderId, String status);
 
+  /**
+   * Retrieves a list of orders within a certain distance from given coordinates.
+   *
+   * @param latitude The latitude of the reference point.
+   * @param longitude The longitude of the reference point.
+   * @param distanceKm The distance in kilometers.
+   * @return A list of orders within the specified distance.
+   */
   List<Order> getOrdersWithinDistance(double latitude, double longitude, double distanceKm);
 }

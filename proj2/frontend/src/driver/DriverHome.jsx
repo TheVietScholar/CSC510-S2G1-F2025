@@ -1,5 +1,6 @@
 import React, { use, useEffect, useState } from "react"
-import {orders} from "../services/api"
+import { LogOut,  RefreshCw } from 'lucide-react'
+import {drivers, orders} from "../services/api"
 
 const DriverHome = ({ user, onLogout }) => {
     const [loading, setLoading] = useState(false);
@@ -15,45 +16,61 @@ const DriverHome = ({ user, onLogout }) => {
     useEffect(() => {
         // Fetch initial available orders from server
         fetchAvailableOrders();
-    }, driverId);
+        fetchDriverProfile();
+    }, [driverId]);
+
+    const fetchDriverProfile = async () => {
+        try {
+            setLoading(true)
+            setError('')
+            const response = await drivers.getMyProfile()
+            console.log('My Driver Profile response:', response)
+
+            if(response.data && response.data.data) {
+            }
+
+        } catch(err) {
+
+        } finally {
+
+        }
+    }
 
     const fetchAvailableOrders = async () => {
         try {
             setLoading(true)
             setError('')
-            const response = orders.;
-            }
+            const response = await orders.getAvailableForDriver(driverLocation.lat, driverLocation.lng, 10)
+            console.log('Available Orders response:', response)
 
-    const handleToggleOnline = () => {
-        setIsOnline(!isOnline);
+            if (response.data && response.data.data) {
+                setAvailableOrders(response.data.data)
+            } else if (Array.isArray(response.data)) {
+                setAvailableOrders(response.data)
+            } else {
+                setError('Unexpected response format while fetching available orders.')
+            }
+        } catch (err) {
+            console.error('Error fetching available orders:', err)
+            setError('Failed to fetch available orders. Please try again later.')
+        } finally {
+            setLoading(false)
+        }
+
     }
 
-    // Simulate receiving a new nearby order when online
-    useEffect(() => {
-        if (!isOnline) return;
-        const timer = setInterval(() => {
-            const newOrder = {
-                id: uuid(),
-                restaurant: ["Sushi House", "Pizza Planet", "Curry Spot"][Math.floor(Math.random() * 3)],
-                customer: ["Liam", "Olivia", "Noah", "Emma"][Math.floor(Math.random() * 4)],
-                items: ["Assorted Items"],
-                distanceKm: +(Math.random() * 5).toFixed(1),
-                etaMin: Math.floor(8 + Math.random() * 20),
-                status: "available",
-            };
-            setAvailableOrders(prev => [newOrder, ...prev]);
-            // give a small browser notification (if permitted)
-            if (window.Notification && Notification.permission === "granted") {
-                new Notification("New nearby order", { body: `${newOrder.restaurant} • ${formatDistance(newOrder.distanceKm)}` });
-            } else if (window.Notification && Notification.permission !== "denied") {
-                Notification.requestPermission();
-            }
-        }, 20_000); // every 20s while online
-        return () => clearInterval(timer);
-    }, [isOnline]);
-
-    function toggleOnline() {
-        setIsOnline(v => !v);
+    const handleToggleOnline = async () => {
+        try{
+            setLoading(true)
+            setError('')
+            setIsOnline(!isOnline)
+            const response = await drivers.updateAvailability(isOnline)
+            console.log('Driver availability updated:', response)
+        } catch (err){
+            setError(response.data)
+        } finally {
+            setLoading(false);
+        }
     }
 
     function acceptOrder(orderId) {
@@ -85,18 +102,34 @@ const DriverHome = ({ user, onLogout }) => {
         return true;
     });
 
+    
+
     return (
-        <div style={styles.container}>
-            <div style={styles.header}>
+        <div>
+            <div>
                 <div>
-                    <div style={styles.title}>Driver Home</div>
+                    <div>Driver Home</div>
                     <div style={{ color: "#6b7280", marginTop: 6 }}>Manage your deliveries and stay on the road</div>
                 </div>
+                <button
+              onClick={onLogout}
+              className="bg-red-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-red-700 transition duration-200 flex items-center"
+            >
+              <LogOut className="w-5 h-5 mr-2" />
+              Logout
+            </button>
+            <button
+              onClick={fetchAvailableOrders}
+              className="bg-gray-700 text-white px-4 py-3 rounded-lg font-semibold hover:bg-gray-600 transition duration-200 flex items-center"
+            >
+              <RefreshCw className="w-5 h-5 mr-2" />
+              Refresh
+            </button>
                 <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
                     <div style={{ textAlign: "right" }}>
                         <div style={{ fontSize: 12, color: "#6b7280" }}>Status</div>
                         <div style={{ marginTop: 6 }}>
-                            <button style={styles.statusButton(isOnline)} onClick={toggleOnline}>
+                            <button onClick={handleToggleOnline}>
                                 {isOnline ? "Online" : "Offline"}
                             </button>
                         </div>
@@ -104,10 +137,10 @@ const DriverHome = ({ user, onLogout }) => {
                 </div>
             </div>
 
-            <div style={styles.columns}>
+            <div>
                 <div>
-                    <div style={{ ...styles.panel, marginBottom: 12 }}>
-                        <div style={styles.sectionTitle}>Available Orders</div>
+                    <div style={{ marginBottom: 12 }}>
+                        <div>Available Orders</div>
                         <div style={{ display: "flex", gap: 8, marginBottom: 10, alignItems: "center" }}>
                             <select value={filter} onChange={e => setFilter(e.target.value)} style={{ padding: 8, borderRadius: 6 }}>
                                 <option value="all">All</option>
@@ -117,22 +150,21 @@ const DriverHome = ({ user, onLogout }) => {
                             <div style={{ color: "#6b7280", fontSize: 13 }}>{filteredAvailable.length} result(s)</div>
                         </div>
 
-                        <div style={styles.list}>
-                            {filteredAvailable.length === 0 && <div style={styles.empty}>No available orders at the moment.</div>}
+                        <div>
+                            {filteredAvailable.length === 0 && <div>No available orders at the moment.</div>}
                             {filteredAvailable.map(order => (
-                                <div key={order.id} style={styles.orderCard}>
-                                    <div style={styles.meta}>
+                                <div key={order.id}>
+                                    <div>
                                         <div style={{ fontWeight: 700 }}>{order.restaurant}</div>
                                         <div style={{ color: "#6b7280", fontSize: 13 }}>{order.items.join(", ")}</div>
                                         <div style={{ display: "flex", gap: 8, marginTop: 6, alignItems: "center" }}>
-                                            <div style={styles.smallBadge("#111827")}>{formatDistance(order.distanceKm)}</div>
-                                            <div style={styles.smallBadge("#6b7280")}>{order.etaMin} min</div>
+                                            <div >{formatDistance(order.distanceKm)}</div>
+                                            <div >{order.etaMin} min</div>
                                         </div>
                                     </div>
 
-                                    <div style={styles.actions}>
+                                    <div>
                                         <button
-                                            style={{ ...styles.btn, ...styles.acceptBtn }}
                                             onClick={() => {
                                                 if (!isOnline) {
                                                     if (!window.confirm("You are currently offline. Go online to accept orders?")) return;
@@ -144,7 +176,6 @@ const DriverHome = ({ user, onLogout }) => {
                                             Accept
                                         </button>
                                         <button
-                                            style={{ ...styles.btn, ...styles.neutralBtn }}
                                             onClick={() => alert(`Order details:\nRestaurant: ${order.restaurant}\nCustomer: ${order.customer}\nItems: ${order.items.join(", ")}`)}
                                         >
                                             Details
@@ -155,40 +186,40 @@ const DriverHome = ({ user, onLogout }) => {
                         </div>
                     </div>
 
-                    <div style={styles.panel}>
-                        <div style={styles.sectionTitle}>Your Assigned Deliveries</div>
-                        <div style={styles.list}>
-                            {assignedOrders.length === 0 && <div style={styles.empty}>You have no assigned deliveries.</div>}
+                    <div>
+                        <div>Your Assigned Deliveries</div>
+                        <div>
+                            {assignedOrders.length === 0 && <div>You have no assigned deliveries.</div>}
                             {assignedOrders.map(order => (
-                                <div key={order.id} style={styles.orderCard}>
-                                    <div style={styles.meta}>
+                                <div key={order.id} >
+                                    <div>
                                         <div style={{ fontWeight: 700 }}>{order.restaurant} → {order.customer}</div>
                                         <div style={{ color: "#6b7280", fontSize: 13 }}>{order.items.join(", ")}</div>
                                         <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
-                                            <div style={styles.smallBadge(order.status === "accepted" ? "#2563eb" : order.status === "picking_up" ? "#f59e0b" : order.status === "on_route" ? "#10b981" : "#6b7280")}>
+                                            <div >
                                                 {order.status.replace("_", " ")}
                                             </div>
                                             <div style={{ color: "#6b7280", fontSize: 13 }}>{order.distanceKm ? formatDistance(order.distanceKm) : ""}</div>
                                         </div>
                                     </div>
 
-                                    <div style={styles.actions}>
+                                    <div >
                                         {order.status === "accepted" && (
-                                            <button style={{ ...styles.btn, ...styles.acceptBtn }} onClick={() => startPickup(order.id)}>
+                                            <button onClick={() => startPickup(order.id)}>
                                                 Start Pickup
                                             </button>
                                         )}
                                         {order.status === "picking_up" && (
-                                            <button style={{ ...styles.btn, background: "#f97316", color: "white" }} onClick={() => markPickedUp(order.id)}>
+                                            <button onClick={() => markPickedUp(order.id)}>
                                                 Mark Picked Up
                                             </button>
                                         )}
                                         {order.status === "on_route" && (
-                                            <button style={{ ...styles.btn, background: "#059669", color: "white" }} onClick={() => completeDelivery(order.id)}>
+                                            <button onClick={() => completeDelivery(order.id)}>
                                                 Complete
                                             </button>
                                         )}
-                                        <button style={{ ...styles.btn, ...styles.neutralBtn }} onClick={() => alert(`Contact ${order.customer}`)}>
+                                        <button onClick={() => alert(`Contact ${order.customer}`)}>
                                             Contact
                                         </button>
                                     </div>
@@ -199,9 +230,9 @@ const DriverHome = ({ user, onLogout }) => {
                 </div>
 
                 <div>
-                    <div style={styles.panel}>
-                        <div style={styles.sectionTitle}>Map / Navigation</div>
-                        <div style={styles.mapPlaceholder}>
+                    <div>
+                        <div>Map / Navigation</div>
+                        <div>
                             Map placeholder — integrate your maps provider here
                         </div>
                         <div style={{ marginTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -211,7 +242,6 @@ const DriverHome = ({ user, onLogout }) => {
                             </div>
                             <div>
                                 <button
-                                    style={{ ...styles.btn, ...styles.neutralBtn }}
                                     onClick={() =>
                                         setDriverLocation({ lat: driverLocation.lat + (Math.random() - 0.5) * 0.01, lng: driverLocation.lng + (Math.random() - 0.5) * 0.01 })
                                     }
@@ -222,8 +252,8 @@ const DriverHome = ({ user, onLogout }) => {
                         </div>
                     </div>
 
-                    <div style={{ ...styles.panel, marginTop: 12 }}>
-                        <div style={styles.sectionTitle}>Quick Stats</div>
+                    <div>
+                        <div>Quick Stats</div>
                         <div style={{ display: "flex", gap: 12 }}>
                             <div style={{ flex: 1, padding: 12, background: "#f8fafc", borderRadius: 8 }}>
                                 <div style={{ fontSize: 12, color: "#6b7280" }}>Earnings (today)</div>
@@ -241,7 +271,7 @@ const DriverHome = ({ user, onLogout }) => {
                 </div>
             </div>
         </div>
-    );
+    )
 }
 
 export default DriverHome

@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import auth from '../services/auth'
 
 const DriverLogin = ({ onDriverLogin }) => {
   const [email, setEmail] = useState('')
@@ -11,29 +12,30 @@ const DriverLogin = ({ onDriverLogin }) => {
     setLoading(true)
   
     try {
-      const response = await fetch('/api/auth/driver/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      })
+      const response = await auth.driverlogin({email, password})
+      const responseData = response?.data || response
   
-      if (response.ok) {
-        const userData = await response.json()
-        console.log('Driver login successful:', userData)
-        
-        // Store token and role from the nested user object
-        if (userData.token) {
-          localStorage.setItem('authToken', userData.token)
+      if (responseData) {       
+        // Store tokens in localStorage
+        if (responseData.token) {
+          localStorage.setItem('bb_token', responseData.token)
+          console.log('Login token stored')
         }
-        if (userData.user && userData.user.roles) {
-          localStorage.setItem('userRole', "DRIVER") // Store first role
+        if (responseData.refreshToken) {
+          localStorage.setItem('bb_refresh_token', responseData.refreshToken)
         }
         
-        onDriverLogin(userData)
+        // Verify token is stored
+        const storedToken = localStorage.getItem('bb_token')
+        if (!storedToken) {
+          throw new Error('Failed to store authentication token')
+        }
+        
+        onDriverLogin(responseData)
     } 
-    } catch (error) {} finally {
+    } catch (error) {
+      console.error("Error when logging in as driver:", error)
+    } finally {
       setLoading(false)
     }
   }
