@@ -63,7 +63,8 @@ public class OrderController {
   // ==================== RETRIEVE ORDERS ====================
 
   /**
-   * Get order by ID. Users can view their own orders, merchant admins can view orders for their
+   * Get order by ID. Users can view their own orders, merchant admins can view
+   * orders for their
    * merchant, drivers can view assigned orders, and admins can view all orders.
    */
   @GetMapping("/{orderId}")
@@ -105,15 +106,13 @@ public class OrderController {
           canAccess = true;
         }
         // Check if merchant admin can access (order belongs to their merchant)
-        else if (user.hasRole(Role.MERCHANT_ADMIN)
-            && orderMerchantId != null
+        else if (user.hasRole(Role.MERCHANT_ADMIN) && orderMerchantId != null
             && user.getMerchantId() != null
             && user.getMerchantId().equals(orderMerchantId)) {
           canAccess = true;
         }
         // Check if driver can access (order is assigned to them)
-        else if (user.hasRole(Role.DRIVER)
-            && orderDriverId != null
+        else if (user.hasRole(Role.DRIVER) && orderDriverId != null
             && user.getDriver() != null
             && orderDriverId.equals(user.getDriver().getId())) {
           canAccess = true;
@@ -135,15 +134,17 @@ public class OrderController {
     }
   }
 
-  /** Get all orders for the authenticated user. Users can only view their own orders. */
+  /**
+   * Get all orders for the authenticated user. Users can only view their own
+   * orders.
+   */
   @GetMapping("/my-orders")
   @IsUser
   public ResponseEntity<ApiResponse<List<OrderDTO>>> getMyOrders(Authentication authentication) {
     try {
       User user = permissionService.getAuthenticatedUser(authentication);
       List<Order> orders = orderService.getOrdersByUser(user.getId());
-      List<OrderDTO> orderDTOs =
-          orders.stream().map(orderMapper::toDTO).collect(Collectors.toList());
+      List<OrderDTO> orderDTOs = orders.stream().map(orderMapper::toDTO).collect(Collectors.toList());
       return ResponseEntity.ok(
           ApiResponse.success(orderDTOs, "Your orders retrieved successfully"));
     } catch (Exception e) {
@@ -152,7 +153,9 @@ public class OrderController {
     }
   }
 
-  /** Get all orders for a specific user. Admin only - to view any user's orders. */
+  /**
+   * Get all orders for a specific user. Admin only - to view any user's orders.
+   */
   @GetMapping("/user/{userId}")
   @IsAdmin
   public ResponseEntity<ApiResponse<List<OrderDTO>>> getOrdersByUser(@PathVariable Long userId) {
@@ -162,8 +165,7 @@ public class OrderController {
       }
 
       List<Order> orders = orderService.getOrdersByUser(userId);
-      List<OrderDTO> orderDTOs =
-          orders.stream().map(orderMapper::toDTO).collect(Collectors.toList());
+      List<OrderDTO> orderDTOs = orders.stream().map(orderMapper::toDTO).collect(Collectors.toList());
       return ResponseEntity.ok(
           ApiResponse.success(orderDTOs, "User orders retrieved successfully"));
     } catch (Exception e) {
@@ -178,8 +180,7 @@ public class OrderController {
   public ResponseEntity<ApiResponse<List<OrderDTO>>> getAllOrders() {
     try {
       List<Order> orders = orderService.getAllOrders();
-      List<OrderDTO> orderDTOs =
-          orders.stream().map(orderMapper::toDTO).collect(Collectors.toList());
+      List<OrderDTO> orderDTOs = orders.stream().map(orderMapper::toDTO).collect(Collectors.toList());
       return ResponseEntity.ok(ApiResponse.success(orderDTOs, "All orders retrieved successfully"));
     } catch (Exception e) {
       return ResponseEntity.badRequest()
@@ -201,8 +202,7 @@ public class OrderController {
       }
 
       List<Order> orders = orderService.getOrdersByMerchant(user.getMerchantId());
-      List<OrderDTO> orderDTOs =
-          orders.stream().map(orderMapper::toDTO).collect(Collectors.toList());
+      List<OrderDTO> orderDTOs = orders.stream().map(orderMapper::toDTO).collect(Collectors.toList());
       return ResponseEntity.ok(
           ApiResponse.success(orderDTOs, "Your merchant orders retrieved successfully"));
     } catch (Exception e) {
@@ -212,7 +212,8 @@ public class OrderController {
   }
 
   /**
-   * Get orders for a specific merchant. Admin or merchant admin (if they own the merchant) can
+   * Get orders for a specific merchant. Admin or merchant admin (if they own the
+   * merchant) can
    * access.
    */
   @GetMapping("/merchant/{merchantId}")
@@ -232,8 +233,7 @@ public class OrderController {
       }
 
       List<Order> orders = orderService.getOrdersByMerchant(merchantId);
-      List<OrderDTO> orderDTOs =
-          orders.stream().map(orderMapper::toDTO).collect(Collectors.toList());
+      List<OrderDTO> orderDTOs = orders.stream().map(orderMapper::toDTO).collect(Collectors.toList());
       return ResponseEntity.ok(
           ApiResponse.success(orderDTOs, "Merchant orders retrieved successfully"));
     } catch (AccessDeniedException e) {
@@ -258,8 +258,7 @@ public class OrderController {
       }
 
       List<Order> orders = orderService.getOrdersByDriver(user.getDriver().getId());
-      List<OrderDTO> orderDTOs =
-          orders.stream().map(orderMapper::toDTO).collect(Collectors.toList());
+      List<OrderDTO> orderDTOs = orders.stream().map(orderMapper::toDTO).collect(Collectors.toList());
       return ResponseEntity.ok(
           ApiResponse.success(orderDTOs, "Your assigned orders retrieved successfully"));
     } catch (Exception e) {
@@ -306,12 +305,12 @@ public class OrderController {
   }
 
   /**
-   * Update order status. Admin can update any order, merchant admin can update orders for their
+   * Update order status. Admin can update any order, merchant admin can update
+   * orders for their
    * merchant.
    */
   @PutMapping("/{orderId}/status")
-  @org.springframework.security.access.prepost.PreAuthorize(
-      "hasRole('ADMIN') or @permissionService.merchantCanAccessOrder(authentication, #orderId)")
+  @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN') or @permissionService.merchantCanAccessOrder(authentication, #orderId)")
   public ResponseEntity<ApiResponse<OrderDTO>> updateOrderStatus(
       @PathVariable Long orderId, @RequestParam String status, Authentication authentication) {
     try {
@@ -358,8 +357,7 @@ public class OrderController {
       }
 
       List<Order> orders = orderService.getOrdersWithinDistance(latitude, longitude, radiusKm);
-      List<OrderDTO> orderDTOs =
-          orders.stream().map(orderMapper::toDTO).collect(Collectors.toList());
+      List<OrderDTO> orderDTOs = orders.stream().map(orderMapper::toDTO).collect(Collectors.toList());
       return ResponseEntity.ok(
           ApiResponse.success(orderDTOs, "Orders within distance retrieved successfully"));
     } catch (Exception e) {
