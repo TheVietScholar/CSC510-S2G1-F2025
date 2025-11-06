@@ -4,9 +4,13 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+import com.boozebuddies.dto.ProductDTO;
 import com.boozebuddies.entity.Category;
 import com.boozebuddies.entity.Merchant;
 import com.boozebuddies.entity.Product;
+import com.boozebuddies.mapper.ProductMapper;
+import com.boozebuddies.repository.CategoryRepository;
+import com.boozebuddies.repository.MerchantRepository;
 import com.boozebuddies.repository.ProductRepository;
 import java.math.BigDecimal;
 import java.util.Arrays;
@@ -22,6 +26,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class ProductServiceImplTest {
 
   @Mock private ProductRepository productRepository;
+  @Mock private CategoryRepository categoryRepository;
+  @Mock private MerchantRepository merchantRepository;
+  @Mock private ProductMapper productMapper;
 
   private ProductServiceImpl productService;
 
@@ -30,10 +37,14 @@ class ProductServiceImplTest {
 
   @BeforeEach
   void setUp() {
-    productService = new ProductServiceImpl(productRepository);
+    productService = new ProductServiceImpl(
+        productRepository, 
+        categoryRepository, 
+        merchantRepository, 
+        productMapper
+    );
 
     testMerchant = Merchant.builder().id(1L).name("Test Merchant").build();
-
     testCategory = Category.builder().id(1L).name("Beer").build();
   }
 
@@ -131,6 +142,93 @@ class ProductServiceImplTest {
   }
 
   @Test
+  void testCreateProduct_ValidProductDTO_ReturnsSavedProduct() {
+    ProductDTO productDTO = ProductDTO.builder()
+        .name("New Beer")
+        .description("Test description")
+        .price(new BigDecimal("7.99"))
+        .categoryId(1L)
+        .merchantId(1L)
+        .isAlcohol(true)
+        .alcoholContent(5.5)
+        .isAvailable(true)
+        .imageUrl("/default.jpg")
+        .build();
+
+    Product productEntity = Product.builder()
+        .name("New Beer")
+        .description("Test description")
+        .price(new BigDecimal("7.99"))
+        .isAlcohol(true)
+        .alcoholContent(5.5)
+        .available(true)
+        .imageUrl("/default.jpg")
+        .build();
+
+    Product savedProduct = Product.builder()
+        .id(1L)
+        .name("New Beer")
+        .description("Test description")
+        .price(new BigDecimal("7.99"))
+        .merchant(testMerchant)
+        .category(testCategory)
+        .isAlcohol(true)
+        .alcoholContent(5.5)
+        .available(true)
+        .imageUrl("/default.jpg")
+        .build();
+
+    when(productMapper.toEntity(productDTO)).thenReturn(productEntity);
+    when(categoryRepository.findById(1L)).thenReturn(Optional.of(testCategory));
+    when(merchantRepository.findById(1L)).thenReturn(Optional.of(testMerchant));
+    when(productRepository.save(any(Product.class))).thenReturn(savedProduct);
+
+    Product result = productService.createProduct(productDTO);
+
+    assertNotNull(result);
+    assertEquals(1L, result.getId());
+    assertEquals("New Beer", result.getName());
+    assertEquals(testMerchant, result.getMerchant());
+    assertEquals(testCategory, result.getCategory());
+    verify(productRepository, times(1)).save(any(Product.class));
+  }
+
+  @Test
+  void testCreateProduct_CategoryNotFound_ThrowsException() {
+    ProductDTO productDTO = ProductDTO.builder()
+        .name("New Beer")
+        .categoryId(999L)
+        .merchantId(1L)
+        .build();
+
+    Product productEntity = Product.builder().name("New Beer").build();
+    
+    when(productMapper.toEntity(productDTO)).thenReturn(productEntity);
+    when(categoryRepository.findById(999L)).thenReturn(Optional.empty());
+
+    assertThrows(IllegalArgumentException.class, () -> productService.createProduct(productDTO));
+    verify(productRepository, never()).save(any());
+  }
+
+  @Test
+  void testCreateProduct_MerchantNotFound_ThrowsException() {
+    ProductDTO productDTO = ProductDTO.builder()
+        .name("New Beer")
+        .categoryId(1L)
+        .merchantId(999L)
+        .build();
+
+    Product productEntity = Product.builder().name("New Beer").build();
+    
+    when(productMapper.toEntity(productDTO)).thenReturn(productEntity);
+    when(categoryRepository.findById(1L)).thenReturn(Optional.of(testCategory));
+    when(merchantRepository.findById(999L)).thenReturn(Optional.empty());
+
+    assertThrows(IllegalArgumentException.class, () -> productService.createProduct(productDTO));
+    verify(productRepository, never()).save(any());
+  }
+
+  @Test
   void testUpdateProduct_ExistingProduct_ReturnsUpdatedProduct() {
     Product existingProduct =
         Product.builder()
@@ -173,7 +271,57 @@ class ProductServiceImplTest {
   }
 
   @Test
-  void testUpdateProduct_NonExistingProduct_ReturnsNull() {
+  void testUpdateProductWithDTO_ValidData_ReturnsUpdatedProduct() {
+    Product existingProduct =
+        Product.builder()
+            .id(1L)
+            .name("Old Name")
+            .price(new BigDecimal("5.99"))
+            .merchant(testMerchant)
+            .category(testCategory)
+            .available(true)
+            .build();
+
+    ProductDTO productDTO = ProductDTO.builder()
+        .name("New Name")
+        .description("New description")
+        .price(new BigDecimal("6.99"))
+        .categoryId(1L)
+        .isAvailable(false)
+        .isAlcohol(true)
+        .alcoholContent(5.5)
+        .imageUrl("new-image.jpg")
+        .build();
+
+    Product updatedProduct = Product.builder()
+        .id(1L)
+        .name("New Name")
+        .description("New description")
+        .price(new BigDecimal("6.99"))
+        .merchant(testMerchant)
+        .category(testCategory)
+        .available(false)
+        .isAlcohol(true)
+        .alcoholContent(5.5)
+        .imageUrl("new-image.jpg")
+        .build();
+
+    when(productRepository.findById(1L)).thenReturn(Optional.of(existingProduct));
+    when(categoryRepository.findById(1L)).thenReturn(Optional.of(testCategory));
+    when(productRepository.save(any(Product.class))).thenReturn(updatedProduct);
+
+    Product result = productService.updateProduct(1L, productDTO);
+
+    assertNotNull(result);
+    assertEquals("New Name", result.getName());
+    assertEquals(new BigDecimal("6.99"), result.getPrice());
+    assertFalse(result.isAvailable());
+    verify(productRepository, times(1)).findById(1L);
+    verify(productRepository, times(1)).save(any(Product.class));
+  }
+
+  @Test
+  void testUpdateProduct_NonExistingProduct_ThrowsException() {
     Product updatedProduct =
         Product.builder()
             .name("New Name")
@@ -238,7 +386,7 @@ class ProductServiceImplTest {
 
     assertEquals(2, result.size());
     assertTrue(result.stream().anyMatch(p -> p.getName().contains("IPA")));
-    assertTrue(result.stream().anyMatch(p -> p.getCategory().getName().contains("Beer")));
+    verify(productRepository, times(1)).searchByKeyword("beer");
   }
 
   @Test

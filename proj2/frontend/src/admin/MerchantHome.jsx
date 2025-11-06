@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import { Plus, Trash2, LogOut, Package, Beer, Wine, RefreshCw } from 'lucide-react'
-import { products } from '../services/api' // Import from your api barrel
+import { products, categories } from '../services/api'
 
-const MerchantHome = ({ user, onLogout }) => { // Add user to props
+const MerchantHome = ({ user, onLogout }) => {
   const [productsList, setProductsList] = useState([])
+  const [categoriesList, setCategoriesList] = useState([])
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
   const [error, setError] = useState('')
@@ -14,25 +15,23 @@ const MerchantHome = ({ user, onLogout }) => { // Add user to props
     price: '',
     isAlcohol: true,
     alcoholContent: '',
-    category: 'Beer'
+    categoryId: ''
   })
 
-  // Get merchantId from user prop
-  const currentMerchantId = user?.merchantId || 1; // Fallback to 1 for safety 
+  const currentMerchantId = user?.merchantId || 1;
 
-  // Load products on component mount
   useEffect(() => {
     loadProducts()
+    loadCategories()
   }, [currentMerchantId])
 
   const loadProducts = async () => {
     try {
       setLoading(true)
       setError('')
-      const response = await products.getByMerchant(currentMerchantId)
+      const response = await products.getByMerchantAll(currentMerchantId)
       console.log('Products response:', response)
       
-      // Handle nested response structure like merchants
       if (response.data && response.data.data) {
         setProductsList(response.data.data)
       } else if (Array.isArray(response.data)) {
@@ -49,10 +48,41 @@ const MerchantHome = ({ user, onLogout }) => { // Add user to props
     }
   }
 
+  const loadCategories = async () => {
+    try {
+      const response = await categories.getAll()
+      console.log('Categories response:', response)
+      
+      if (response.data && response.data.data) {
+        setCategoriesList(response.data.data)
+      } else if (Array.isArray(response.data)) {
+        setCategoriesList(response.data)
+      } else if (Array.isArray(response)) {
+        setCategoriesList(response)
+      } else {
+        console.error('Unexpected categories response:', response)
+        setCategoriesList([])
+      }
+    } catch (err) {
+      console.error('Error loading categories:', err)
+      setCategoriesList([
+        { id: 1, name: 'Beer' },
+        { id: 2, name: 'Snacks' },
+        { id: 3, name: 'Cocktails' },
+        { id: 4, name: 'Spirits' },
+        { id: 5, name: 'Lagers & Ales' },
+        { id: 6, name: 'Wine' },
+        { id: 7, name: 'Small Plates' },
+        { id: 8, name: 'Pub Fare' },
+        { id: 9, name: 'Drafts' }
+      ])
+    }
+  }
+
   const handleCreateProduct = async (e) => {
     e.preventDefault()
-    if (!newProduct.name || !newProduct.price) {
-      alert('Please fill in required fields: Name and Price')
+    if (!newProduct.name || !newProduct.price || !newProduct.categoryId) {
+      alert('Please fill in required fields: Name, Price and Category')
       return
     }
   
@@ -64,11 +94,11 @@ const MerchantHome = ({ user, onLogout }) => { // Add user to props
         name: newProduct.name,
         description: newProduct.description || '',
         price: parseFloat(newProduct.price),
-        category: newProduct.category,
+        categoryId: parseInt(newProduct.categoryId),
         merchantId: currentMerchantId,
         isAlcohol: newProduct.isAlcohol, 
-        alcoholContent: newProduct.isAlcohol ? (parseFloat(newProduct.alcoholContent) || 5.0) : 0.0,
-        isAvailable: true,
+        alcoholContent: newProduct.isAlcohol ? (parseFloat(newProduct.alcoholContent) || 5.0) : null, // Change 0.0 to null
+        available: true,
         imageUrl: '/default-product.jpg'
       }
       
@@ -87,7 +117,7 @@ const MerchantHome = ({ user, onLogout }) => { // Add user to props
         price: '', 
         isAlcohol: true, 
         alcoholContent: '', 
-        category: 'Beer' 
+        categoryId: '' 
       })
       
       alert('Product added successfully!')
@@ -118,11 +148,26 @@ const MerchantHome = ({ user, onLogout }) => { // Add user to props
   const handleToggleAvailability = async (id, newAvailability) => {
     try {
       setError('')
-      // Call your update product endpoint
-      const response = await products.update(id, { available: newAvailability })
+      
+      const currentProduct = productsList.find(p => p.id === id)
+      if (!currentProduct) return
+      
+      const updateData = {
+        id: currentProduct.id,
+        name: currentProduct.name,
+        description: currentProduct.description,
+        price: currentProduct.price,
+        categoryId: currentProduct.categoryId,
+        merchantId: currentProduct.merchantId,
+        isAlcohol: currentProduct.isAlcohol,
+        alcoholContent: currentProduct.alcoholContent,
+        available: newAvailability, 
+        imageUrl: currentProduct.imageUrl
+      }
+      
+      const response = await products.update(id, updateData)
       console.log('Toggle availability response:', response)
       
-      // Update local state
       setProductsList(prev => 
         prev.map(product => 
           product.id === id 
@@ -131,10 +176,20 @@ const MerchantHome = ({ user, onLogout }) => { // Add user to props
         )
       )
       
-      alert(`Product ${newAvailability ? 'made available' : 'marked unavailable'}!`)
     } catch (err) {
       setError('Failed to update product availability. Please try again.')
       console.error('Error toggling availability:', err)
+      console.error('Error response data:', err.response?.data)
+      console.error('Error status:', err.response?.status)
+      
+      // Revert the toggle in UI if the request failed
+      setProductsList(prev => 
+        prev.map(product => 
+          product.id === id 
+            ? { ...product, available: !newAvailability } // Revert to previous state
+            : product
+        )
+      )
     }
   }
 
@@ -161,7 +216,10 @@ const MerchantHome = ({ user, onLogout }) => { // Add user to props
           </div>
           <div className="flex space-x-4">
             <button
-              onClick={loadProducts}
+              onClick={() => {
+                loadProducts()
+                loadCategories()
+              }}
               className="bg-gray-700 text-white px-4 py-3 rounded-lg font-semibold hover:bg-gray-600 transition duration-200 flex items-center"
             >
               <RefreshCw className="w-5 h-5 mr-2" />
@@ -245,17 +303,18 @@ const MerchantHome = ({ user, onLogout }) => { // Add user to props
                     Category *
                   </label>
                   <select
-                    value={newProduct.category}
-                    onChange={(e) => setNewProduct(prev => ({ ...prev, category: e.target.value }))}
+                    value={newProduct.categoryId}
+                    onChange={(e) => setNewProduct(prev => ({ ...prev, categoryId: e.target.value }))}
                     className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-red-600"
                     required
                     disabled={creating}
                   >
-                    <option value="Beer">Beer</option>
-                    <option value="Wine">Wine</option>
-                    <option value="Spirits">Spirits</option>
-                    <option value="Cocktails">Cocktails</option>
-                    <option value="Non-Alcoholic">Non-Alcoholic</option>
+                    <option value="">Select a category</option>
+                    {categoriesList.map(category => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -335,7 +394,7 @@ const MerchantHome = ({ user, onLogout }) => { // Add user to props
                             <div className="flex items-center space-x-4">
                               <span className="text-2xl font-bold text-red-600">${product.price}</span>
                               <span className="bg-gray-700 text-gray-300 px-2 py-1 rounded text-sm">
-                                {product.category}
+                                {categoriesList.find(cat => cat.id === product.categoryId)?.name || `Category ID: ${product.categoryId}`}
                               </span>
                               {product.isAlcohol && (
                                 <span className="bg-red-600 text-white px-2 py-1 rounded text-sm flex items-center">
@@ -344,16 +403,21 @@ const MerchantHome = ({ user, onLogout }) => { // Add user to props
                                 </span>
                               )}
                               {/* AVAILABILITY TOGGLE */}
-                              <button
-                                onClick={() => handleToggleAvailability(product.id, !product.available)}
-                                className={`px-3 py-1 rounded text-sm font-semibold transition duration-200 ${
-                                  product.available 
-                                    ? 'bg-green-600 hover:bg-green-700 text-white' 
-                                    : 'bg-red-600 hover:bg-red-700 text-white'
-                                }`}
-                              >
-                                {product.available ? 'Available' : 'Unavailable'}
-                              </button>
+                              <div className="flex items-center space-x-2">
+                                <span className="text-sm text-gray-400">Available:</span>
+                                <label className="relative inline-flex items-center cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={product.available}
+                                    onChange={(e) => handleToggleAvailability(product.id, e.target.checked)}
+                                    className="sr-only peer"
+                                  />
+                                  <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                                </label>
+                                <span className={`text-sm font-medium ${product.available ? 'text-green-400' : 'text-red-400'}`}>
+                                  {product.available ? 'Yes' : 'No'}
+                                </span>
+                              </div>
                             </div>
                             <p className="text-gray-600 text-xs mt-2">ID: {product.id}</p>
                           </div>
@@ -385,7 +449,7 @@ const MerchantHome = ({ user, onLogout }) => { // Add user to props
           </div>
           <div className="bg-gray-900 border border-gray-700 rounded-lg p-6 text-center">
             <div className="text-2xl font-bold text-red-600">
-              {productsList.filter(p => p.category === 'Beer').length}
+              {productsList.filter(p => p.categoryId === 1).length}
             </div>
             <div className="text-gray-400 flex items-center justify-center">
               <Beer className="w-4 h-4 mr-1" /> Beers
@@ -393,7 +457,7 @@ const MerchantHome = ({ user, onLogout }) => { // Add user to props
           </div>
           <div className="bg-gray-900 border border-gray-700 rounded-lg p-6 text-center">
             <div className="text-2xl font-bold text-red-600">
-              {productsList.filter(p => p.category === 'Wine').length}
+              {productsList.filter(p => p.categoryId === 6).length}
             </div>
             <div className="text-gray-400 flex items-center justify-center">
               <Wine className="w-4 h-4 mr-1" /> Wines

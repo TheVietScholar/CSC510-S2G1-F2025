@@ -8,10 +8,9 @@ export const products = {
   delete: (id) => http.delete(`/products/${id}`),
   search: (keyword) => http.get(`/products/search?keyword=${encodeURIComponent(keyword)}`),
   checkAvailability: (id) => http.get(`/products/${id}/available`),
-  getByMerchant: (merchantId) => http.get(`/products/merchant/${merchantId}`),
+  getByMerchant: (merchantId) => http.get(`/products/merchant/${merchantId}`), 
+  getByMerchantAll: (merchantId) => http.get(`/products/merchant/${merchantId}/all`), 
   getAvailable: () => http.get('/products/available'),
 }
 
 export default products
-
-

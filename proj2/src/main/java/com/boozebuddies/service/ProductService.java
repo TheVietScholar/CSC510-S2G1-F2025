@@ -1,5 +1,6 @@
 package com.boozebuddies.service;
 
+import com.boozebuddies.dto.ProductDTO;
 import com.boozebuddies.entity.Product;
 import java.util.List;
 
@@ -30,15 +31,19 @@ public interface ProductService {
   /** Add a new product to the system. */
   Product addProduct(Product product);
 
+  /** Create a new product from a ProductDTO. */
+  Product createProduct(ProductDTO productDTO);
+
   /** Update an existing product. */
   Product updateProduct(Long id, Product product);
+
+  /** Update an existing product from a ProductDTO. */
+  Product updateProduct(Long id, ProductDTO productDTO);
 
   /** Delete a product. */
   void deleteProduct(Long id);
 
-  /**
-   * Get products by category. (You mentioned working on category if needed - this will be useful)
-   */
+  /** Get products by category. */
   List<Product> getProductsByCategory(Long categoryId);
 
   /** Get available products by category. */
