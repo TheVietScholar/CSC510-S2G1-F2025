@@ -233,20 +233,17 @@ public class OrderControllerTest {
 
   // ==================== GET ORDER BY ID TESTS ====================
 
-    @Test
-    @DisplayName("GET /api/orders/{id} should return 200 with order data")
-    void getOrderById_Success() throws Exception {
+  @Test
+  @DisplayName("GET /api/orders/{id} should return 200 with order data")
+  void getOrderById_Success() throws Exception {
     // Mock the authenticated user
-    User testUser = User.builder()
-        .id(1L)
-        .email("user@test.com")
-        .build();
+    User testUser = User.builder().id(1L).email("user@test.com").build();
     testUser.setRoles(java.util.Set.of(Role.ADMIN)); // Give admin role to bypass permission checks
-    
+
     // Mock the order relationships so permission checks work
     testOrder.setUser(testUser);
     testOrder.setMerchant(testMerchant);
-    
+
     when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
     when(orderService.getOrderById(1L)).thenReturn(Optional.of(testOrder));
     when(orderMapper.toDTO(testOrder)).thenReturn(testOrderDTO);
@@ -257,7 +254,22 @@ public class OrderControllerTest {
         .andExpect(jsonPath("$.success").value(true))
         .andExpect(jsonPath("$.message").value("Order retrieved successfully"))
         .andExpect(jsonPath("$.data.id").value(1));
-    }
+  }
+
+  @Test
+  @DisplayName("Regular user can access their own order")
+  void getOrderById_UserOwnsOrder() throws Exception {
+    testOrder.setUser(testUser); // testUser owns the order
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
+    when(orderService.getOrderById(1L)).thenReturn(Optional.of(testOrder));
+    when(orderMapper.toDTO(testOrder)).thenReturn(testOrderDTO);
+
+    mockMvc
+        .perform(get("/api/orders/1"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.success").value(true))
+        .andExpect(jsonPath("$.data.id").value(1));
+  }
 
   @Test
   @DisplayName("GET /api/orders/{id} should return 404 when order not found")
@@ -303,6 +315,65 @@ public class OrderControllerTest {
         .andExpect(
             jsonPath("$.message")
                 .value(org.hamcrest.Matchers.containsString("Failed to retrieve order")));
+  }
+
+  @Test
+  @DisplayName("Regular user cannot access another user's order")
+  void getOrderById_UserCannotAccessOthersOrder() throws Exception {
+    User otherUser = User.builder().id(2L).build();
+    testOrder.setUser(otherUser);
+
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(testUser);
+    when(orderService.getOrderById(1L)).thenReturn(Optional.of(testOrder));
+
+    mockMvc
+        .perform(get("/api/orders/1"))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(jsonPath("$.message").value("You don't have permission to view this order"));
+  }
+
+  @DisplayName("Merchant admin can access orders from their merchant")
+  void getOrderById_MerchantAdminAccess() throws Exception {
+    testOrder.setMerchant(testMerchant); // merchant ID 1
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(merchantAdminUser);
+    when(orderService.getOrderById(1L)).thenReturn(Optional.of(testOrder));
+    when(orderMapper.toDTO(testOrder)).thenReturn(testOrderDTO);
+
+    mockMvc
+        .perform(get("/api/orders/1"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.success").value(true));
+  }
+
+  @Test
+  @DisplayName("Merchant admin cannot access orders from another merchant")
+  void getOrderById_MerchantAdminForbidden() throws Exception {
+    Merchant otherMerchant = Merchant.builder().id(99L).build();
+    testOrder.setMerchant(otherMerchant);
+
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(merchantAdminUser);
+    when(orderService.getOrderById(1L)).thenReturn(Optional.of(testOrder));
+
+    mockMvc
+        .perform(get("/api/orders/1"))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(jsonPath("$.message").value("You don't have permission to view this order"));
+  }
+
+  @Test
+  @DisplayName("Driver can access assigned order")
+  void getOrderById_DriverAccess() throws Exception {
+    testOrder.setDriver(testDriver); // assign order to driver
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(driverUser);
+    when(orderService.getOrderById(1L)).thenReturn(Optional.of(testOrder));
+    when(orderMapper.toDTO(testOrder)).thenReturn(testOrderDTO);
+
+    mockMvc
+        .perform(get("/api/orders/1"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.success").value(true));
   }
 
   // ==================== GET MY ORDERS TESTS ====================

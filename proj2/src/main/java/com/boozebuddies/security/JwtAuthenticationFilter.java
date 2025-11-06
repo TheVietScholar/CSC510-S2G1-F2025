@@ -12,7 +12,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -21,8 +20,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 /**
- * Filter that validates JWT from the Authorization header and sets the
- * SecurityContext. Runs once
+ * Filter that validates JWT from the Authorization header and sets the SecurityContext. Runs once
  * per request before Spring Security checks authorization.
  */
 @Component
@@ -43,9 +41,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
   @Override
   protected void doFilterInternal(
-      HttpServletRequest request,
-      HttpServletResponse response,
-      FilterChain filterChain)
+      HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
       throws ServletException, IOException {
 
     try {
@@ -84,9 +80,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     log.debug("Extracted roles from token: {}", roles);
 
     // Build authorities
-    Set<SimpleGrantedAuthority> authorities = roles.stream()
-        .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
-        .collect(Collectors.toSet());
+    Set<SimpleGrantedAuthority> authorities =
+        roles.stream()
+            .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
+            .collect(Collectors.toSet());
 
     // Verify the user still exists / active
     User user = userService.findByEmail(username).orElse(null);
@@ -111,8 +108,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       log.debug("Using roles from user entity: {}", authorities);
     }
 
-    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(user, null,
-        authorities);
+    UsernamePasswordAuthenticationToken authentication =
+        new UsernamePasswordAuthenticationToken(user, null, authorities);
     authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
     SecurityContextHolder.getContext().setAuthentication(authentication);
     log.debug("Authentication set for user: {} with authorities: {}", username, authorities);

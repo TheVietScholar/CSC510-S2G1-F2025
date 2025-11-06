@@ -93,7 +93,7 @@ public class Order {
       this.totalAmount = BigDecimal.ZERO;
       return;
     }
-    
+
     // Filter out null subtotals and sum them
     this.totalAmount =
         items.stream()

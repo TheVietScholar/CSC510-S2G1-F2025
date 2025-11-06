@@ -20,7 +20,6 @@ import com.boozebuddies.service.NotificationService;
 import com.boozebuddies.service.PaymentService;
 import com.boozebuddies.service.ProductService;
 import com.boozebuddies.service.UserService;
-
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
@@ -75,7 +74,7 @@ public class OrderServiceImplTest {
     // REMOVE THIS LINE - not needed since unitPrice is already set
     // when(product.getPrice()).thenReturn(new BigDecimal("10.00"));
     when(product.isAlcohol()).thenReturn(false);
-    
+
     when(productService.getProductById(1L)).thenReturn(product);
 
     when(order.getUser()).thenReturn(user);
@@ -83,7 +82,7 @@ public class OrderServiceImplTest {
     when(order.getItems()).thenReturn(List.of(item));
     when(order.getTotalAmount()).thenReturn(null);
     when(orderRepository.save(order)).thenReturn(order);
-    
+
     when(deliveryRepository.save(any(Delivery.class)))
         .thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -93,7 +92,7 @@ public class OrderServiceImplTest {
     verify(order).getTotalAmount();
     verify(order).calculateTotal();
     verify(paymentService).processPayment(order, "test_payment");
-    
+
     ArgumentCaptor<Delivery> deliveryCaptor = ArgumentCaptor.forClass(Delivery.class);
     verify(deliveryRepository).save(deliveryCaptor.capture());
     Delivery savedDelivery = deliveryCaptor.getValue();
@@ -108,7 +107,7 @@ public class OrderServiceImplTest {
     Order order = mock(Order.class);
     OrderItem item = mock(OrderItem.class);
     Product product = mock(Product.class);
-    
+
     // Mock product initialization (happens BEFORE validation)
     when(item.getProduct()).thenReturn(product);
     when(item.getQuantity()).thenReturn(2);
@@ -116,14 +115,14 @@ public class OrderServiceImplTest {
     when(product.getId()).thenReturn(1L);
     when(product.getName()).thenReturn("Beer");
     when(product.isAlcohol()).thenReturn(true); // This is an alcohol product
-    
+
     // Mock productService to return the product
     when(productService.getProductById(1L)).thenReturn(product);
-    
+
     when(order.getUser()).thenReturn(user);
     when(order.getMerchant()).thenReturn(merchant);
     when(order.getItems()).thenReturn(List.of(item));
-    
+
     // Mock user NOT age verified
     when(user.getId()).thenReturn(1L);
     when(user.isAgeVerified()).thenReturn(false);
