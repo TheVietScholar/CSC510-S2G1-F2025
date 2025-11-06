@@ -12,8 +12,15 @@ const RestaurantMenu = ({ restaurant, cart, onAddToCart, onRemoveFromCart, onBac
     if (!restaurant?.id) return
     let mounted = true
     products.getByMerchant(restaurant.id)
-      .then(resp => { if (mounted) setMenuItems(resp.data || []) })
-      .catch(() => setMenuItems([]))
+      .then(resp => {
+        // ProductController returns ApiResponse envelope: { success, data: [...], message }
+        const items = resp.data?.data || resp.data || []
+        if (mounted) setMenuItems(Array.isArray(items) ? items : [])
+      })
+      .catch((err) => {
+        console.error('Failed to load menu items:', err)
+        if (mounted) setMenuItems([])
+      })
     return () => { mounted = false }
   }, [restaurant?.id])
 

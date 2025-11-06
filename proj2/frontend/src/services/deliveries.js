@@ -6,6 +6,7 @@ export const deliveries = {
   cancel: (deliveryId, reason) => http.post(`/deliveries/${deliveryId}/cancel?reason=${encodeURIComponent(reason)}`),
   getByDriver: (driverId) => http.get(`/deliveries/driver/${driverId}`),
   getById: (deliveryId) => http.get(`/deliveries/${deliveryId}`),
+  getByOrderId: (orderId) => http.get(`/deliveries/order/${orderId}`),
   getActive: () => http.get('/deliveries/active'),
 }
 

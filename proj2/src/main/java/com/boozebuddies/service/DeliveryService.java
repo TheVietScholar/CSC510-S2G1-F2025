@@ -85,4 +85,12 @@ public interface DeliveryService {
    * @param longitude The current longitude.
    */
   void updateDeliveryLocation(Long deliveryId, Double latitude, Double longitude);
+
+  /**
+   * Finds a delivery by order ID.
+   *
+   * @param orderId The order ID.
+   * @return The Delivery object, or null if not found.
+   */
+  Delivery getDeliveryByOrderId(Long orderId);
 }

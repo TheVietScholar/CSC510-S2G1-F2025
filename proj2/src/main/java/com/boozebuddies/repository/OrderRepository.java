@@ -63,6 +63,17 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                         """)
   Optional<Order> findWithItems(@Param("id") Long id);
 
+  // Find order with user, merchant, and driver relationships loaded for permission checks
+  @Query(
+      """
+                          SELECT o FROM Order o
+                          LEFT JOIN FETCH o.user
+                          LEFT JOIN FETCH o.merchant
+                          LEFT JOIN FETCH o.driver
+                          WHERE o.id = :id
+                        """)
+  Optional<Order> findByIdWithRelationships(@Param("id") Long id);
+
   // Totals & reporting
   @Query(
       "SELECT o.merchant.id, SUM(o.totalAmount) FROM Order o WHERE o.status = com.boozebuddies.model.OrderStatus.DELIVERED GROUP BY o.merchant.id")

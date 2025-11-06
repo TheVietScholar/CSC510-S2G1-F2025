@@ -117,11 +117,25 @@ public class PaymentServiceImpl implements PaymentService {
   }
 
   /**
-   * Validates a payment method before processing. For now, any non-null, non-empty string is
-   * considered valid.
+   * Validates a payment method before processing. Accepts test payment methods
+   * for testing
+   * purposes.
    */
   @Override
   public boolean validatePaymentMethod(User user, String paymentMethod) {
-    return user != null && paymentMethod != null && !paymentMethod.trim().isEmpty();
+    if (user == null) {
+      return false;
+    }
+    if (paymentMethod == null || paymentMethod.trim().isEmpty()) {
+      return false;
+    }
+    String method = paymentMethod.trim().toLowerCase();
+    // Accept test payment methods for testing purposes
+    if (method.equals("test_payment") || method.equals("test")) {
+      return true;
+    }
+    // For now, any non-empty string is considered valid (for future real payment
+    // integrations)
+    return true;
   }
 }

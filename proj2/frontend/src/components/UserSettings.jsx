@@ -1,9 +1,14 @@
 import React, { useEffect, useState } from 'react'
+import { users as usersAPI } from '../services/api'
+import { CheckCircle, XCircle } from 'lucide-react'
 
 const UserSettings = ({ onBack, asModal = false, onClose }) => {
   const [address, setAddress] = useState({ line1: '', line2: '', city: '', state: '', zip: '' })
   const [payment, setPayment] = useState({ cardName: '', cardNumber: '', exp: '', cvc: '' })
   const [saved, setSaved] = useState(false)
+  const [userProfile, setUserProfile] = useState(null)
+  const [verifying, setVerifying] = useState(false)
+  const [verifyMessage, setVerifyMessage] = useState('')
 
   useEffect(() => {
     try {
@@ -12,7 +17,50 @@ const UserSettings = ({ onBack, asModal = false, onClose }) => {
       if (a) setAddress(a)
       if (p) setPayment(p)
     } catch {}
+    
+    // Fetch current user profile
+    fetchUserProfile()
   }, [])
+
+  const fetchUserProfile = async () => {
+    try {
+      const response = await usersAPI.getMe()
+      const profile = response.data?.data || response.data
+      if (profile) {
+        console.log('UserSettings: User profile from API:', profile)
+        console.log('UserSettings: ageVerified value:', profile.ageVerified, 'type:', typeof profile.ageVerified)
+        setUserProfile(profile)
+      }
+    } catch (err) {
+      console.error('Failed to fetch user profile:', err)
+    }
+  }
+
+  const handleVerifyAge = async () => {
+    if (!userProfile?.id) {
+      setVerifyMessage('Unable to verify: user profile not loaded')
+      return
+    }
+    
+    setVerifying(true)
+    setVerifyMessage('')
+    
+    try {
+      const response = await usersAPI.verifyAge(userProfile.id)
+      const updatedProfile = response.data?.data || response.data
+      if (updatedProfile) {
+        setUserProfile(updatedProfile)
+        setVerifyMessage('Age verified successfully! ✅')
+        setTimeout(() => setVerifyMessage(''), 3000)
+      }
+    } catch (err) {
+      const errorMsg = err.response?.data?.message || err.message || 'Failed to verify age'
+      setVerifyMessage(`Verification failed: ${errorMsg}`)
+      setTimeout(() => setVerifyMessage(''), 5000)
+    } finally {
+      setVerifying(false)
+    }
+  }
 
   const saveAll = () => {
     localStorage.setItem('bb_address', JSON.stringify(address))
@@ -30,6 +78,50 @@ const UserSettings = ({ onBack, asModal = false, onClose }) => {
         </div>
 
         <div className="space-y-8">
+          {/* Age Verification Section */}
+          <section>
+            <h2 className="text-lg font-semibold mb-3">Age Verification</h2>
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3">
+                {userProfile?.ageVerified === true ? (
+                  <>
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                    <span className="text-green-700 font-medium">Age Verified</span>
+                  </>
+                ) : (
+                  <>
+                    <XCircle className="w-5 h-5 text-red-600" />
+                    <span className="text-red-700 font-medium">Not Verified</span>
+                  </>
+                )}
+              </div>
+              {!(userProfile?.ageVerified === true) && (
+                  <button
+                    onClick={handleVerifyAge}
+                    disabled={verifying}
+                    className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {verifying ? 'Verifying...' : 'Verify Age'}
+                  </button>
+                )}
+              </div>
+            <p className="text-sm text-gray-600 mb-2">
+              {userProfile?.ageVerified === true
+                ? 'Your age has been verified. You can order alcohol products.'
+                : 'Age verification is required to order alcohol products. Click the button above to verify.'}
+            </p>
+              {verifyMessage && (
+                <p className={`text-sm mt-2 ${verifyMessage.includes('success') ? 'text-green-600' : 'text-red-600'}`}>
+                  {verifyMessage}
+                </p>
+              )}
+              <p className="text-xs text-gray-500 mt-2">
+                TODO: Integrate with ID verification service (e.g., Veriff, Jumio, Onfido) for automated ID document scanning and verification.
+              </p>
+            </div>
+          </section>
+
           <section>
             <h2 className="text-lg font-semibold mb-3">Address</h2>
             <div className="grid grid-cols-1 gap-3">
@@ -76,6 +168,50 @@ const UserSettings = ({ onBack, asModal = false, onClose }) => {
       <div style={{ height: 72 }} />
 
       <div className="max-w-3xl mx-auto px-6 pb-10 grid grid-cols-1 gap-8">
+        {/* Age Verification Section */}
+        <div className="bg-white p-6 rounded-xl border border-transparent shadow-sm">
+          <h2 className="text-xl font-semibold mb-4">Age Verification</h2>
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3">
+                {userProfile?.ageVerified === true ? (
+                  <>
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                    <span className="text-green-700 font-medium">Age Verified</span>
+                  </>
+                ) : (
+                  <>
+                    <XCircle className="w-5 h-5 text-red-600" />
+                    <span className="text-red-700 font-medium">Not Verified</span>
+                  </>
+                )}
+              </div>
+              {!(userProfile?.ageVerified === true) && (
+                <button
+                  onClick={handleVerifyAge}
+                  disabled={verifying}
+                  className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {verifying ? 'Verifying...' : 'Verify Age'}
+                </button>
+              )}
+            </div>
+            <p className="text-sm text-gray-600 mb-2">
+              {userProfile?.ageVerified === true
+                ? 'Your age has been verified. You can order alcohol products.'
+                : 'Age verification is required to order alcohol products. Click the button above to verify.'}
+            </p>
+            {verifyMessage && (
+              <p className={`text-sm mt-2 ${verifyMessage.includes('success') ? 'text-green-600' : 'text-red-600'}`}>
+                {verifyMessage}
+              </p>
+            )}
+            <p className="text-xs text-gray-500 mt-2">
+              TODO: Integrate with ID verification service (e.g., Veriff, Jumio, Onfido) for automated ID document scanning and verification.
+            </p>
+          </div>
+        </div>
+
         <div className="bg-white p-6 rounded-xl border border-transparent shadow-sm">
           <h2 className="text-xl font-semibold mb-4">Address</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

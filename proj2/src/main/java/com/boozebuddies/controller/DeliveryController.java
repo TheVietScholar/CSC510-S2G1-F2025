@@ -112,6 +112,46 @@ public class DeliveryController {
     }
   }
 
+  /** Get delivery by order ID. Users can view deliveries for their own orders. */
+  @GetMapping("/order/{orderId}")
+  @IsAuthenticated
+  public ResponseEntity<ApiResponse<DeliveryDTO>> getDeliveryByOrderId(
+      @PathVariable Long orderId, Authentication authentication) {
+    try {
+      User user = permissionService.getAuthenticatedUser(authentication);
+      Delivery delivery = deliveryService.getDeliveryByOrderId(orderId);
+
+      if (delivery == null) {
+        return ResponseEntity.notFound().build();
+      }
+
+      // Check if user can access this delivery (owner of order, driver, or admin)
+      boolean canAccess =
+          user.hasRole(Role.ADMIN)
+              || // Admins can see all
+              (delivery.getOrder() != null
+                  && delivery.getOrder().getUser() != null
+                  && delivery.getOrder().getUser().getId().equals(user.getId()))
+              || // User owns the order
+              (user.hasRole(Role.DRIVER)
+                  && user.getDriver() != null
+                  && delivery.getDriver() != null
+                  && delivery.getDriver().getId().equals(user.getDriver().getId())); // Driver's own delivery
+
+      if (!canAccess) {
+        throw new AccessDeniedException("You don't have permission to view this delivery");
+      }
+
+      DeliveryDTO deliveryDTO = deliveryMapper.toDTO(delivery);
+      return ResponseEntity.ok(ApiResponse.success(deliveryDTO, "Delivery retrieved successfully"));
+    } catch (AccessDeniedException e) {
+      return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error(e.getMessage()));
+    } catch (Exception e) {
+      return ResponseEntity.badRequest()
+          .body(ApiResponse.error("Failed to retrieve delivery: " + e.getMessage()));
+    }
+  }
+
   /** Get delivery by ID. Drivers can view their own deliveries, admins can view all. */
   @GetMapping("/{deliveryId}")
   @IsAuthenticated

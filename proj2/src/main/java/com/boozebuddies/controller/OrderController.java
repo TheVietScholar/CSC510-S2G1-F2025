@@ -67,8 +67,7 @@ public class OrderController {
    * merchant, drivers can view assigned orders, and admins can view all orders.
    */
   @GetMapping("/{orderId}")
-  @org.springframework.security.access.prepost.PreAuthorize(
-      "hasRole('ADMIN') or @permissionService.ownsOrder(authentication, #orderId) or @permissionService.merchantCanAccessOrder(authentication, #orderId) or @permissionService.driverCanAccessOrder(authentication, #orderId)")
+  @IsAuthenticated
   public ResponseEntity<ApiResponse<OrderDTO>> getOrderById(
       @PathVariable Long orderId, Authentication authentication) {
     try {
@@ -76,6 +75,7 @@ public class OrderController {
         return ResponseEntity.badRequest().body(ApiResponse.error("Invalid order ID"));
       }
 
+      User user = permissionService.getAuthenticatedUser(authentication);
       Optional<Order> orderOpt = orderService.getOrderById(orderId);
 
       if (orderOpt.isEmpty()) {
@@ -83,6 +83,41 @@ public class OrderController {
       }
 
       Order order = orderOpt.get();
+
+      // Check permissions: Admin can see all, otherwise check ownership/access
+      boolean canAccess = false;
+      
+      if (user.hasRole(Role.ADMIN)) {
+        canAccess = true;
+      } else {
+        // Get order relationships (loaded by JOIN FETCH query in repository)
+        Long orderUserId = order.getUser() != null ? order.getUser().getId() : null;
+        Long orderMerchantId = order.getMerchant() != null ? order.getMerchant().getId() : null;
+        Long orderDriverId = order.getDriver() != null ? order.getDriver().getId() : null;
+        
+        // Check if user owns the order
+        if (orderUserId != null && orderUserId.equals(user.getId())) {
+          canAccess = true;
+        } 
+        // Check if merchant admin can access (order belongs to their merchant)
+        else if (user.hasRole(Role.MERCHANT_ADMIN) && orderMerchantId != null 
+            && user.getMerchantId() != null 
+            && user.getMerchantId().equals(orderMerchantId)) {
+          canAccess = true;
+        }
+        // Check if driver can access (order is assigned to them)
+        else if (user.hasRole(Role.DRIVER) && orderDriverId != null 
+            && user.getDriver() != null 
+            && orderDriverId.equals(user.getDriver().getId())) {
+          canAccess = true;
+        }
+      }
+
+      if (!canAccess) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            .body(ApiResponse.error("You don't have permission to view this order"));
+      }
+
       OrderDTO orderDTO = orderMapper.toDTO(order);
       return ResponseEntity.ok(ApiResponse.success(orderDTO, "Order retrieved successfully"));
     } catch (AccessDeniedException e) {
