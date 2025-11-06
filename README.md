@@ -13,6 +13,9 @@ In short: **we make local beer delivery faster, safer, and easier** for everyone
 The project demonstrates the power of distributed teamwork, automation, and clean software architecture using modern tools like Docker, Spring Boot, and React.
 
 ---
+## Demo
+![QR to Demo Video](/proj2/misc/TRN8G2.jpg)
+---
 
 ## 🧩 Tech Stack
 **Front-End:**
