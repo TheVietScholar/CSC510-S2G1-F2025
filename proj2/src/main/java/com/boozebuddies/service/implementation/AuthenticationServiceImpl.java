@@ -11,6 +11,7 @@ import com.boozebuddies.exception.InvalidTokenException;
 import com.boozebuddies.mapper.UserMapper;
 import com.boozebuddies.security.JwtUtil;
 import com.boozebuddies.service.AuthenticationService;
+import com.boozebuddies.service.DriverService;
 import com.boozebuddies.service.UserService;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -25,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuthenticationServiceImpl implements AuthenticationService {
 
   private final UserService userService;
+  private final DriverService driverService;
   private final PasswordEncoder passwordEncoder;
   private final JwtUtil jwtUtil;
   private final UserMapper userMapper;
@@ -33,11 +35,13 @@ public class AuthenticationServiceImpl implements AuthenticationService {
   @Autowired
   public AuthenticationServiceImpl(
       UserService userService,
+      DriverService driverService,
       PasswordEncoder passwordEncoder,
       JwtUtil jwtUtil,
       UserMapper userMapper,
       @Value("${jwt.refreshExpirationMs:604800000}") long refreshExpirationMs) {
     this.userService = userService;
+    this.driverService = driverService;
     this.passwordEncoder = passwordEncoder;
     this.jwtUtil = jwtUtil;
     this.userMapper = userMapper;
@@ -79,7 +83,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     if (request == null || request.getEmail() == null || request.getPassword() == null) {
       throw new InvalidCredentialsException("Email and password are required");
     }
-     
 
     // Find user by email
     User user =
@@ -133,6 +136,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         userService
             .findByEmail(request.getEmail())
             .orElseThrow(() -> new InvalidCredentialsException("Invalid email or password"));
+
+    // Ensure user is a driver
+    driverService
+        .getDriverByUserId(user.getId())
+        .orElseThrow(() -> new InvalidCredentialsException("User is not a driver"));
 
     // Verify password
     if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {

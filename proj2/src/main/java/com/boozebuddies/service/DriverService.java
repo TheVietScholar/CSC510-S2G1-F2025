@@ -1,8 +1,10 @@
 package com.boozebuddies.service;
 
 import com.boozebuddies.entity.Driver;
+import com.boozebuddies.entity.User;
 import com.boozebuddies.model.CertificationStatus;
 import java.util.List;
+import java.util.Optional;
 
 public interface DriverService {
 
@@ -45,7 +47,15 @@ public interface DriverService {
    * @param driverId The ID of the driver.
    * @return The corresponding Driver object, or null if not found.
    */
-  Driver getDriverById(Long driverId);
+  Optional<Driver> getDriverById(Long driverId);
+
+  /**
+   * Retrieves a driver by their associated user ID.
+   *
+   * @param userId The user ID linked to the driver.
+   * @return The corresponding Driver object, or null if not found.
+   */
+  Optional<Driver> getDriverByUserId(Long userId);
 
   /**
    * Retrieves all registered drivers in the system.
@@ -62,9 +72,31 @@ public interface DriverService {
    */
   Driver updateDriver(Driver driver);
 
-  Driver getDriverProfile(com.boozebuddies.entity.User user);
+  /**
+   * Retrieves the profile of a driver based on the associated user.
+   *
+   * @param user The user associated with the driver.
+   * @return The Driver profile
+   */
+  Driver getDriverProfile(User user);
 
+  /**
+   * Finds nearby available drivers within a specified radius.
+   *
+   * @param latitude origin latitude
+   * @param longitude origin longitude
+   * @param radiusMeters search radius in meters
+   * @return List of nearby available drivers
+   */
   List<Driver> getNearbyAvailableDrivers(Double latitude, Double longitude, Double radiusMeters);
 
+  /**
+   * Updates the current location of a driver.
+   *
+   * @param userId the user ID of the driver
+   * @param latitude Updated latitude
+   * @param longitude Updated longitude
+   * @return The updated Driver object
+   */
   Driver updateDriverLocation(Long userId, Double latitude, Double longitude);
 }

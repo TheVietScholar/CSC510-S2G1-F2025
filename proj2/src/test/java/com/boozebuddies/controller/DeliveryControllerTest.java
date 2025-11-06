@@ -122,7 +122,7 @@ public class DeliveryControllerTest {
   @DisplayName("POST /api/deliveries/assign returns 200 on success")
   void assignDriverToOrder_success() throws Exception {
     when(orderService.getOrderById(100L)).thenReturn(Optional.of(testDelivery.getOrder()));
-    when(driverService.getDriverById(10L)).thenReturn(testDelivery.getDriver());
+    when(driverService.getDriverById(10L)).thenReturn(Optional.of(testDelivery.getDriver()));
     when(deliveryService.assignDriverToOrder(any(Order.class), any(Driver.class)))
         .thenReturn(testDelivery);
     when(deliveryMapper.toDTO(testDelivery)).thenReturn(testDeliveryDTO);
@@ -154,7 +154,7 @@ public class DeliveryControllerTest {
   @DisplayName("POST /api/deliveries/assign returns 400 when driver not found")
   void assignDriverToOrder_driverNotFound() throws Exception {
     when(orderService.getOrderById(100L)).thenReturn(Optional.of(testDelivery.getOrder()));
-    when(driverService.getDriverById(999L)).thenReturn(null);
+    when(driverService.getDriverById(999L)).thenReturn(Optional.empty());
 
     mockMvc
         .perform(post("/api/deliveries/assign?orderId=100&driverId=999"))
@@ -168,7 +168,7 @@ public class DeliveryControllerTest {
   @DisplayName("POST /api/deliveries/assign returns 400 on exception")
   void assignDriverToOrder_exception_returnsBadRequest() throws Exception {
     when(orderService.getOrderById(100L)).thenReturn(Optional.of(testDelivery.getOrder()));
-    when(driverService.getDriverById(10L)).thenReturn(testDriver);
+    when(driverService.getDriverById(10L)).thenReturn(Optional.of(testDriver));
     when(deliveryService.assignDriverToOrder(any(Order.class), any(Driver.class)))
         .thenThrow(new RuntimeException("no driver"));
 

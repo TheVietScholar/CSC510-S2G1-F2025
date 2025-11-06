@@ -86,7 +86,7 @@ public class OrderController {
 
       // Check permissions: Admin can see all, otherwise check ownership/access
       boolean canAccess = false;
-      
+
       if (user.hasRole(Role.ADMIN)) {
         canAccess = true;
       } else {
@@ -94,20 +94,22 @@ public class OrderController {
         Long orderUserId = order.getUser() != null ? order.getUser().getId() : null;
         Long orderMerchantId = order.getMerchant() != null ? order.getMerchant().getId() : null;
         Long orderDriverId = order.getDriver() != null ? order.getDriver().getId() : null;
-        
+
         // Check if user owns the order
         if (orderUserId != null && orderUserId.equals(user.getId())) {
           canAccess = true;
-        } 
+        }
         // Check if merchant admin can access (order belongs to their merchant)
-        else if (user.hasRole(Role.MERCHANT_ADMIN) && orderMerchantId != null 
-            && user.getMerchantId() != null 
+        else if (user.hasRole(Role.MERCHANT_ADMIN)
+            && orderMerchantId != null
+            && user.getMerchantId() != null
             && user.getMerchantId().equals(orderMerchantId)) {
           canAccess = true;
         }
         // Check if driver can access (order is assigned to them)
-        else if (user.hasRole(Role.DRIVER) && orderDriverId != null 
-            && user.getDriver() != null 
+        else if (user.hasRole(Role.DRIVER)
+            && orderDriverId != null
+            && user.getDriver() != null
             && orderDriverId.equals(user.getDriver().getId())) {
           canAccess = true;
         }

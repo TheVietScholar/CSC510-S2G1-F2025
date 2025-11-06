@@ -16,8 +16,7 @@ import org.springframework.stereotype.Component;
 public class OrderMapper {
 
   public OrderDTO toDTO(Order order) {
-    if (order == null)
-      return null;
+    if (order == null) return null;
 
     return OrderDTO.builder()
         .id(order.getId())
@@ -38,8 +37,7 @@ public class OrderMapper {
   }
 
   public Order toEntity(CreateOrderRequest request) {
-    if (request == null)
-      return null;
+    if (request == null) return null;
 
     Order order = new Order();
 
@@ -73,8 +71,7 @@ public class OrderMapper {
   }
 
   private OrderItemDTO orderItemToDTO(OrderItem orderItem) {
-    if (orderItem == null)
-      return null;
+    if (orderItem == null) return null;
 
     return OrderItemDTO.builder()
         .id(orderItem.getId())
@@ -87,8 +84,7 @@ public class OrderMapper {
   }
 
   private OrderItem orderItemRequestToEntity(OrderItemRequest request) {
-    if (request == null)
-      return null;
+    if (request == null) return null;
 
     OrderItem orderItem = new OrderItem();
     orderItem.setQuantity(request.getQuantity());

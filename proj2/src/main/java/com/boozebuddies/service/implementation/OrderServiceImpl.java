@@ -24,23 +24,17 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class OrderServiceImpl implements OrderService {
 
-  @Autowired
-  private OrderRepository orderRepository;
+  @Autowired private OrderRepository orderRepository;
 
-  @Autowired
-  private DeliveryRepository deliveryRepository;
+  @Autowired private DeliveryRepository deliveryRepository;
 
-  @Autowired
-  private PaymentService paymentService;
+  @Autowired private PaymentService paymentService;
 
-  @Autowired
-  private NotificationService notificationService;
+  @Autowired private NotificationService notificationService;
 
-  @Autowired
-  private ProductService productService;
+  @Autowired private ProductService productService;
 
-  @Autowired
-  private UserService userService;
+  @Autowired private UserService userService;
 
   @Transactional
   public Order createOrder(Order order) {
@@ -103,9 +97,10 @@ public class OrderServiceImpl implements OrderService {
 
   @Transactional
   public Order cancelOrder(Long orderId) {
-    Order order = orderRepository
-        .findById(orderId)
-        .orElseThrow(() -> new RuntimeException("Order not found"));
+    Order order =
+        orderRepository
+            .findById(orderId)
+            .orElseThrow(() -> new RuntimeException("Order not found"));
 
     // Check if order can be cancelled
     if (!order.canBeCancelled()) {
@@ -130,9 +125,10 @@ public class OrderServiceImpl implements OrderService {
 
   @Transactional
   public Order updateOrderStatus(Long orderId, String status) {
-    Order order = orderRepository
-        .findById(orderId)
-        .orElseThrow(() -> new RuntimeException("Order not found"));
+    Order order =
+        orderRepository
+            .findById(orderId)
+            .orElseThrow(() -> new RuntimeException("Order not found"));
 
     OrderStatus newStatus = OrderStatus.valueOf(status.toUpperCase());
 
@@ -192,8 +188,10 @@ public class OrderServiceImpl implements OrderService {
         item.setSubtotal(item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
       } else {
         throw new RuntimeException(
-            "Order item missing required fields: unitPrice=" + item.getUnitPrice()
-                + ", quantity=" + item.getQuantity());
+            "Order item missing required fields: unitPrice="
+                + item.getUnitPrice()
+                + ", quantity="
+                + item.getQuantity());
       }
     }
   }
@@ -212,8 +210,9 @@ public class OrderServiceImpl implements OrderService {
     }
 
     // Check if user is age verified for alcohol products
-    boolean hasAlcohol = order.getItems().stream()
-        .anyMatch(item -> item.getProduct() != null && item.getProduct().isAlcohol());
+    boolean hasAlcohol =
+        order.getItems().stream()
+            .anyMatch(item -> item.getProduct() != null && item.getProduct().isAlcohol());
 
     if (hasAlcohol) {
       // Fetch fresh user data from database to ensure we have latest age verification

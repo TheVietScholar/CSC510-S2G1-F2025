@@ -62,8 +62,14 @@ public class DriverServiceImpl implements DriverService {
 
   /** Retrieves a driver by their unique ID. */
   @Override
-  public Driver getDriverById(Long driverId) {
-    return driverRepository.findById(driverId).orElse(null);
+  public Optional<Driver> getDriverById(Long driverId) {
+    return driverRepository.findById(driverId);
+  }
+
+  /** Retrieves a driver by their associated user ID. */
+  @Override
+  public Optional<Driver> getDriverByUserId(Long userId) {
+    return driverRepository.findByUserId(userId);
   }
 
   /** Retrieves all registered drivers in the system. */

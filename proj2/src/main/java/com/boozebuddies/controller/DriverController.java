@@ -11,6 +11,7 @@ import com.boozebuddies.security.annotation.RoleAnnotations.*;
 import com.boozebuddies.service.DriverService;
 import com.boozebuddies.service.PermissionService;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -31,8 +32,7 @@ public class DriverController {
 
   @PostMapping("/register")
   @IsAdmin
-  public ResponseEntity<ApiResponse<DriverDTO>> registerDriver(
-      @RequestBody DriverDTO driverDTO) {
+  public ResponseEntity<ApiResponse<DriverDTO>> registerDriver(@RequestBody DriverDTO driverDTO) {
     try {
       Driver driver = driverMapper.toEntity(driverDTO);
       Driver registeredDriver = driverService.registerDriver(driver);
@@ -87,10 +87,13 @@ public class DriverController {
   @IsAdmin
   public ResponseEntity<ApiResponse<DriverDTO>> getDriverById(@PathVariable Long driverId) {
     try {
-      Driver driver = driverService.getDriverById(driverId);
+      Driver driver = driverService.getDriverById(driverId).get();
       DriverDTO driverDTO = driverMapper.toDTO(driver);
       return ResponseEntity.ok(ApiResponse.success(driverDTO, "Driver retrieved successfully"));
     } catch (DriverNotFoundException e) {
+      return ResponseEntity.status(HttpStatus.NOT_FOUND)
+          .body(ApiResponse.error("Driver not found with ID: " + driverId));
+    } catch (NoSuchElementException e) {
       return ResponseEntity.status(HttpStatus.NOT_FOUND)
           .body(ApiResponse.error("Driver not found with ID: " + driverId));
     } catch (Exception e) {

@@ -11,6 +11,7 @@ import com.boozebuddies.repository.DriverRepository;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -86,14 +87,14 @@ class DriverServiceImplTest {
   }
 
   @Test
-  @DisplayName("getDriverById returns driver or null")
+  @DisplayName("getDriverById returns driver or empty optional")
   void getDriverById_returnsOrNull() {
     Driver d1 = Driver.builder().id(1L).name("d1").build();
     when(repository.findById(1L)).thenReturn(Optional.of(d1));
     when(repository.findById(999L)).thenReturn(Optional.empty());
 
     assertNotNull(service.getDriverById(1L));
-    assertNull(service.getDriverById(999L));
+    assertThrows(NoSuchElementException.class, service.getDriverById(999L)::get);
   }
 
   @Test

@@ -11,7 +11,7 @@ const DriverLogin = ({ onDriverLogin }) => {
     setLoading(true)
   
     try {
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch('/api/auth/driver/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -21,14 +21,14 @@ const DriverLogin = ({ onDriverLogin }) => {
   
       if (response.ok) {
         const userData = await response.json()
-        console.log('Login successful:', userData)
+        console.log('Driver login successful:', userData)
         
         // Store token and role from the nested user object
         if (userData.token) {
           localStorage.setItem('authToken', userData.token)
         }
         if (userData.user && userData.user.roles) {
-          localStorage.setItem('userRole', userData.user.roles[0]) // Store first role
+          localStorage.setItem('userRole', "DRIVER") // Store first role
         }
         
         onDriverLogin(userData)

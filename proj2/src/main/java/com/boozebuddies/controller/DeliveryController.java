@@ -15,6 +15,7 @@ import com.boozebuddies.service.DriverService;
 import com.boozebuddies.service.OrderService;
 import com.boozebuddies.service.PermissionService;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -48,15 +49,15 @@ public class DeliveryController {
               .getOrderById(orderId)
               .orElseThrow(() -> new RuntimeException("Order not found"));
 
-      Driver driver = driverService.getDriverById(driverId); // ← FIXED
-      if (driver == null) {
-        throw new RuntimeException("Driver not found");
-      }
+      Driver driver = driverService.getDriverById(driverId).get(); // ← FIXED
 
       Delivery delivery = deliveryService.assignDriverToOrder(order, driver);
       DeliveryDTO deliveryDTO = deliveryMapper.toDTO(delivery);
 
       return ResponseEntity.ok(ApiResponse.success(deliveryDTO, "Driver assigned successfully"));
+    } catch (NoSuchElementException e) {
+      return ResponseEntity.badRequest()
+          .body(ApiResponse.error("Driver not found with ID: " + driverId));
     } catch (Exception e) {
       return ResponseEntity.badRequest()
           .body(ApiResponse.error("Failed to assign driver: " + e.getMessage()));
@@ -136,7 +137,10 @@ public class DeliveryController {
               (user.hasRole(Role.DRIVER)
                   && user.getDriver() != null
                   && delivery.getDriver() != null
-                  && delivery.getDriver().getId().equals(user.getDriver().getId())); // Driver's own delivery
+                  && delivery
+                      .getDriver()
+                      .getId()
+                      .equals(user.getDriver().getId())); // Driver's own delivery
 
       if (!canAccess) {
         throw new AccessDeniedException("You don't have permission to view this delivery");
