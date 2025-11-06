@@ -40,23 +40,17 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class OrderServiceImpl implements OrderService {
 
-  @Autowired
-  private OrderRepository orderRepository;
+  @Autowired private OrderRepository orderRepository;
 
-  @Autowired
-  private DeliveryRepository deliveryRepository;
+  @Autowired private DeliveryRepository deliveryRepository;
 
-  @Autowired
-  private PaymentService paymentService;
+  @Autowired private PaymentService paymentService;
 
-  @Autowired
-  private NotificationService notificationService;
+  @Autowired private NotificationService notificationService;
 
-  @Autowired
-  private ProductService productService;
+  @Autowired private ProductService productService;
 
-  @Autowired
-  private UserService userService;
+  @Autowired private UserService userService;
 
   /**
    * Creates a new order, processes payment, generates a delivery record, and sends confirmation
@@ -156,9 +150,10 @@ public class OrderServiceImpl implements OrderService {
    */
   @Transactional
   public Order cancelOrder(Long orderId) {
-    Order order = orderRepository
-        .findById(orderId)
-        .orElseThrow(() -> new RuntimeException("Order not found"));
+    Order order =
+        orderRepository
+            .findById(orderId)
+            .orElseThrow(() -> new RuntimeException("Order not found"));
 
     if (!order.canBeCancelled()) {
       throw new RuntimeException(
@@ -186,9 +181,10 @@ public class OrderServiceImpl implements OrderService {
    */
   @Transactional
   public Order updateOrderStatus(Long orderId, String status) {
-    Order order = orderRepository
-        .findById(orderId)
-        .orElseThrow(() -> new RuntimeException("Order not found"));
+    Order order =
+        orderRepository
+            .findById(orderId)
+            .orElseThrow(() -> new RuntimeException("Order not found"));
 
     OrderStatus newStatus = OrderStatus.valueOf(status.toUpperCase());
 
@@ -275,8 +271,9 @@ public class OrderServiceImpl implements OrderService {
     }
 
     // Check if user is age verified for alcohol products
-    boolean hasAlcohol = order.getItems().stream()
-        .anyMatch(item -> item.getProduct() != null && item.getProduct().isAlcohol());
+    boolean hasAlcohol =
+        order.getItems().stream()
+            .anyMatch(item -> item.getProduct() != null && item.getProduct().isAlcohol());
 
     if (hasAlcohol) {
       // Fetch fresh user data from database to ensure we have latest age verification
@@ -333,28 +330,30 @@ public class OrderServiceImpl implements OrderService {
 
   @Override
   public List<Order> getOrdersWithinDistance(double latitude, double longitude, double distanceKm) {
-    List<OrderStatus> availableStatuses = List.of(
-        OrderStatus.PENDING,
-        OrderStatus.CONFIRMED,
-        OrderStatus.PREPARING,
-        OrderStatus.READY_FOR_PICKUP);
+    List<OrderStatus> availableStatuses =
+        List.of(
+            OrderStatus.PENDING,
+            OrderStatus.CONFIRMED,
+            OrderStatus.PREPARING,
+            OrderStatus.READY_FOR_PICKUP);
     List<Order> availOrders = orderRepository.findAvailableForAssignment(availableStatuses);
 
     // Filter orders by distance, excluding orders with null merchant or missing
     // coordinates
     return availOrders.stream()
-        .filter(order -> {
-          if (order.getMerchant() == null) {
-            return false; // Skip orders without merchant
-          }
-          Double merchantLat = order.getMerchant().getLatitude();
-          Double merchantLng = order.getMerchant().getLongitude();
-          if (merchantLat == null || merchantLng == null) {
-            return false; // Skip orders with merchants that don't have coordinates
-          }
-          double distance = calculateDistance(latitude, longitude, merchantLat, merchantLng);
-          return distance <= distanceKm; // Include orders within the radius
-        })
+        .filter(
+            order -> {
+              if (order.getMerchant() == null) {
+                return false; // Skip orders without merchant
+              }
+              Double merchantLat = order.getMerchant().getLatitude();
+              Double merchantLng = order.getMerchant().getLongitude();
+              if (merchantLat == null || merchantLng == null) {
+                return false; // Skip orders with merchants that don't have coordinates
+              }
+              double distance = calculateDistance(latitude, longitude, merchantLat, merchantLng);
+              return distance <= distanceKm; // Include orders within the radius
+            })
         .collect(Collectors.toList());
   }
 
@@ -365,11 +364,12 @@ public class OrderServiceImpl implements OrderService {
     double dLat = Math.toRadians(lat2 - lat1);
     double dLon = Math.toRadians(lon2 - lon1);
 
-    double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
-        + Math.cos(Math.toRadians(lat1))
-            * Math.cos(Math.toRadians(lat2))
-            * Math.sin(dLon / 2)
-            * Math.sin(dLon / 2);
+    double a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2)
+            + Math.cos(Math.toRadians(lat1))
+                * Math.cos(Math.toRadians(lat2))
+                * Math.sin(dLon / 2)
+                * Math.sin(dLon / 2);
 
     double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
