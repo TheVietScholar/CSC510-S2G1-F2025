@@ -16,6 +16,10 @@ http.interceptors.request.use(
     const token = localStorage.getItem('bb_token')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
+      // Debug: Log token presence (remove in production)
+      console.log(`[HTTP] Adding Authorization header for ${config.method?.toUpperCase()} ${config.url}`)
+    } else {
+      console.warn(`[HTTP] No token found for ${config.method?.toUpperCase()} ${config.url}`)
     }
     return config
   },
