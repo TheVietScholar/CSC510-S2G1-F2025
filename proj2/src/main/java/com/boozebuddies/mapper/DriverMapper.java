@@ -5,9 +5,16 @@ import com.boozebuddies.entity.Driver;
 import com.boozebuddies.model.CertificationStatus;
 import org.springframework.stereotype.Component;
 
+/** Mapper for converting between Driver entities and DriverDTO objects. */
 @Component
 public class DriverMapper {
 
+  /**
+   * Converts a Driver entity to a DriverDTO.
+   *
+   * @param driver the driver entity to convert
+   * @return the DriverDTO, or null if the input is null
+   */
   public DriverDTO toDTO(Driver driver) {
     if (driver == null) return null;
 
@@ -30,6 +37,12 @@ public class DriverMapper {
         .build();
   }
 
+  /**
+   * Converts a DriverDTO to a Driver entity.
+   *
+   * @param driverDTO the DriverDTO to convert
+   * @return the Driver entity, or null if the input is null
+   */
   public Driver toEntity(DriverDTO driverDTO) {
     if (driverDTO == null) return null;
 

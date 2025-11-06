@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+/** REST controller for managing ratings for products, drivers, and merchants. */
 @RestController
 @RequestMapping("/api/ratings")
 @RequiredArgsConstructor
@@ -29,6 +30,17 @@ public class RatingController {
   // -----------------------------
   // Rate a product
   // -----------------------------
+
+  /**
+   * Creates a rating for a product. Users can rate products, or admins can rate on behalf of users.
+   *
+   * @param userId the user ID
+   * @param productId the product ID
+   * @param rating the rating value
+   * @param review optional review text
+   * @param authentication the authentication object
+   * @return the created rating
+   */
   @PostMapping("/product")
   @IsAuthenticated
   public ResponseEntity<RatingDTO> rateProduct(
@@ -57,6 +69,17 @@ public class RatingController {
   // -----------------------------
   // Rate a driver
   // -----------------------------
+
+  /**
+   * Creates a rating for a driver. Users can rate drivers, or admins can rate on behalf of users.
+   *
+   * @param userId the user ID
+   * @param driverId the driver ID
+   * @param rating the rating value
+   * @param review optional review text
+   * @param authentication the authentication object
+   * @return the created rating
+   */
   @PostMapping("/driver")
   @IsAuthenticated
   public ResponseEntity<RatingDTO> rateDriver(
@@ -84,6 +107,18 @@ public class RatingController {
   // -----------------------------
   // Rate a merchant
   // -----------------------------
+
+  /**
+   * Creates a rating for a merchant. Users can rate merchants, or admins can rate on behalf of
+   * users.
+   *
+   * @param userId the user ID
+   * @param merchantId the merchant ID
+   * @param rating the rating value
+   * @param review optional review text
+   * @param authentication the authentication object
+   * @return the created rating
+   */
   @PostMapping("/merchant")
   @IsAuthenticated
   public ResponseEntity<RatingDTO> rateMerchant(
@@ -111,6 +146,13 @@ public class RatingController {
   // -----------------------------
   // Get average rating for a product
   // -----------------------------
+
+  /**
+   * Retrieves the average rating for a product.
+   *
+   * @param productId the product ID
+   * @return the average rating
+   */
   @GetMapping("/product/{productId}/average")
   public ResponseEntity<Double> getAverageRatingForProduct(@PathVariable Long productId) {
     Product product = new Product();
@@ -123,6 +165,13 @@ public class RatingController {
   // -----------------------------
   // Get average rating for a driver
   // -----------------------------
+
+  /**
+   * Retrieves the average rating for a driver.
+   *
+   * @param driverId the driver ID
+   * @return the average rating
+   */
   @GetMapping("/driver/{driverId}/average")
   public ResponseEntity<Double> getAverageRatingForDriver(@PathVariable Long driverId) {
     Driver driver = new Driver();
@@ -135,6 +184,13 @@ public class RatingController {
   // -----------------------------
   // Get average rating for a merchant
   // -----------------------------
+
+  /**
+   * Retrieves the average rating for a merchant.
+   *
+   * @param merchantId the merchant ID
+   * @return the average rating
+   */
   @GetMapping("/merchant/{merchantId}/average")
   public ResponseEntity<Double> getAverageRatingForMerchant(@PathVariable Long merchantId) {
     Merchant merchant = new Merchant();

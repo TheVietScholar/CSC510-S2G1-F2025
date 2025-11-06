@@ -6,6 +6,10 @@ import com.boozebuddies.model.CertificationStatus;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Service interface responsible for managing driver-related operations such as registration,
+ * certification, availability updates, and location tracking.
+ */
 public interface DriverService {
 
   /**
@@ -65,7 +69,7 @@ public interface DriverService {
   List<Driver> getAllDrivers();
 
   /**
-   * Updates driver information.
+   * Updates driver information such as name, contact details, or vehicle data.
    *
    * @param driver The driver object containing updated information.
    * @return The updated Driver object.

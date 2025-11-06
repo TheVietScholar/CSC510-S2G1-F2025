@@ -13,7 +13,16 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** Implementation of role management service. */
+/**
+ * Implementation of the {@link RoleService} interface, responsible for managing user roles and
+ * merchant associations.
+ *
+ * <p>This service provides operations to assign, remove, and validate roles for users, ensuring
+ * that business rules such as age restrictions and mutual exclusivity between certain roles (e.g.,
+ * DRIVER and MERCHANT_ADMIN) are enforced.
+ *
+ * <p>It also manages associations between users and merchants for merchant administrators.
+ */
 @Service
 @RequiredArgsConstructor
 public class RoleServiceImpl implements RoleService {
@@ -21,6 +30,14 @@ public class RoleServiceImpl implements RoleService {
   private final UserService userService;
   private final MerchantService merchantService;
 
+  /**
+   * Assigns a new role to a user after validating eligibility and existing role combinations.
+   *
+   * @param userId the ID of the user
+   * @param role the {@link Role} to assign
+   * @return the updated {@link User} with the new role
+   * @throws ValidationException if the role violates business rules
+   */
   @Override
   @Transactional
   public User assignRole(Long userId, Role role) {
@@ -33,6 +50,16 @@ public class RoleServiceImpl implements RoleService {
     return userService.updateUser(userId, user);
   }
 
+  /**
+   * Assigns a role to a user along with a merchant association, used primarily for assigning {@link
+   * Role#MERCHANT_ADMIN}.
+   *
+   * @param userId the ID of the user
+   * @param role the role to assign
+   * @param merchantId the ID of the merchant associated with the user (required for MERCHANT_ADMIN)
+   * @return the updated {@link User} with assigned role and merchant
+   * @throws ValidationException if the merchant ID is missing or invalid for the role
+   */
   @Override
   @Transactional
   public User assignRoleWithMerchant(Long userId, Role role, Long merchantId) {
@@ -52,6 +79,14 @@ public class RoleServiceImpl implements RoleService {
     return userService.updateUser(userId, user);
   }
 
+  /**
+   * Removes a specific role from a user.
+   *
+   * @param userId the ID of the user
+   * @param role the role to remove
+   * @return the updated {@link User} without the removed role
+   * @throws ValidationException if attempting to remove the last role from the user
+   */
   @Override
   @Transactional
   public User removeRole(Long userId, Role role) {
@@ -68,11 +103,18 @@ public class RoleServiceImpl implements RoleService {
     if (role == Role.MERCHANT_ADMIN) {
       user.setMerchantId(null);
     }
-    // Note: Driver entity cleanup should be handled separately if needed
 
     return userService.updateUser(userId, user);
   }
 
+  /**
+   * Replaces all roles for a given user, ensuring that at least one role is assigned.
+   *
+   * @param userId the ID of the user
+   * @param roles the new set of roles to assign
+   * @return the updated {@link User} with new roles
+   * @throws ValidationException if the roles set is null or empty
+   */
   @Override
   @Transactional
   public User setRoles(Long userId, Set<Role> roles) {
@@ -91,6 +133,15 @@ public class RoleServiceImpl implements RoleService {
     return userService.updateUser(userId, user);
   }
 
+  /**
+   * Assigns a merchant to a user who already holds the {@link Role#MERCHANT_ADMIN} role.
+   *
+   * @param userId the ID of the user
+   * @param merchantId the ID of the merchant to associate
+   * @return the updated {@link User} with the merchant assigned
+   * @throws UnauthorizedException if the user does not have MERCHANT_ADMIN role
+   * @throws ValidationException if the merchant ID is null or does not exist
+   */
   @Override
   @Transactional
   public User assignMerchantToUser(Long userId, Long merchantId) {
@@ -115,6 +166,13 @@ public class RoleServiceImpl implements RoleService {
     return userService.updateUser(userId, user);
   }
 
+  /**
+   * Removes a merchant association from a user, typically when demoting or revoking merchant
+   * privileges.
+   *
+   * @param userId the ID of the user
+   * @return the updated {@link User} with the merchant removed
+   */
   @Override
   @Transactional
   public User removeMerchantFromUser(Long userId) {
@@ -123,6 +181,13 @@ public class RoleServiceImpl implements RoleService {
     return userService.updateUser(userId, user);
   }
 
+  /**
+   * Checks whether a user has permission to access data for a specific merchant.
+   *
+   * @param user the user attempting to access the merchant
+   * @param merchantId the ID of the merchant being accessed
+   * @return {@code true} if the user can access the merchant, otherwise {@code false}
+   */
   @Override
   public boolean canAccessMerchant(User user, Long merchantId) {
     if (user.hasRole(Role.ADMIN)) {
@@ -136,6 +201,13 @@ public class RoleServiceImpl implements RoleService {
     return false;
   }
 
+  /**
+   * Determines the primary (highest-level) role of a user based on role hierarchy: ADMIN >
+   * MERCHANT_ADMIN > DRIVER > USER.
+   *
+   * @param user the user to evaluate
+   * @return the highest-priority {@link Role} the user holds
+   */
   @Override
   public Role getPrimaryRole(User user) {
     if (user.hasRole(Role.ADMIN)) {
@@ -150,11 +222,22 @@ public class RoleServiceImpl implements RoleService {
     return Role.USER;
   }
 
-  /** Validate role assignment rules. */
+  /**
+   * Validates role assignment rules to prevent conflicts or violations of business constraints.
+   *
+   * <p>Rules include:
+   *
+   * <ul>
+   *   <li>A user cannot hold both DRIVER and MERCHANT_ADMIN roles simultaneously.
+   *   <li>A user must be age-verified to be assigned the DRIVER role.
+   * </ul>
+   *
+   * @param user the user being validated
+   * @param role the role being assigned
+   * @throws ValidationException if role assignment violates business rules
+   */
   private void validateRoleAssignment(User user, Role role) {
-    // Add business rules for role assignment
-    // For example: a user can't be both DRIVER and MERCHANT_ADMIN
-
+    // Prevent conflicting roles
     if (role == Role.MERCHANT_ADMIN && user.hasRole(Role.DRIVER)) {
       throw new ValidationException("A driver cannot also be a merchant admin");
     }

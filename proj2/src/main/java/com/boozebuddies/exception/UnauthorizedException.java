@@ -6,10 +6,21 @@ package com.boozebuddies.exception;
  */
 public class UnauthorizedException extends RuntimeException {
 
+  /**
+   * Constructs a new UnauthorizedException with the specified message.
+   *
+   * @param message the detail message
+   */
   public UnauthorizedException(String message) {
     super(message);
   }
 
+  /**
+   * Constructs a new UnauthorizedException with the specified message and cause.
+   *
+   * @param message the detail message
+   * @param cause the cause of the exception
+   */
   public UnauthorizedException(String message, Throwable cause) {
     super(message, cause);
   }

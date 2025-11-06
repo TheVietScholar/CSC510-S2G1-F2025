@@ -21,6 +21,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+/** REST controller for managing merchants and merchant operations. */
 @RestController
 @RequestMapping("/api/merchants")
 public class MerchantController {
@@ -29,6 +30,13 @@ public class MerchantController {
   private final MerchantMapper merchantMapper;
   private final PermissionService permissionService;
 
+  /**
+   * Constructor injection for merchant services.
+   *
+   * @param merchantService the merchant service
+   * @param merchantMapper the merchant mapper
+   * @param permissionService the permission service
+   */
   @Autowired
   public MerchantController(
       MerchantService merchantService,
@@ -41,6 +49,12 @@ public class MerchantController {
 
   // ==================== REGISTER (ADMIN ONLY) ====================
 
+  /**
+   * Registers a new merchant. Admin only.
+   *
+   * @param merchantDTO the merchant data
+   * @return the registered merchant
+   */
   @PostMapping("/register")
   @IsAdmin
   public ResponseEntity<?> registerMerchant(@RequestBody MerchantDTO merchantDTO) {
@@ -61,6 +75,13 @@ public class MerchantController {
 
   // ==================== VERIFY (ADMIN ONLY) ====================
 
+  /**
+   * Verifies or unverifies a merchant. Admin only.
+   *
+   * @param id the merchant ID
+   * @param verified whether the merchant is verified
+   * @return the updated merchant
+   */
   @PutMapping("/{id}/verify")
   @IsAdmin
   public ResponseEntity<?> verifyMerchant(@PathVariable Long id, @RequestParam boolean verified) {
@@ -79,6 +100,12 @@ public class MerchantController {
 
   // ==================== RETRIEVE (ALL AUTHENTICATED USERS) ====================
 
+  /**
+   * Retrieves a merchant by ID. Admin only.
+   *
+   * @param id the merchant ID
+   * @return the merchant with the specified ID
+   */
   @GetMapping("/{id}")
   @IsAdmin
   public ResponseEntity<?> getMerchantById(@PathVariable Long id) {
@@ -97,7 +124,12 @@ public class MerchantController {
     }
   }
 
-  /** Get merchant by name. Authenticated users only. */
+  /**
+   * Retrieves a merchant by name. Authenticated users only.
+   *
+   * @param name the merchant name
+   * @return the merchant with the specified name
+   */
   @GetMapping("/name/{name}")
   @IsAuthenticated
   public ResponseEntity<ApiResponse<MerchantDTO>> getMerchantByName(@PathVariable String name) {
@@ -118,8 +150,10 @@ public class MerchantController {
   }
 
   /**
-   * Get all merchants sorted by distance from authenticated user's location. Authenticated users
-   * only - uses user's stored location.
+   * Retrieves all merchants sorted by distance from the authenticated user's location.
+   *
+   * @param authentication the authentication object
+   * @return a list of merchants sorted by distance
    */
   @GetMapping("/by-distance")
   @IsAuthenticated
@@ -152,6 +186,11 @@ public class MerchantController {
     }
   }
 
+  /**
+   * Retrieves all merchants. Authenticated users only.
+   *
+   * @return a list of all merchants
+   */
   @GetMapping
   @IsAuthenticated
   public ResponseEntity<?> getAllMerchants() {
@@ -167,6 +206,12 @@ public class MerchantController {
 
   // ==================== DELETE (ADMIN ONLY) ====================
 
+  /**
+   * Deletes a merchant. Admin only.
+   *
+   * @param id the merchant ID
+   * @return a success message
+   */
   @DeleteMapping("/{id}")
   @IsAdmin
   public ResponseEntity<?> deleteMerchant(@PathVariable Long id) {
@@ -190,6 +235,15 @@ public class MerchantController {
 
   // ==================== ORDERS BY MERCHANT ====================
 
+  /**
+   * Retrieves orders for a specific merchant. Admin or merchant owner only.
+   *
+   * @param id the merchant ID
+   * @param page the page number
+   * @param size the page size
+   * @param authentication the authentication object
+   * @return a paginated list of orders
+   */
   @GetMapping("/{id}/orders")
   @org.springframework.security.access.prepost.PreAuthorize(
       "hasRole('ADMIN') or @permissionService.ownsMerchant(authentication, #id)")
@@ -218,7 +272,12 @@ public class MerchantController {
 
   // ==================== MERCHANT_ADMIN ENDPOINTS ====================
 
-  /** Get the merchant managed by the authenticated merchant admin. */
+  /**
+   * Retrieves the merchant managed by the authenticated merchant admin.
+   *
+   * @param authentication the authentication object
+   * @return the merchant managed by this admin
+   */
   @GetMapping("/my-merchant")
   @IsMerchantAdmin
   public ResponseEntity<?> getMyMerchant(Authentication authentication) {
@@ -240,7 +299,14 @@ public class MerchantController {
     }
   }
 
-  /** Get orders for the merchant managed by the authenticated merchant admin. */
+  /**
+   * Retrieves orders for the merchant managed by the authenticated merchant admin.
+   *
+   * @param page the page number
+   * @param size the page size
+   * @param authentication the authentication object
+   * @return a paginated list of orders for the managed merchant
+   */
   @GetMapping("/my-merchant/orders")
   @IsMerchantAdmin
   public ResponseEntity<?> getMyMerchantOrders(

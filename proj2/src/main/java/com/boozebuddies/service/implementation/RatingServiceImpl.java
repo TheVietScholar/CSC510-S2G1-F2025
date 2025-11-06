@@ -11,14 +11,38 @@ import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
+/**
+ * Implementation of the {@link RatingService} interface that handles ratings for products, drivers,
+ * and merchants. This service allows users to submit and retrieve ratings for different entities
+ * within the BoozeBuddies platform.
+ *
+ * <p>Each rating is stored in an in-memory list (for demonstration or testing purposes). In a
+ * production environment, these would typically be persisted in a database.
+ *
+ * <p>Ratings are validated to ensure valid users, target entities, and rating values (1–5).
+ */
 @Service
 public class RatingServiceImpl implements RatingService {
 
+  /** In-memory storage for product ratings. */
   private final List<Rating> productRatings = new ArrayList<>();
+
+  /** In-memory storage for driver ratings. */
   private final List<Rating> driverRatings = new ArrayList<>();
+
+  /** In-memory storage for merchant ratings. */
   private final List<Rating> merchantRatings = new ArrayList<>();
 
-  /** Allows a user to rate a product they purchased. */
+  /**
+   * Allows a user to rate a product they purchased.
+   *
+   * @param user the user submitting the rating
+   * @param product the product being rated
+   * @param rating the numeric rating (1–5)
+   * @param review an optional textual review
+   * @return the created {@link Rating} object
+   * @throws IllegalArgumentException if the user, product, or rating value is invalid
+   */
   @Override
   public Rating rateProduct(User user, Product product, int rating, String review) {
     if (user == null || product == null || rating < 1 || rating > 5) {
@@ -38,7 +62,16 @@ public class RatingServiceImpl implements RatingService {
     return r;
   }
 
-  /** Allows a user to rate a driver. */
+  /**
+   * Allows a user to rate a driver.
+   *
+   * @param user the user submitting the rating
+   * @param driver the driver being rated
+   * @param rating the numeric rating (1–5)
+   * @param review an optional textual review
+   * @return the created {@link Rating} object
+   * @throws IllegalArgumentException if the user, driver, or rating value is invalid
+   */
   @Override
   public Rating rateDriver(User user, Driver driver, int rating, String review) {
     if (user == null || driver == null || rating < 1 || rating > 5) {
@@ -58,7 +91,16 @@ public class RatingServiceImpl implements RatingService {
     return r;
   }
 
-  /** Allows a user to rate a merchant. */
+  /**
+   * Allows a user to rate a merchant.
+   *
+   * @param user the user submitting the rating
+   * @param merchant the merchant being rated
+   * @param rating the numeric rating (1–5)
+   * @param review an optional textual review
+   * @return the created {@link Rating} object
+   * @throws IllegalArgumentException if the user, merchant, or rating value is invalid
+   */
   @Override
   public Rating rateMerchant(User user, Merchant merchant, int rating, String review) {
     if (user == null || merchant == null || rating < 1 || rating > 5) {
@@ -78,7 +120,12 @@ public class RatingServiceImpl implements RatingService {
     return r;
   }
 
-  /** Retrieves the average rating for a product. */
+  /**
+   * Retrieves the average rating for a given product.
+   *
+   * @param product the product whose average rating is being calculated
+   * @return the average rating (0.0 if no ratings exist)
+   */
   @Override
   public double getAverageRatingForProduct(Product product) {
     List<Rating> ratings =
@@ -89,7 +136,12 @@ public class RatingServiceImpl implements RatingService {
     return ratings.stream().mapToInt(Rating::getRating).average().orElse(0.0);
   }
 
-  /** Retrieves the average rating for a driver. */
+  /**
+   * Retrieves the average rating for a given driver.
+   *
+   * @param driver the driver whose average rating is being calculated
+   * @return the average rating (0.0 if no ratings exist)
+   */
   @Override
   public double getAverageRatingForDriver(Driver driver) {
     List<Rating> ratings =
@@ -100,7 +152,12 @@ public class RatingServiceImpl implements RatingService {
     return ratings.stream().mapToInt(Rating::getRating).average().orElse(0.0);
   }
 
-  /** Retrieves the average rating for a merchant. */
+  /**
+   * Retrieves the average rating for a given merchant.
+   *
+   * @param merchant the merchant whose average rating is being calculated
+   * @return the average rating (0.0 if no ratings exist)
+   */
   @Override
   public double getAverageRatingForMerchant(Merchant merchant) {
     List<Rating> ratings =
