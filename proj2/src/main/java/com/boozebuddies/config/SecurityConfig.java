@@ -15,6 +15,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+/** Security configuration for the application using JWT authentication. */
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true, securedEnabled = true)
@@ -22,11 +23,22 @@ public class SecurityConfig {
 
   private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
-  // Constructor injection - Spring will automatically create JwtAuthenticationFilter
+  /**
+   * Constructor injection for JWT authentication filter.
+   *
+   * @param jwtAuthenticationFilter the JWT authentication filter
+   */
   public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
     this.jwtAuthenticationFilter = jwtAuthenticationFilter;
   }
 
+  /**
+   * Configures the security filter chain with JWT authentication and role-based access control.
+   *
+   * @param http the HttpSecurity to configure
+   * @return the configured SecurityFilterChain
+   * @throws Exception if an error occurs during configuration
+   */
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
     http
@@ -205,7 +217,9 @@ public class SecurityConfig {
   }
 
   /**
-   * CORS configuration for cross-origin requests IMPORTANT: Configure this properly for production!
+   * Configures CORS settings for cross-origin requests.
+   *
+   * @return the CORS configuration source
    */
   @Bean
   public CorsConfigurationSource corsConfigurationSource() {

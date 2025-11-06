@@ -6,6 +6,10 @@ import com.boozebuddies.model.CertificationStatus;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Service interface responsible for managing driver-related operations such as registration,
+ * certification, availability updates, and location tracking.
+ */
 public interface DriverService {
 
   /**
@@ -65,7 +69,7 @@ public interface DriverService {
   List<Driver> getAllDrivers();
 
   /**
-   * Updates driver information.
+   * Updates driver information such as name, contact details, or vehicle data.
    *
    * @param driver The driver object containing updated information.
    * @return The updated Driver object.
@@ -73,30 +77,30 @@ public interface DriverService {
   Driver updateDriver(Driver driver);
 
   /**
-   * Retrieves the profile of a driver based on the associated user.
+   * Retrieves the driver profile associated with a given user account.
    *
-   * @param user The user associated with the driver.
-   * @return The Driver profile
+   * @param user The user whose driver profile is being retrieved.
+   * @return The corresponding Driver object, or null if the user is not registered as a driver.
    */
   Driver getDriverProfile(User user);
 
   /**
-   * Finds nearby available drivers within a specified radius.
+   * Retrieves a list of nearby available drivers based on a geographic location.
    *
-   * @param latitude origin latitude
-   * @param longitude origin longitude
-   * @param radiusMeters search radius in meters
-   * @return List of nearby available drivers
+   * @param latitude The latitude coordinate to search from.
+   * @param longitude The longitude coordinate to search from.
+   * @param radiusMeters The radius (in meters) within which to search for available drivers.
+   * @return A list of nearby drivers who are available for delivery.
    */
   List<Driver> getNearbyAvailableDrivers(Double latitude, Double longitude, Double radiusMeters);
 
   /**
-   * Updates the current location of a driver.
+   * Updates the current geographic location of a driver.
    *
-   * @param userId the user ID of the driver
-   * @param latitude Updated latitude
-   * @param longitude Updated longitude
-   * @return The updated Driver object
+   * @param userId The ID of the user associated with the driver.
+   * @param latitude The driver's current latitude.
+   * @param longitude The driver's current longitude.
+   * @return The updated Driver object with the new location.
    */
   Driver updateDriverLocation(Long userId, Double latitude, Double longitude);
 }

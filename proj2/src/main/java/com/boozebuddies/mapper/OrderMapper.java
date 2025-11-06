@@ -12,9 +12,16 @@ import com.boozebuddies.entity.User;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
 
+/** Mapper for converting between Order entities and Order-related DTO objects. */
 @Component
 public class OrderMapper {
 
+  /**
+   * Converts an Order entity to an OrderDTO.
+   *
+   * @param order the order entity to convert
+   * @return the OrderDTO, or null if the input is null
+   */
   public OrderDTO toDTO(Order order) {
     if (order == null) return null;
 
@@ -36,6 +43,12 @@ public class OrderMapper {
         .build();
   }
 
+  /**
+   * Converts a CreateOrderRequest to an Order entity.
+   *
+   * @param request the CreateOrderRequest to convert
+   * @return the Order entity, or null if the input is null
+   */
   public Order toEntity(CreateOrderRequest request) {
     if (request == null) return null;
 
@@ -70,6 +83,12 @@ public class OrderMapper {
     return order;
   }
 
+  /**
+   * Converts an OrderItem entity to an OrderItemDTO.
+   *
+   * @param orderItem the order item entity to convert
+   * @return the OrderItemDTO, or null if the input is null
+   */
   private OrderItemDTO orderItemToDTO(OrderItem orderItem) {
     if (orderItem == null) return null;
 
@@ -83,6 +102,12 @@ public class OrderMapper {
         .build();
   }
 
+  /**
+   * Converts an OrderItemRequest to an OrderItem entity.
+   *
+   * @param request the OrderItemRequest to convert
+   * @return the OrderItem entity, or null if the input is null
+   */
   private OrderItem orderItemRequestToEntity(OrderItemRequest request) {
     if (request == null) return null;
 

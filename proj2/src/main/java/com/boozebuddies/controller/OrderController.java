@@ -20,6 +20,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+/** REST controller for managing orders and order operations. */
 @RestController
 @RequestMapping("/api/orders")
 @RequiredArgsConstructor
@@ -31,7 +32,13 @@ public class OrderController {
 
   // ==================== CREATE ORDER (USER ONLY) ====================
 
-  /** Create a new order. Only users with USER role can place orders. */
+  /**
+   * Creates a new order. Only users with USER role can place orders.
+   *
+   * @param createOrderRequest the order creation request
+   * @param authentication the authentication object
+   * @return the created order
+   */
   @PostMapping
   @IsUser
   public ResponseEntity<ApiResponse<OrderDTO>> createOrder(
@@ -63,8 +70,12 @@ public class OrderController {
   // ==================== RETRIEVE ORDERS ====================
 
   /**
-   * Get order by ID. Users can view their own orders, merchant admins can view orders for their
-   * merchant, drivers can view assigned orders, and admins can view all orders.
+   * Retrieves an order by ID. Users can view their own orders, merchant admins can view orders for
+   * their merchant, drivers can view assigned orders, and admins can view all orders.
+   *
+   * @param orderId the order ID
+   * @param authentication the authentication object
+   * @return the order with the specified ID
    */
   @GetMapping("/{orderId}")
   @IsAuthenticated
@@ -130,7 +141,12 @@ public class OrderController {
     }
   }
 
-  /** Get all orders for the authenticated user. Users can only view their own orders. */
+  /**
+   * Retrieves all orders for the authenticated user. Users can only view their own orders.
+   *
+   * @param authentication the authentication object
+   * @return a list of the user's orders
+   */
   @GetMapping("/my-orders")
   @IsUser
   public ResponseEntity<ApiResponse<List<OrderDTO>>> getMyOrders(Authentication authentication) {
@@ -147,7 +163,12 @@ public class OrderController {
     }
   }
 
-  /** Get all orders for a specific user. Admin only - to view any user's orders. */
+  /**
+   * Retrieves all orders for a specific user. Admin only.
+   *
+   * @param userId the user ID
+   * @return a list of orders for the specified user
+   */
   @GetMapping("/user/{userId}")
   @IsAdmin
   public ResponseEntity<ApiResponse<List<OrderDTO>>> getOrdersByUser(@PathVariable Long userId) {
@@ -167,7 +188,11 @@ public class OrderController {
     }
   }
 
-  /** Get all orders (Admin only). */
+  /**
+   * Retrieves all orders. Admin only.
+   *
+   * @return a list of all orders
+   */
   @GetMapping
   @IsAdmin
   public ResponseEntity<ApiResponse<List<OrderDTO>>> getAllOrders() {
@@ -182,7 +207,12 @@ public class OrderController {
     }
   }
 
-  /** Get orders for the merchant managed by the authenticated merchant admin. */
+  /**
+   * Retrieves orders for the merchant managed by the authenticated merchant admin.
+   *
+   * @param authentication the authentication object
+   * @return a list of orders for the managed merchant
+   */
   @GetMapping("/merchant/my-orders")
   @IsMerchantAdmin
   public ResponseEntity<ApiResponse<List<OrderDTO>>> getMyMerchantOrders(
@@ -207,8 +237,12 @@ public class OrderController {
   }
 
   /**
-   * Get orders for a specific merchant. Admin or merchant admin (if they own the merchant) can
-   * access.
+   * Retrieves orders for a specific merchant. Admin or merchant admin (if they own the merchant)
+   * can access.
+   *
+   * @param merchantId the merchant ID
+   * @param authentication the authentication object
+   * @return a list of orders for the specified merchant
    */
   @GetMapping("/merchant/{merchantId}")
   @IsAdminOrMerchantAdmin
@@ -239,7 +273,12 @@ public class OrderController {
     }
   }
 
-  /** Get orders assigned to the authenticated driver. */
+  /**
+   * Retrieves orders assigned to the authenticated driver.
+   *
+   * @param authentication the authentication object
+   * @return a list of orders assigned to the driver
+   */
   @GetMapping("/driver/assigned")
   @IsDriver
   public ResponseEntity<ApiResponse<List<OrderDTO>>> getDriverOrders(
@@ -265,7 +304,13 @@ public class OrderController {
 
   // ==================== UPDATE ORDERS ====================
 
-  /** Cancel an order. Only the user who placed the order can cancel it. */
+  /**
+   * Cancels an order. Only the user who placed the order can cancel it.
+   *
+   * @param orderId the order ID
+   * @param authentication the authentication object
+   * @return the cancelled order
+   */
   @PostMapping("/{orderId}/cancel")
   @IsUser
   public ResponseEntity<ApiResponse<OrderDTO>> cancelOrder(
@@ -301,8 +346,13 @@ public class OrderController {
   }
 
   /**
-   * Update order status. Admin can update any order, merchant admin can update orders for their
+   * Updates order status. Admin can update any order, merchant admin can update orders for their
    * merchant.
+   *
+   * @param orderId the order ID
+   * @param status the new order status
+   * @param authentication the authentication object
+   * @return the updated order
    */
   @PutMapping("/{orderId}/status")
   @org.springframework.security.access.prepost.PreAuthorize(
@@ -332,6 +382,15 @@ public class OrderController {
     }
   }
 
+  /**
+   * Method for getting a list of available orders by distance
+   *
+   * @param latitude of driver
+   * @param longitude of driver
+   * @param radiusKm for distance from driver
+   * @param authentication for driver user
+   * @return ResponseEntity with List of Orders
+   */
   @GetMapping("/by-distance")
   @IsDriver
   public ResponseEntity<ApiResponse<List<OrderDTO>>> getOrdersByDistance(

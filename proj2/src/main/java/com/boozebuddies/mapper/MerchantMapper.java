@@ -4,9 +4,16 @@ import com.boozebuddies.dto.MerchantDTO;
 import com.boozebuddies.entity.Merchant;
 import org.springframework.stereotype.Component;
 
+/** Mapper for converting between Merchant entities and MerchantDTO objects. */
 @Component
 public class MerchantMapper {
 
+  /**
+   * Converts a Merchant entity to a MerchantDTO.
+   *
+   * @param merchant the merchant entity to convert
+   * @return the MerchantDTO, or null if the input is null
+   */
   public MerchantDTO toDTO(Merchant merchant) {
     if (merchant == null) return null;
 
@@ -29,6 +36,12 @@ public class MerchantMapper {
         .build();
   }
 
+  /**
+   * Converts a MerchantDTO to a Merchant entity.
+   *
+   * @param merchantDTO the MerchantDTO to convert
+   * @return the Merchant entity, or null if the input is null
+   */
   public Merchant toEntity(MerchantDTO merchantDTO) {
     if (merchantDTO == null) return null;
 

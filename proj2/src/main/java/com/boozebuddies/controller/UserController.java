@@ -20,6 +20,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+/** REST controller for managing users and user operations. */
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
@@ -36,7 +37,13 @@ public class UserController {
 
   // ==================== RETRIEVE ====================
 
-  /** Get user by ID. Users can view their own profile, admins can view any profile. */
+  /**
+   * Retrieves a user by ID. Users can view their own profile, admins can view any profile.
+   *
+   * @param id the user ID
+   * @param authentication the authentication object
+   * @return the user with the specified ID
+   */
   @GetMapping("/{id}")
   @IsAuthenticated
   public ResponseEntity<?> getUserById(@PathVariable Long id, Authentication authentication) {
@@ -67,7 +74,11 @@ public class UserController {
     }
   }
 
-  /** Get all users (Admin only). */
+  /**
+   * Retrieves all users. Admin only.
+   *
+   * @return a list of all users
+   */
   @GetMapping
   @IsAdmin
   public ResponseEntity<?> getAllUsers() {
@@ -81,7 +92,12 @@ public class UserController {
     }
   }
 
-  /** Get current user's profile. */
+  /**
+   * Retrieves the authenticated user's profile.
+   *
+   * @param authentication the authentication object
+   * @return the current user's profile
+   */
   @GetMapping("/me")
   @IsAuthenticated
   public ResponseEntity<?> getCurrentUser(Authentication authentication) {
@@ -96,7 +112,14 @@ public class UserController {
 
   // ==================== UPDATE ====================
 
-  /** Update user. Users can update their own profile, admins can update any profile. */
+  /**
+   * Updates a user. Users can update their own profile, admins can update any profile.
+   *
+   * @param id the user ID
+   * @param userDTO the updated user data
+   * @param authentication the authentication object
+   * @return the updated user
+   */
   @PutMapping("/{id}")
   @IsAuthenticated
   public ResponseEntity<?> updateUser(
@@ -130,7 +153,13 @@ public class UserController {
 
   // ==================== VERIFY AGE ====================
 
-  /** Verify user's age (can be self or admin). */
+  /**
+   * Verifies a user's age. Users can verify their own age, admins can verify any user's age.
+   *
+   * @param id the user ID
+   * @param authentication the authentication object
+   * @return the user with updated age verification status
+   */
   @PostMapping("/{id}/verify-age")
   @IsAuthenticated
   public ResponseEntity<?> verifyAge(@PathVariable Long id, Authentication authentication) {
@@ -170,7 +199,12 @@ public class UserController {
 
   // ==================== DELETE ====================
 
-  /** Delete user (Admin only). */
+  /**
+   * Deletes a user. Admin only.
+   *
+   * @param id the user ID
+   * @return a success message
+   */
   @DeleteMapping("/{id}")
   @IsAdmin
   public ResponseEntity<?> deleteUser(@PathVariable Long id) {
@@ -192,7 +226,13 @@ public class UserController {
 
   // ==================== ROLE MANAGEMENT (Admin only) ====================
 
-  /** Assign a role to a user. */
+  /**
+   * Assigns a role to a user. Admin only.
+   *
+   * @param id the user ID
+   * @param request the role assignment request
+   * @return the updated user
+   */
   @PostMapping("/{id}/roles")
   @IsAdmin
   public ResponseEntity<?> assignRole(@PathVariable Long id, @RequestBody RoleRequest request) {
@@ -214,7 +254,13 @@ public class UserController {
     }
   }
 
-  /** Remove a role from a user. */
+  /**
+   * Removes a role from a user. Admin only.
+   *
+   * @param id the user ID
+   * @param role the role to remove
+   * @return the updated user
+   */
   @DeleteMapping("/{id}/roles/{role}")
   @IsAdmin
   public ResponseEntity<?> removeRole(@PathVariable Long id, @PathVariable Role role) {
@@ -228,7 +274,13 @@ public class UserController {
     }
   }
 
-  /** Set all roles for a user (replaces existing roles). */
+  /**
+   * Sets all roles for a user, replacing existing roles. Admin only.
+   *
+   * @param id the user ID
+   * @param request the set roles request
+   * @return the updated user
+   */
   @PutMapping("/{id}/roles")
   @IsAdmin
   public ResponseEntity<?> setRoles(@PathVariable Long id, @RequestBody SetRolesRequest request) {
@@ -242,7 +294,13 @@ public class UserController {
     }
   }
 
-  /** Assign a merchant to a user (for MERCHANT_ADMIN role). */
+  /**
+   * Assigns a merchant to a user for MERCHANT_ADMIN role. Admin only.
+   *
+   * @param id the user ID
+   * @param request the merchant assignment request
+   * @return the updated user
+   */
   @PostMapping("/{id}/merchant")
   @IsAdmin
   public ResponseEntity<?> assignMerchant(
@@ -259,17 +317,20 @@ public class UserController {
 
   // ==================== REQUEST DTOs ====================
 
+  /** Request DTO for assigning a role to a user. */
   @lombok.Data
   public static class RoleRequest {
     private Role role;
     private Long merchantId; // Optional, only for MERCHANT_ADMIN
   }
 
+  /** Request DTO for setting all roles for a user. */
   @lombok.Data
   public static class SetRolesRequest {
     private Set<Role> roles;
   }
 
+  /** Request DTO for assigning a merchant to a user. */
   @lombok.Data
   public static class MerchantAssignmentRequest {
     private Long merchantId;

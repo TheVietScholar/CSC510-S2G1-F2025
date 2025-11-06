@@ -6,10 +6,16 @@ import com.boozebuddies.entity.User;
 import java.util.HashSet;
 import org.springframework.stereotype.Component;
 
+/** Mapper for converting between User entities and User-related DTO objects. */
 @Component
 public class UserMapper {
 
-  /** Converts User entity to UserDTO. Excludes sensitive fields like password and refresh token. */
+  /**
+   * Converts User entity to UserDTO. Excludes sensitive fields like password and refresh token.
+   *
+   * @param user the user entity to convert
+   * @return the UserDTO, or null if the input is null
+   */
   public UserDTO toDTO(User user) {
     if (user == null) return null;
 
@@ -31,7 +37,12 @@ public class UserMapper {
         .build();
   }
 
-  /** Converts UserDTO to User entity. Note: This does NOT set password or refresh token fields. */
+  /**
+   * Converts UserDTO to User entity. Note: This does NOT set password or refresh token fields.
+   *
+   * @param userDTO the UserDTO to convert
+   * @return the User entity, or null if the input is null
+   */
   public User toEntity(UserDTO userDTO) {
     if (userDTO == null) return null;
 
@@ -53,7 +64,12 @@ public class UserMapper {
         .build();
   }
 
-  /** Converts RegisterUserRequest to User entity. Sets default values for new users. */
+  /**
+   * Converts RegisterUserRequest to User entity. Sets default values for new users.
+   *
+   * @param request the RegisterUserRequest to convert
+   * @return the User entity, or null if the input is null
+   */
   public User toEntity(RegisterUserRequest request) {
     if (request == null) return null;
 
