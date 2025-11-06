@@ -24,17 +24,23 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class OrderServiceImpl implements OrderService {
 
-  @Autowired private OrderRepository orderRepository;
+  @Autowired
+  private OrderRepository orderRepository;
 
-  @Autowired private DeliveryRepository deliveryRepository;
+  @Autowired
+  private DeliveryRepository deliveryRepository;
 
-  @Autowired private PaymentService paymentService;
+  @Autowired
+  private PaymentService paymentService;
 
-  @Autowired private NotificationService notificationService;
+  @Autowired
+  private NotificationService notificationService;
 
-  @Autowired private ProductService productService;
+  @Autowired
+  private ProductService productService;
 
-  @Autowired private UserService userService;
+  @Autowired
+  private UserService userService;
 
   @Transactional
   public Order createOrder(Order order) {
@@ -97,10 +103,9 @@ public class OrderServiceImpl implements OrderService {
 
   @Transactional
   public Order cancelOrder(Long orderId) {
-    Order order =
-        orderRepository
-            .findById(orderId)
-            .orElseThrow(() -> new RuntimeException("Order not found"));
+    Order order = orderRepository
+        .findById(orderId)
+        .orElseThrow(() -> new RuntimeException("Order not found"));
 
     // Check if order can be cancelled
     if (!order.canBeCancelled()) {
@@ -125,10 +130,9 @@ public class OrderServiceImpl implements OrderService {
 
   @Transactional
   public Order updateOrderStatus(Long orderId, String status) {
-    Order order =
-        orderRepository
-            .findById(orderId)
-            .orElseThrow(() -> new RuntimeException("Order not found"));
+    Order order = orderRepository
+        .findById(orderId)
+        .orElseThrow(() -> new RuntimeException("Order not found"));
 
     OrderStatus newStatus = OrderStatus.valueOf(status.toUpperCase());
 
@@ -210,9 +214,8 @@ public class OrderServiceImpl implements OrderService {
     }
 
     // Check if user is age verified for alcohol products
-    boolean hasAlcohol =
-        order.getItems().stream()
-            .anyMatch(item -> item.getProduct() != null && item.getProduct().isAlcohol());
+    boolean hasAlcohol = order.getItems().stream()
+        .anyMatch(item -> item.getProduct() != null && item.getProduct().isAlcohol());
 
     if (hasAlcohol) {
       // Fetch fresh user data from database to ensure we have latest age verification
@@ -261,11 +264,10 @@ public class OrderServiceImpl implements OrderService {
 
     for (Order order : availOrders) {
       if (calculateDistance(
-              latitude,
-              longitude,
-              order.getMerchant().getLatitude(),
-              order.getMerchant().getLongitude())
-          > distanceKm) {
+          latitude,
+          longitude,
+          order.getMerchant().getLatitude(),
+          order.getMerchant().getLongitude()) > distanceKm) {
         availOrders.remove(order);
       }
     }
@@ -274,7 +276,8 @@ public class OrderServiceImpl implements OrderService {
   }
 
   /**
-   * Calculate distance between two points using Haversine formula. Returns distance in kilometers.
+   * Calculate distance between two points using Haversine formula. Returns
+   * distance in kilometers.
    */
   private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
     final int EARTH_RADIUS_KM = 6371;
@@ -282,12 +285,11 @@ public class OrderServiceImpl implements OrderService {
     double dLat = Math.toRadians(lat2 - lat1);
     double dLon = Math.toRadians(lon2 - lon1);
 
-    double a =
-        Math.sin(dLat / 2) * Math.sin(dLat / 2)
-            + Math.cos(Math.toRadians(lat1))
-                * Math.cos(Math.toRadians(lat2))
-                * Math.sin(dLon / 2)
-                * Math.sin(dLon / 2);
+    double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
+        + Math.cos(Math.toRadians(lat1))
+            * Math.cos(Math.toRadians(lat2))
+            * Math.sin(dLon / 2)
+            * Math.sin(dLon / 2);
 
     double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 

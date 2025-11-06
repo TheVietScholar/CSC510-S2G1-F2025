@@ -2,6 +2,7 @@ package com.boozebuddies.service.implementation;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 import com.boozebuddies.entity.Delivery;
@@ -21,6 +22,7 @@ import com.boozebuddies.service.PaymentService;
 import com.boozebuddies.service.ProductService;
 import com.boozebuddies.service.UserService;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -1180,7 +1182,8 @@ public class OrderServiceImplTest {
     Order order2 = mock(Order.class);
     Order order3 = mock(Order.class);
 
-    when(orderRepository.findByCustomerId(userId)).thenReturn(List.of(order1, order2, order3));
+    when(orderRepository.findByCustomerId(userId))
+        .thenReturn(List.of(order1, order2, order3));
 
     List<Order> orders = orderService.getOrdersByUser(userId);
 
