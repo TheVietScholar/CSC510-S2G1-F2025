@@ -15,7 +15,8 @@ public interface DriverRepository extends JpaRepository<Driver, Long> {
 
   Optional<Driver> findByPhone(String phone);
 
-  Optional<Driver> findByUserId(Long userId);
+  @Query("SELECT d FROM Driver d WHERE d.user.id = :userId")
+  Optional<Driver> findByUserId(@Param("userId") Long userId);
 
   List<Driver> findByIsAvailable(boolean isAvailable);
 

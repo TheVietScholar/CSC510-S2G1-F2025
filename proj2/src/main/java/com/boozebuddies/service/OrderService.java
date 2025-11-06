@@ -79,4 +79,24 @@ public interface OrderService {
    * @return A list of orders within the specified distance.
    */
   List<Order> getOrdersWithinDistance(double latitude, double longitude, double distanceKm);
+
+  /**
+   * Calculate distance between two points using Haversine formula.
+   *
+   * @param lat1 Latitude of first point
+   * @param lon1 Longitude of first point
+   * @param lat2 Latitude of second point
+   * @param lon2 Longitude of second point
+   * @return Distance in kilometers
+   */
+  double calculateDistance(double lat1, double lon1, double lat2, double lon2);
+
+  /**
+   * Update the estimated delivery time for an order.
+   *
+   * @param orderId The order ID
+   * @param estimatedDeliveryTime The estimated delivery time
+   * @return The updated order
+   */
+  Order updateEstimatedDeliveryTime(Long orderId, java.time.LocalDateTime estimatedDeliveryTime);
 }

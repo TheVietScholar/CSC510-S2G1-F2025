@@ -120,12 +120,32 @@ public class DriverController {
   // ==================== DRIVER ENDPOINTS ====================
 
   @GetMapping("/my-profile")
-  @IsSelfOrAdmin
+  @IsDriver
   public ResponseEntity<ApiResponse<DriverDTO>> getMyProfile(Authentication authentication) {
-    User user = permissionService.getAuthenticatedUser(authentication);
-    Driver driver = driverService.getDriverProfile(user);
-    DriverDTO driverDTO = driverMapper.toDTO(driver);
-    return ResponseEntity.ok(ApiResponse.success(driverDTO, "Your profile retrieved successfully"));
+    try {
+      User user = permissionService.getAuthenticatedUser(authentication);
+      if (user == null) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            .body(ApiResponse.error("Authentication required"));
+      }
+      if (!user.hasRole(com.boozebuddies.model.Role.DRIVER)) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            .body(ApiResponse.error("User does not have DRIVER role"));
+      }
+      Driver driver = driverService.getDriverProfile(user);
+      if (driver == null) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(ApiResponse.error("Driver profile not found for this user"));
+      }
+      DriverDTO driverDTO = driverMapper.toDTO(driver);
+      return ResponseEntity.ok(ApiResponse.success(driverDTO, "Your profile retrieved successfully"));
+    } catch (IllegalArgumentException e) {
+      return ResponseEntity.status(HttpStatus.NOT_FOUND)
+          .body(ApiResponse.error("Driver profile not found: " + e.getMessage()));
+    } catch (Exception e) {
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+          .body(ApiResponse.error("Failed to retrieve driver profile: " + e.getMessage()));
+    }
   }
 
   @PutMapping("/my-profile/availability")

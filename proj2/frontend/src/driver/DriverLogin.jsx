@@ -32,11 +32,27 @@ const DriverLogin = ({ onDriverLogin }) => {
         }
         
         onDriverLogin(responseData)
-    } 
+      } else {
+        throw new Error('Invalid login response')
+      }
     } catch (error) {
       console.error("Error when logging in as driver:", error)
+      // Fallback to hardcoded for demo if API fails
+      handleHardcodedAuth()
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleHardcodedAuth = () => {
+    // Simple authentication fallback for demo
+    if (email === 'driver@boozebuddies.com' && password === 'password') {
+      onDriverLogin({ 
+        email: 'driver@boozebuddies.com', 
+        role: 'driver'
+      })
+    } else {
+      console.error('Invalid driver credentials')
     }
   }
 

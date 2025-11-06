@@ -3,9 +3,11 @@ package com.boozebuddies.config;
 import com.boozebuddies.entity.Certification;
 import com.boozebuddies.entity.Driver;
 import com.boozebuddies.entity.User;
+import com.boozebuddies.model.CertificationStatus;
 import com.boozebuddies.model.Role;
 import com.boozebuddies.repository.DriverRepository;
 import com.boozebuddies.repository.UserRepository;
+import java.time.LocalDate;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -19,6 +21,9 @@ public class DataInitializer implements CommandLineRunner {
   private UserRepository userRepository;
 
   @Autowired
+  private DriverRepository driverRepository;
+
+  @Autowired
   private PasswordEncoder passwordEncoder;
 
   @Override
@@ -26,6 +31,7 @@ public class DataInitializer implements CommandLineRunner {
     createAdminUser();
     createMerchantAdmin();
     createUser();
+    createDriverUser();
   }
 
   private void createUser() {
@@ -108,6 +114,67 @@ public class DataInitializer implements CommandLineRunner {
       System.out.println("==========================");
     } else {
       System.out.println("Merchant admin user already exists");
+    }
+  }
+
+  private void createDriverUser() {
+    // Check if driver user already exists by email
+    Optional<User> existingDriverUser = userRepository.findByEmailIgnoreCase("driver@boozebuddies.com");
+    if (existingDriverUser.isEmpty()) {
+      // Create the User first
+      User driverUser = User.builder()
+          .name("Demo Driver")
+          .email("driver@boozebuddies.com")
+          .passwordHash(passwordEncoder.encode("password"))
+          .isActive(true)
+          .isEmailVerified(true)
+          .ageVerified(true)
+          .latitude(35.7800) // Raleigh area coordinates
+          .longitude(-78.6380)
+          .build();
+
+      // Add DRIVER role
+      driverUser.addRole(Role.DRIVER);
+
+      // Save the user first
+      User savedUser = userRepository.save(driverUser);
+
+      // Create the Driver entity linked to the user
+      Certification certification = Certification.builder()
+          .certificationNumber("CERT-DRV-001")
+          .certificationType("Alcohol Delivery")
+          .issueDate(LocalDate.now().minusMonths(6))
+          .expiryDate(LocalDate.now().plusYears(1))
+          .valid(true)
+          .build();
+
+      Driver driver = Driver.builder()
+          .user(savedUser)
+          .name("Demo Driver")
+          .email("driver@boozebuddies.com")
+          .phone("(555) 123-4567")
+          .vehicleType("Car")
+          .licensePlate("DRV-001")
+          .isAvailable(true)
+          .currentLatitude(35.7800)
+          .currentLongitude(-78.6380)
+          .rating(4.8)
+          .totalDeliveries(0)
+          .certificationStatus(CertificationStatus.APPROVED)
+          .certification(certification)
+          .build();
+
+      driverRepository.save(driver);
+
+      System.out.println("=== DRIVER USER CREATED ===");
+      System.out.println("Email: driver@boozebuddies.com");
+      System.out.println("Password: password");
+      System.out.println("Role: DRIVER");
+      System.out.println("Certification Status: APPROVED");
+      System.out.println("Vehicle: Car (DRV-001)");
+      System.out.println("==========================");
+    } else {
+      System.out.println("Driver user already exists");
     }
   }
 }

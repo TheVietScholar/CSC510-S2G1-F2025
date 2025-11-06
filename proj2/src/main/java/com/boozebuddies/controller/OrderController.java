@@ -2,6 +2,7 @@ package com.boozebuddies.controller;
 
 import com.boozebuddies.dto.ApiResponse;
 import com.boozebuddies.dto.CreateOrderRequest;
+import com.boozebuddies.dto.DriverOrderDTO;
 import com.boozebuddies.dto.OrderDTO;
 import com.boozebuddies.entity.Order;
 import com.boozebuddies.entity.User;
@@ -341,7 +342,7 @@ public class OrderController {
 
   @GetMapping("/by-distance")
   @IsDriver
-  public ResponseEntity<ApiResponse<List<OrderDTO>>> getOrdersByDistance(
+  public ResponseEntity<ApiResponse<List<DriverOrderDTO>>> getOrdersByDistance(
       @RequestParam Double latitude,
       @RequestParam Double longitude,
       @RequestParam Double radiusKm,
@@ -360,9 +361,36 @@ public class OrderController {
       }
 
       List<Order> orders = orderService.getOrdersWithinDistance(latitude, longitude, radiusKm);
-      List<OrderDTO> orderDTOs = orders.stream().map(orderMapper::toDTO).collect(Collectors.toList());
+
+      // Convert to DriverOrderDTO with distance and ETA calculations, and update
+      // estimatedDeliveryTime
+      List<DriverOrderDTO> driverOrderDTOs = orders.stream()
+          .map(order -> {
+            // Calculate distance from driver to merchant
+            Double distanceKm = null;
+            if (order.getMerchant() != null
+                && order.getMerchant().getLatitude() != null
+                && order.getMerchant().getLongitude() != null) {
+              distanceKm = orderService.calculateDistance(
+                  latitude,
+                  longitude,
+                  order.getMerchant().getLatitude(),
+                  order.getMerchant().getLongitude());
+
+              // Calculate and update estimatedDeliveryTime in database
+              // ETA = distance / speed * 60 (convert to minutes) + 5 minutes for pickup
+              if (distanceKm != null) {
+                int etaMinutes = (int) Math.ceil((distanceKm / 30.0) * 60) + 5;
+                java.time.LocalDateTime estimatedTime = java.time.LocalDateTime.now().plusMinutes(etaMinutes);
+                orderService.updateEstimatedDeliveryTime(order.getId(), estimatedTime);
+              }
+            }
+            return orderMapper.toDriverDTO(order, distanceKm);
+          })
+          .collect(Collectors.toList());
+
       return ResponseEntity.ok(
-          ApiResponse.success(orderDTOs, "Orders within distance retrieved successfully"));
+          ApiResponse.success(driverOrderDTOs, "Orders within distance retrieved successfully"));
     } catch (Exception e) {
       return ResponseEntity.badRequest()
           .body(ApiResponse.error("Failed to retrieve orders: " + e.getMessage()));
