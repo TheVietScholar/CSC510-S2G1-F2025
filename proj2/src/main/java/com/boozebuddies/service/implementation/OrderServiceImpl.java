@@ -293,6 +293,4 @@ public class OrderServiceImpl implements OrderService {
 
     return EARTH_RADIUS_KM * c;
   }
-
-  
 }
