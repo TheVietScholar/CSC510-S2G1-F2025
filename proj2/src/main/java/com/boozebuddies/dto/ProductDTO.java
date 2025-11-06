@@ -21,8 +21,8 @@ public class ProductDTO {
   /** The price of the product */
   private BigDecimal price;
 
-  /** The category the product belongs to */
-  private String category;
+  /** The category ID this product belongs to */
+  private Long categoryId;  
 
   /** The ID of the merchant selling this product */
   private Long merchantId;
