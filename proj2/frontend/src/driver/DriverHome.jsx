@@ -29,8 +29,21 @@ const DriverHome = ({ user, onLogout }) => {
         try {
             setLoading(true)
             setError('')
-            const response = await drivers.getMyProfile()
-            console.log('My Driver Profile response:', response)
+            
+            // Verify token exists before making request
+            const token = localStorage.getItem('bb_token')
+            if (!token) {
+                setError('Authentication token missing. Please log in again.')
+                return
+            }
+            
+            // Get user ID from user prop or localStorage
+            if (!user?.id) {
+                setError('User ID missing. Please log in again.')
+                return
+            }
+            
+            const response = await drivers.getMyProfile(user.id)
 
             const driverData = response.data?.data || response.data;
             if (driverData) {
@@ -40,11 +53,9 @@ const DriverHome = ({ user, onLogout }) => {
                         lat: driverData.currentLatitude, 
                         lng: driverData.currentLongitude 
                     });
-                    console.log('Driver location set from profile:', driverData.currentLatitude, driverData.currentLongitude);
                 } else {
                     // Default to Raleigh if driver location not set in database
                     setDriverLocation({ lat: 35.7800, lng: -78.6380 });
-                    console.warn('No driver location found in profile, using default Raleigh location. Please update your location.');
                 }
                 // Update online status if available
                 if (driverData.isAvailable !== undefined) {
@@ -53,7 +64,20 @@ const DriverHome = ({ user, onLogout }) => {
             }
 
         } catch(err) {
-            console.error('Error fetching driver profile:', err);
+            const errorMessage = err.response?.data?.message || err.message || 'Failed to fetch driver profile';
+            const statusCode = err.response?.status;
+            
+            if (statusCode === 403) {
+                setError('Access forbidden. Please ensure you are logged in as a driver and have the correct permissions.');
+            } else if (statusCode === 401) {
+                setError('Authentication failed. Please log in again.');
+                // Clear invalid token
+                localStorage.removeItem('bb_token');
+                localStorage.removeItem('bb_refresh_token');
+            } else {
+                setError(errorMessage);
+            }
+            
             // Set default location on error
             setDriverLocation({ lat: 35.7800, lng: -78.6380 });
         } finally {
@@ -63,14 +87,12 @@ const DriverHome = ({ user, onLogout }) => {
 
     const fetchAvailableOrders = async () => {
         if (!driverLocation) {
-            console.warn('Cannot fetch orders: driver location not set');
             return;
         }
         try {
             setLoading(true)
             setError('')
             const response = await orders.getAvailableForDriver(driverLocation.lat, driverLocation.lng, 10)
-            console.log('Available Orders response:', response)
 
             if (response.data && response.data.data) {
                 setAvailableOrders(response.data.data)
@@ -80,7 +102,6 @@ const DriverHome = ({ user, onLogout }) => {
                 setError('Unexpected response format while fetching available orders.')
             }
         } catch (err) {
-            console.error('Error fetching available orders:', err)
             setError('Failed to fetch available orders. Please try again later.')
         } finally {
             setLoading(false)
@@ -93,10 +114,9 @@ const DriverHome = ({ user, onLogout }) => {
             setLoading(true)
             setError('')
             setIsOnline(!isOnline)
-            const response = await drivers.updateAvailability(isOnline)
-            console.log('Driver availability updated:', response)
+            await drivers.updateAvailability(isOnline)
         } catch (err){
-            setError(response.data)
+            setError(err.response?.data?.message || 'Failed to update availability')
         } finally {
             setLoading(false);
         }
@@ -314,11 +334,10 @@ const DriverHome = ({ user, onLogout }) => {
                                                     try {
                                                         await drivers.updateLocation(newLocation.lat, newLocation.lng);
                                                     } catch (err) {
-                                                        console.error('Failed to update location on server:', err);
+                                                        // Silently handle location update errors
                                                     }
                                                 },
                                                 (error) => {
-                                                    console.error('Geolocation error:', error);
                                                     alert('Unable to get your location. Please enable location services.');
                                                 }
                                             );

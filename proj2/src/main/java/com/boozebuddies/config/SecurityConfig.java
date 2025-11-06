@@ -182,6 +182,12 @@ public class SecurityConfig {
                     .hasRole("ADMIN")
 
                     // ==================== DRIVER MANAGEMENT ENDPOINTS ====================
+                    // Drivers manage their own profile - MUST come before /api/drivers/{id} rule
+                    .requestMatchers(HttpMethod.GET, "/api/drivers/my-profile")
+                    .authenticated()
+                    .requestMatchers("/api/drivers/my-profile/**")
+                    .hasRole("DRIVER")
+                    
                     // ADMIN manages driver certifications and views all drivers
                     .requestMatchers(HttpMethod.GET, "/api/drivers")
                     .hasRole("ADMIN")
@@ -191,12 +197,6 @@ public class SecurityConfig {
                     .hasRole("ADMIN")
                     .requestMatchers(HttpMethod.PUT, "/api/drivers/{id}/certification")
                     .hasRole("ADMIN")
-
-                    // Drivers manage their own profile
-                    .requestMatchers(HttpMethod.GET, "/api/drivers/my-profile")
-                    .hasRole("DRIVER")
-                    .requestMatchers("/api/drivers/my-profile/**")
-                    .hasRole("DRIVER")
 
                     // ==================== ADMIN ENDPOINTS ====================
                     .requestMatchers("/api/admin/**")
