@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import Login from './components/Login'
+import DriverLogin from './driver/DriverLogin'
 import Home from './components/Home'
 import RestaurantMenu from './components/RestaurantMenu'
 import Cart from './components/Cart'
@@ -29,6 +30,20 @@ function App() {
     } else {
       console.log('User is regular user, redirecting to home')
       setCurrentPage('home')
+    }
+  }
+
+  const handleDriverLogin = (userData) => {
+    console.log('Login userData:', userData)
+    setUser(userData.user)
+    
+    // Check if user has ADMIN or MERCHANT_ADMIN role
+    if (userData.user && userData.user.roles && userData.user.roles.includes('DRIVER')) {
+      console.log('User is DRIVER, redirecting to driver-home')
+      setCurrentPage('driver-home')
+    } else {
+      console.log('User is regular user, redirecting to login')
+      setCurrentPage('login')
     }
   }
 
@@ -95,7 +110,7 @@ function App() {
   const renderPage = () => {
     switch (currentPage) {
       case 'login':
-        return <Login onLogin={handleLogin} />
+        return <Login onLogin={handleLogin} onGoToDriverLogin={() => setCurrentPage('driver-login')} />
       case 'home':
         return <Home onSelectRestaurant={handleSelectRestaurant} onOpenSettings={() => setCurrentPage('settings')} onLogout={handleLogout} />
       case 'menu':
@@ -137,6 +152,8 @@ function App() {
       case 'merchant-home':
         console.log('Rendering: MerchantHome')
         return <MerchantHome user={user} onLogout={handleLogout} /> // Add user prop
+      case 'driver-login':
+        return <DriverLogin onDriverLogin={handleDriverLogin} />
       default:
         return <Login onLogin={handleLogin} />
     }
