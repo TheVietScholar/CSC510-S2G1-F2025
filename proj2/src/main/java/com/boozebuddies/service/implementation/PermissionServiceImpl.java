@@ -39,13 +39,22 @@ public class PermissionServiceImpl implements PermissionService {
    *
    * @param authentication the current authentication object containing the user's identity
    * @param userId the ID of the user to compare against
-   * @return true if the authenticated user’s ID matches the provided ID, false otherwise
+   * @return true if the authenticated user's ID matches the provided ID, false otherwise
    */
   @Override
   public boolean isSelf(Authentication authentication, Long userId) {
     if (authentication == null || userId == null) {
       return false;
     }
+    
+    // Try to get User from authentication principal first (set by JwtAuthenticationFilter)
+    Object principal = authentication.getPrincipal();
+    if (principal instanceof User) {
+      User user = (User) principal;
+      return user.getId().equals(userId);
+    }
+    
+    // Fallback: look up by email if principal is not a User object
     String email = authentication.getName();
     return userService.findByEmail(email).map(user -> user.getId().equals(userId)).orElse(false);
   }
