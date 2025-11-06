@@ -331,4 +331,35 @@ public class OrderController {
           .body(ApiResponse.error("Failed to update order status: " + e.getMessage()));
     }
   }
+
+  @GetMapping("/by-distance")
+  @IsDriver
+  public ResponseEntity<ApiResponse<List<OrderDTO>>> getOrdersByDistance(
+      @RequestParam Double latitude,
+      @RequestParam Double longitude,
+      @RequestParam Double radiusKm,
+      Authentication authentication) {
+    try {
+
+      if (latitude == null
+          || longitude == null
+          || radiusKm == null
+          || radiusKm <= 0
+          || latitude < -90
+          || latitude > 90
+          || longitude < -180
+          || longitude > 180) {
+        return ResponseEntity.badRequest().body(ApiResponse.error("Invalid location or radius"));
+      }
+
+      List<Order> orders = orderService.getOrdersWithinDistance(latitude, longitude, radiusKm);
+      List<OrderDTO> orderDTOs =
+          orders.stream().map(orderMapper::toDTO).collect(Collectors.toList());
+      return ResponseEntity.ok(
+          ApiResponse.success(orderDTOs, "Orders within distance retrieved successfully"));
+    } catch (Exception e) {
+      return ResponseEntity.badRequest()
+          .body(ApiResponse.error("Failed to retrieve orders: " + e.getMessage()));
+    }
+  }
 }

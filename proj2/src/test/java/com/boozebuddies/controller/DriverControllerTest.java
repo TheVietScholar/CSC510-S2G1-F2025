@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -233,7 +234,7 @@ public class DriverControllerTest {
   @Test
   @DisplayName("GET /api/drivers/{id} returns 200 with driver")
   void getDriverById_success() throws Exception {
-    when(driverService.getDriverById(1L)).thenReturn(testDriver);
+    when(driverService.getDriverById(1L)).thenReturn(Optional.of(testDriver));
     when(driverMapper.toDTO(testDriver)).thenReturn(testDriverDTO);
 
     mockMvc

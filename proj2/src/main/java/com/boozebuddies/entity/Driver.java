@@ -98,4 +98,9 @@ public class Driver {
   public boolean isCertified() {
     return certificationStatus == CertificationStatus.APPROVED;
   }
+
+  public Driver orElseThrow(Object object) {
+    // TODO Auto-generated method stub
+    throw new UnsupportedOperationException("Unimplemented method 'orElseThrow'");
+  }
 }

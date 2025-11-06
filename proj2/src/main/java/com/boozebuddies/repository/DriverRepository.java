@@ -15,6 +15,8 @@ public interface DriverRepository extends JpaRepository<Driver, Long> {
 
   Optional<Driver> findByPhone(String phone);
 
+  Optional<Driver> findByUserId(Long userId);
+
   List<Driver> findByIsAvailable(boolean isAvailable);
 
   List<Driver> findByVehicleType(String vehicleType);

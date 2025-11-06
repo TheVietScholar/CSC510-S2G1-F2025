@@ -14,6 +14,7 @@ import com.boozebuddies.exception.InvalidCredentialsException;
 import com.boozebuddies.exception.InvalidTokenException;
 import com.boozebuddies.mapper.UserMapper;
 import com.boozebuddies.security.JwtUtil;
+import com.boozebuddies.service.DriverService;
 import com.boozebuddies.service.UserService;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -31,6 +32,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 class AuthenticationServiceImplTest {
 
   @Mock private UserService userService;
+  @Mock private DriverService driverService;
   @Mock private PasswordEncoder passwordEncoder;
   @Mock private JwtUtil jwtUtil;
   @Mock private UserMapper userMapper;
@@ -48,6 +50,7 @@ class AuthenticationServiceImplTest {
     authenticationService =
         new AuthenticationServiceImpl(
             userService,
+            driverService,
             passwordEncoder,
             jwtUtil,
             userMapper,
