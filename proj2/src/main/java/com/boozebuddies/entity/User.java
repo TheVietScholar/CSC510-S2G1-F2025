@@ -10,9 +10,7 @@ import java.util.List;
 import java.util.Set;
 import lombok.*;
 
-/**
- * Entity representing a user in the system.
- */
+/** Entity representing a user in the system. */
 @Entity
 @Table(name = "users")
 @NoArgsConstructor
@@ -131,9 +129,7 @@ public class User {
 
   // ==================== LIFECYCLE ====================
 
-  /**
-   * Updates the updatedAt timestamp before persisting changes.
-   */
+  /** Updates the updatedAt timestamp before persisting changes. */
   @PreUpdate
   public void preUpdate() {
     this.updatedAt = LocalDateTime.now();

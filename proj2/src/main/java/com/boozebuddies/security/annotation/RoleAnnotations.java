@@ -4,13 +4,14 @@ import java.lang.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 
 /**
- * A collection of custom Spring Security annotations that simplify role-based
- * access control within controller classes.
+ * A collection of custom Spring Security annotations that simplify role-based access control within
+ * controller classes.
  *
- * <p>These annotations wrap commonly used {@link PreAuthorize} expressions,
- * allowing for cleaner and more readable method-level security declarations.
+ * <p>These annotations wrap commonly used {@link PreAuthorize} expressions, allowing for cleaner
+ * and more readable method-level security declarations.
  *
  * <p>Usage example:
+ *
  * <pre>{@code
  * @RestController
  * @RequestMapping("/api/users")
@@ -30,8 +31,8 @@ public class RoleAnnotations {
   /**
    * Restricts access to users with the {@code USER} role.
    *
-   * <p>Applies to controller methods or classes that should only be available
-   * to regular authenticated users.
+   * <p>Applies to controller methods or classes that should only be available to regular
+   * authenticated users.
    *
    * <p>Equivalent to: {@code @PreAuthorize("hasRole('USER')")}
    */
@@ -43,8 +44,7 @@ public class RoleAnnotations {
   /**
    * Restricts access to users with the {@code ADMIN} role.
    *
-   * <p>Use this for administrative operations that should not be accessible
-   * to non-admin users.
+   * <p>Use this for administrative operations that should not be accessible to non-admin users.
    *
    * <p>Equivalent to: {@code @PreAuthorize("hasRole('ADMIN')")}
    */
@@ -56,8 +56,7 @@ public class RoleAnnotations {
   /**
    * Restricts access to users with the {@code MERCHANT_ADMIN} role.
    *
-   * <p>Intended for endpoints that manage or monitor merchant-related
-   * functionality.
+   * <p>Intended for endpoints that manage or monitor merchant-related functionality.
    *
    * <p>Equivalent to: {@code @PreAuthorize("hasRole('MERCHANT_ADMIN')")}
    */
@@ -79,11 +78,9 @@ public class RoleAnnotations {
   public @interface IsDriver {}
 
   /**
-   * Restricts access to users with either the {@code ADMIN} or
-   * {@code MERCHANT_ADMIN} role.
+   * Restricts access to users with either the {@code ADMIN} or {@code MERCHANT_ADMIN} role.
    *
-   * <p>Useful for endpoints shared between system administrators and merchant
-   * administrators.
+   * <p>Useful for endpoints shared between system administrators and merchant administrators.
    *
    * <p>Equivalent to: {@code @PreAuthorize("hasAnyRole('ADMIN', 'MERCHANT_ADMIN')")}
    */
@@ -93,13 +90,14 @@ public class RoleAnnotations {
   public @interface IsAdminOrMerchantAdmin {}
 
   /**
-   * Restricts access to either an {@code ADMIN} or the authenticated user
-   * acting on their own resource.
+   * Restricts access to either an {@code ADMIN} or the authenticated user acting on their own
+   * resource.
    *
-   * <p>Uses {@code @permissionService.isSelf(authentication, #id)} to verify
-   * ownership of the resource being accessed.
+   * <p>Uses {@code @permissionService.isSelf(authentication, #id)} to verify ownership of the
+   * resource being accessed.
    *
    * <p>Usage example:
+   *
    * <pre>{@code
    * @GetMapping("/users/{id}")
    * @IsSelfOrAdmin(idParam = "id")
@@ -108,16 +106,15 @@ public class RoleAnnotations {
    * }
    * }</pre>
    *
-   * <p>Equivalent to:
-   * {@code @PreAuthorize("hasRole('ADMIN') or @permissionService.isSelf(authentication, #id)")}
+   * <p>Equivalent to: {@code @PreAuthorize("hasRole('ADMIN')
+   * or @permissionService.isSelf(authentication, #id)")}
    */
   @Target({ElementType.METHOD})
   @Retention(RetentionPolicy.RUNTIME)
   @PreAuthorize("hasRole('ADMIN') or @permissionService.isSelf(authentication, #id)")
   public @interface IsSelfOrAdmin {
     /**
-     * The name of the method parameter representing the user ID.
-     * Defaults to {@code "id"}.
+     * The name of the method parameter representing the user ID. Defaults to {@code "id"}.
      *
      * @return the parameter name to evaluate
      */
@@ -125,13 +122,14 @@ public class RoleAnnotations {
   }
 
   /**
-   * Restricts access to either an {@code ADMIN} or a {@code MERCHANT_ADMIN}
-   * who owns the specified merchant.
+   * Restricts access to either an {@code ADMIN} or a {@code MERCHANT_ADMIN} who owns the specified
+   * merchant.
    *
-   * <p>Uses {@code @permissionService.ownsMerchant(authentication, #merchantId)}
-   * to verify ownership.
+   * <p>Uses {@code @permissionService.ownsMerchant(authentication, #merchantId)} to verify
+   * ownership.
    *
    * <p>Usage example:
+   *
    * <pre>{@code
    * @PutMapping("/merchants/{merchantId}")
    * @OwnsMerchantOrAdmin(merchantIdParam = "merchantId")
@@ -148,8 +146,8 @@ public class RoleAnnotations {
   @PreAuthorize("hasRole('ADMIN') or @permissionService.ownsMerchant(authentication, #merchantId)")
   public @interface OwnsMerchantOrAdmin {
     /**
-     * The name of the method parameter representing the merchant ID.
-     * Defaults to {@code "merchantId"}.
+     * The name of the method parameter representing the merchant ID. Defaults to {@code
+     * "merchantId"}.
      *
      * @return the parameter name to evaluate
      */

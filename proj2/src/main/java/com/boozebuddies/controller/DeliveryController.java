@@ -24,9 +24,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * REST controller for managing deliveries and driver operations.
- */
+/** REST controller for managing deliveries and driver operations. */
 @RestController
 @RequestMapping("/api/deliveries")
 @RequiredArgsConstructor

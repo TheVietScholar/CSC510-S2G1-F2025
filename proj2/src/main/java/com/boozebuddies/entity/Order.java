@@ -8,9 +8,7 @@ import java.util.List;
 import lombok.*;
 import org.hibernate.annotations.BatchSize;
 
-/**
- * Entity representing a customer order.
- */
+/** Entity representing a customer order. */
 @Entity
 @Table(name = "orders")
 @NoArgsConstructor
@@ -116,9 +114,7 @@ public class Order {
     for (int i = 0; i < items.size(); i++) items.get(i).setLineNo(i + 1);
   }
 
-  /**
-   * Calculates and sets the total amount of the order based on item subtotals.
-   */
+  /** Calculates and sets the total amount of the order based on item subtotals. */
   public void calculateTotal() {
     if (items == null || items.isEmpty()) {
       this.totalAmount = BigDecimal.ZERO;
@@ -153,9 +149,7 @@ public class Order {
     return true; // Simplified for example
   }
 
-  /**
-   * Updates the updatedAt timestamp before persisting changes.
-   */
+  /** Updates the updatedAt timestamp before persisting changes. */
   @PreUpdate
   public void preUpdate() {
     this.updatedAt = LocalDateTime.now();

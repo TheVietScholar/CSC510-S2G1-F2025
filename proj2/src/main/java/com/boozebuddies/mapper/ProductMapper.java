@@ -5,9 +5,7 @@ import com.boozebuddies.dto.ProductDTO;
 import com.boozebuddies.entity.Product;
 import org.springframework.stereotype.Component;
 
-/**
- * Mapper for converting between Product entities and Product-related DTO objects.
- */
+/** Mapper for converting between Product entities and Product-related DTO objects. */
 @Component
 public class ProductMapper {
 
@@ -34,8 +32,8 @@ public class ProductMapper {
   }
 
   /**
-   * Convert a ProductDTO to a Product entity. Relationships like category/merchant should be set
-   * in the service layer.
+   * Convert a ProductDTO to a Product entity. Relationships like category/merchant should be set in
+   * the service layer.
    *
    * @param dto the ProductDTO to convert
    * @return the Product entity, or null if the input is null

@@ -15,21 +15,21 @@ import org.springframework.stereotype.Repository;
 
 /**
  * Repository interface for managing {@link Payment} entities within the BoozeBuddies platform.
- * <p>
- * Extends {@link JpaRepository} to provide standard CRUD operations, along with custom query
- * methods for retrieving and analyzing payment records based on user, order, status,
- * and transaction data.
- * </p>
  *
- * <p>This repository supports both paginated and non-paginated queries for use in
- * reporting dashboards, user billing history, and back-office analytics.</p>
+ * <p>Extends {@link JpaRepository} to provide standard CRUD operations, along with custom query
+ * methods for retrieving and analyzing payment records based on user, order, status, and
+ * transaction data.
  *
- * <p>Common use cases include:</p>
+ * <p>This repository supports both paginated and non-paginated queries for use in reporting
+ * dashboards, user billing history, and back-office analytics.
+ *
+ * <p>Common use cases include:
+ *
  * <ul>
- *   <li>Retrieving payments by associated order or user</li>
- *   <li>Filtering transactions by {@link PaymentStatus}</li>
- *   <li>Aggregating payment totals for financial summaries</li>
- *   <li>Tracking refunds, failed payments, and pending authorizations</li>
+ *   <li>Retrieving payments by associated order or user
+ *   <li>Filtering transactions by {@link PaymentStatus}
+ *   <li>Aggregating payment totals for financial summaries
+ *   <li>Tracking refunds, failed payments, and pending authorizations
  * </ul>
  */
 @Repository
@@ -76,9 +76,9 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
   /**
    * Retrieves a paginated list of payments created within a specified date range.
    *
-   * @param start     the start of the date range
-   * @param end       the end of the date range
-   * @param pageable  pagination and sorting configuration
+   * @param start the start of the date range
+   * @param end the end of the date range
+   * @param pageable pagination and sorting configuration
    * @return a {@link Page} of payments created between the given timestamps
    */
   @Query("SELECT p FROM Payment p WHERE p.createdAt BETWEEN :start AND :end")
@@ -95,7 +95,8 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
   /**
    * Calculates the total sum of payment amounts for a given {@link PaymentStatus}.
-   * <p>Returns {@code 0} if no matching payments exist.</p>
+   *
+   * <p>Returns {@code 0} if no matching payments exist.
    *
    * @param status the payment status to filter by
    * @return the total monetary value of payments with the given status

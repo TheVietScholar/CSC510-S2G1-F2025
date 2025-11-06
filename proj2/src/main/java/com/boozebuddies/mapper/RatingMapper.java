@@ -4,9 +4,7 @@ import com.boozebuddies.dto.RatingDTO;
 import com.boozebuddies.entity.Rating;
 import org.springframework.stereotype.Component;
 
-/**
- * Mapper for converting between Rating entities and RatingDTO objects.
- */
+/** Mapper for converting between Rating entities and RatingDTO objects. */
 @Component
 public class RatingMapper {
 

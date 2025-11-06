@@ -5,9 +5,7 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import lombok.*;
 
-/**
- * Entity representing a rating and review for a merchant, driver, or product.
- */
+/** Entity representing a rating and review for a merchant, driver, or product. */
 @Entity
 @Table(name = "ratings")
 @NoArgsConstructor
