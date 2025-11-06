@@ -94,7 +94,6 @@ public class UserController {
     }
   }
 
-
   // ==================== UPDATE ====================
 
   /** Update user. Users can update their own profile, admins can update any profile. */

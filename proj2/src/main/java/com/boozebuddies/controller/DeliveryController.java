@@ -136,7 +136,10 @@ public class DeliveryController {
               (user.hasRole(Role.DRIVER)
                   && user.getDriver() != null
                   && delivery.getDriver() != null
-                  && delivery.getDriver().getId().equals(user.getDriver().getId())); // Driver's own delivery
+                  && delivery
+                      .getDriver()
+                      .getId()
+                      .equals(user.getDriver().getId())); // Driver's own delivery
 
       if (!canAccess) {
         throw new AccessDeniedException("You don't have permission to view this delivery");

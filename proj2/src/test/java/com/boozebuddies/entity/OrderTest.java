@@ -27,34 +27,37 @@ class OrderTest {
     testMerchant = Merchant.builder().id(1L).name("Test Store").build();
     testDriver = Driver.builder().id(1L).build();
 
-    testItem1 = OrderItem.builder()
-        .id(1L)
-        .name("Beer")
-        .quantity(2)
-        .unitPrice(new BigDecimal("10.00"))
-        .subtotal(new BigDecimal("20.00"))
-        .build();
+    testItem1 =
+        OrderItem.builder()
+            .id(1L)
+            .name("Beer")
+            .quantity(2)
+            .unitPrice(new BigDecimal("10.00"))
+            .subtotal(new BigDecimal("20.00"))
+            .build();
 
-    testItem2 = OrderItem.builder()
-        .id(2L)
-        .name("Wine")
-        .quantity(1)
-        .unitPrice(new BigDecimal("25.00"))
-        .subtotal(new BigDecimal("25.00"))
-        .build();
+    testItem2 =
+        OrderItem.builder()
+            .id(2L)
+            .name("Wine")
+            .quantity(1)
+            .unitPrice(new BigDecimal("25.00"))
+            .subtotal(new BigDecimal("25.00"))
+            .build();
 
-    order = Order.builder()
-        .id(1L)
-        .user(testUser)
-        .merchant(testMerchant)
-        .driver(testDriver)
-        .status(OrderStatus.PENDING)
-        .totalAmount(new BigDecimal("45.00"))
-        .deliveryAddress("123 Main St")
-        .specialInstructions("Ring doorbell")
-        .ageVerified(true)
-        .items(new ArrayList<>())
-        .build();
+    order =
+        Order.builder()
+            .id(1L)
+            .user(testUser)
+            .merchant(testMerchant)
+            .driver(testDriver)
+            .status(OrderStatus.PENDING)
+            .totalAmount(new BigDecimal("45.00"))
+            .deliveryAddress("123 Main St")
+            .specialInstructions("Ring doorbell")
+            .ageVerified(true)
+            .items(new ArrayList<>())
+            .build();
   }
 
   // ==================== BUILDER TESTS ====================
@@ -67,22 +70,23 @@ class OrderTest {
     List<OrderItem> items = new ArrayList<>();
     items.add(testItem1);
 
-    Order testOrder = Order.builder()
-        .id(2L)
-        .user(testUser)
-        .merchant(testMerchant)
-        .driver(testDriver)
-        .status(OrderStatus.CONFIRMED)
-        .totalAmount(new BigDecimal("100.00"))
-        .deliveryAddress("456 Oak Ave")
-        .specialInstructions("Leave at door")
-        .ageVerified(true)
-        .createdAt(now)
-        .updatedAt(now)
-        .estimatedDeliveryTime(estimatedDelivery)
-        .promoCode("SAVE20")
-        .items(items)
-        .build();
+    Order testOrder =
+        Order.builder()
+            .id(2L)
+            .user(testUser)
+            .merchant(testMerchant)
+            .driver(testDriver)
+            .status(OrderStatus.CONFIRMED)
+            .totalAmount(new BigDecimal("100.00"))
+            .deliveryAddress("456 Oak Ave")
+            .specialInstructions("Leave at door")
+            .ageVerified(true)
+            .createdAt(now)
+            .updatedAt(now)
+            .estimatedDeliveryTime(estimatedDelivery)
+            .promoCode("SAVE20")
+            .items(items)
+            .build();
 
     assertNotNull(testOrder);
     assertEquals(2L, testOrder.getId());
@@ -104,12 +108,13 @@ class OrderTest {
   @Test
   @DisplayName("Builder creates order with default values")
   void testBuilder_Defaults() {
-    Order testOrder = Order.builder()
-        .user(testUser)
-        .merchant(testMerchant)
-        .status(OrderStatus.PENDING)
-        .deliveryAddress("123 Main St")
-        .build();
+    Order testOrder =
+        Order.builder()
+            .user(testUser)
+            .merchant(testMerchant)
+            .status(OrderStatus.PENDING)
+            .deliveryAddress("123 Main St")
+            .build();
 
     assertNotNull(testOrder);
     assertFalse(testOrder.isAgeVerified());
@@ -253,13 +258,14 @@ class OrderTest {
     order.addItem(testItem1);
     order.addItem(testItem2);
 
-    OrderItem testItem3 = OrderItem.builder()
-        .id(3L)
-        .name("Whiskey")
-        .quantity(1)
-        .unitPrice(new BigDecimal("50.00"))
-        .subtotal(new BigDecimal("50.00"))
-        .build();
+    OrderItem testItem3 =
+        OrderItem.builder()
+            .id(3L)
+            .name("Whiskey")
+            .quantity(1)
+            .unitPrice(new BigDecimal("50.00"))
+            .subtotal(new BigDecimal("50.00"))
+            .build();
     order.addItem(testItem3);
 
     // Remove middle item
@@ -314,11 +320,8 @@ class OrderTest {
   @Test
   @DisplayName("calculateTotal filters out null subtotals")
   void testCalculateTotal_FilterNullSubtotals() {
-    OrderItem itemWithNullSubtotal = OrderItem.builder()
-        .id(3L)
-        .name("Item with null subtotal")
-        .subtotal(null)
-        .build();
+    OrderItem itemWithNullSubtotal =
+        OrderItem.builder().id(3L).name("Item with null subtotal").subtotal(null).build();
 
     order.addItem(testItem1);
     order.addItem(itemWithNullSubtotal);
@@ -507,24 +510,24 @@ class OrderTest {
     LocalDateTime now = LocalDateTime.now();
     List<OrderItem> items = new ArrayList<>();
 
-    Order testOrder = new Order(
-        5L,
-        testUser,
-        testMerchant,
-        testDriver,
-        OrderStatus.PENDING,
-        new BigDecimal("100.00"),
-        "789 Pine St",
-        "Ring twice",
-        true,
-        now,
-        now,
-        now.plusHours(2),
-        "DISCOUNT10",
-        items,
-        null,
-        null
-    );
+    Order testOrder =
+        new Order(
+            5L,
+            testUser,
+            testMerchant,
+            testDriver,
+            OrderStatus.PENDING,
+            new BigDecimal("100.00"),
+            "789 Pine St",
+            "Ring twice",
+            true,
+            now,
+            now,
+            now.plusHours(2),
+            "DISCOUNT10",
+            items,
+            null,
+            null);
 
     assertNotNull(testOrder);
     assertEquals(5L, testOrder.getId());
@@ -607,13 +610,14 @@ class OrderTest {
   @Test
   @DisplayName("Adding and removing multiple items maintains correct state")
   void testAddRemoveMultipleItems() {
-    OrderItem item3 = OrderItem.builder()
-        .id(3L)
-        .name("Vodka")
-        .quantity(1)
-        .unitPrice(new BigDecimal("30.00"))
-        .subtotal(new BigDecimal("30.00"))
-        .build();
+    OrderItem item3 =
+        OrderItem.builder()
+            .id(3L)
+            .name("Vodka")
+            .quantity(1)
+            .unitPrice(new BigDecimal("30.00"))
+            .subtotal(new BigDecimal("30.00"))
+            .build();
 
     order.addItem(testItem1);
     order.addItem(testItem2);

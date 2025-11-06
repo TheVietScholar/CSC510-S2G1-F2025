@@ -37,11 +37,11 @@ public class Product {
   @Column(name = "is_alcohol")
   private boolean isAlcohol;
 
-  public boolean isAlcohol() {  // This should be the getter name
+  public boolean isAlcohol() { // This should be the getter name
     return isAlcohol;
   }
 
-  public void setAlcohol(boolean alcohol) {  // Setter
+  public void setAlcohol(boolean alcohol) { // Setter
     this.isAlcohol = alcohol;
   }
 

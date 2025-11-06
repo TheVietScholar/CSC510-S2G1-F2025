@@ -5,12 +5,12 @@ import static org.junit.jupiter.api.Assertions.*;
 import com.boozebuddies.model.Role;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import java.util.ArrayList;
 
 @DisplayName("User Entity Tests")
 class UserTest {
@@ -19,17 +19,18 @@ class UserTest {
 
   @BeforeEach
   void setUp() {
-    user = User.builder()
-        .id(1L)
-        .name("John Doe")
-        .email("john@example.com")
-        .passwordHash("hashedPassword")
-        .phone("1234567890")
-        .dateOfBirth(LocalDate.of(1990, 1, 1))
-        .ageVerified(true)
-        .isActive(true)
-        .isEmailVerified(false)
-        .build();
+    user =
+        User.builder()
+            .id(1L)
+            .name("John Doe")
+            .email("john@example.com")
+            .passwordHash("hashedPassword")
+            .phone("1234567890")
+            .dateOfBirth(LocalDate.of(1990, 1, 1))
+            .ageVerified(true)
+            .isActive(true)
+            .isEmailVerified(false)
+            .build();
   }
 
   // ==================== BUILDER TESTS ====================
@@ -38,23 +39,24 @@ class UserTest {
   @DisplayName("Builder creates user with all fields")
   void testBuilder_AllFields() {
     LocalDateTime now = LocalDateTime.now();
-    User testUser = User.builder()
-        .id(1L)
-        .name("Jane Doe")
-        .email("jane@example.com")
-        .passwordHash("hash123")
-        .phone("9876543210")
-        .dateOfBirth(LocalDate.of(1995, 5, 15))
-        .ageVerified(true)
-        .latitude(35.7796)
-        .longitude(-78.6382)
-        .merchantId(10L)
-        .isActive(true)
-        .isEmailVerified(true)
-        .lastLoginAt(now)
-        .refreshToken("token123")
-        .refreshTokenExpiryDate(now.plusDays(7))
-        .build();
+    User testUser =
+        User.builder()
+            .id(1L)
+            .name("Jane Doe")
+            .email("jane@example.com")
+            .passwordHash("hash123")
+            .phone("9876543210")
+            .dateOfBirth(LocalDate.of(1995, 5, 15))
+            .ageVerified(true)
+            .latitude(35.7796)
+            .longitude(-78.6382)
+            .merchantId(10L)
+            .isActive(true)
+            .isEmailVerified(true)
+            .lastLoginAt(now)
+            .refreshToken("token123")
+            .refreshTokenExpiryDate(now.plusDays(7))
+            .build();
 
     assertNotNull(testUser);
     assertEquals("Jane Doe", testUser.getName());
@@ -73,11 +75,8 @@ class UserTest {
   @Test
   @DisplayName("Builder creates user with default values")
   void testBuilder_Defaults() {
-    User testUser = User.builder()
-        .name("Test User")
-        .email("test@example.com")
-        .passwordHash("hash")
-        .build();
+    User testUser =
+        User.builder().name("Test User").email("test@example.com").passwordHash("hash").build();
 
     assertNotNull(testUser.getRoles());
     assertTrue(testUser.getRoles().isEmpty());
@@ -191,9 +190,9 @@ class UserTest {
   void testRemoveRole_Success() {
     user.addRole(Role.USER);
     user.addRole(Role.ADMIN);
-    
+
     user.removeRole(Role.ADMIN);
-    
+
     assertTrue(user.hasRole(Role.USER));
     assertFalse(user.hasRole(Role.ADMIN));
   }
@@ -307,16 +306,16 @@ class UserTest {
   @DisplayName("preUpdate updates updatedAt timestamp")
   void testPreUpdate() {
     LocalDateTime originalUpdatedAt = user.getUpdatedAt();
-    
+
     // Simulate some delay
     try {
       Thread.sleep(10);
     } catch (InterruptedException e) {
       // Ignore
     }
-    
+
     user.preUpdate();
-    
+
     assertNotNull(user.getUpdatedAt());
     assertTrue(user.getUpdatedAt().isAfter(originalUpdatedAt));
   }
@@ -328,7 +327,7 @@ class UserTest {
   void testIsActive() {
     user.setActive(true);
     assertTrue(user.isActive());
-    
+
     user.setActive(false);
     assertFalse(user.isActive());
   }
@@ -338,7 +337,7 @@ class UserTest {
   void testIsEmailVerified() {
     user.setEmailVerified(true);
     assertTrue(user.isEmailVerified());
-    
+
     user.setEmailVerified(false);
     assertFalse(user.isEmailVerified());
   }
@@ -348,7 +347,7 @@ class UserTest {
   void testIsAgeVerified() {
     user.setAgeVerified(true);
     assertTrue(user.isAgeVerified());
-    
+
     user.setAgeVerified(false);
     assertFalse(user.isAgeVerified());
   }
@@ -359,13 +358,13 @@ class UserTest {
   @DisplayName("setRoles replaces entire role set")
   void testSetRoles() {
     user.addRole(Role.USER);
-    
+
     Set<Role> newRoles = new HashSet<>();
     newRoles.add(Role.ADMIN);
     newRoles.add(Role.MERCHANT_ADMIN);
-    
+
     user.setRoles(newRoles);
-    
+
     assertFalse(user.hasRole(Role.USER));
     assertTrue(user.hasRole(Role.ADMIN));
     assertTrue(user.hasRole(Role.MERCHANT_ADMIN));
@@ -377,7 +376,7 @@ class UserTest {
     user.addRole(Role.USER);
     user.addRole(Role.ADMIN);
     user.addRole(Role.DRIVER);
-    
+
     assertTrue(user.hasRole(Role.USER));
     assertTrue(user.hasRole(Role.ADMIN));
     assertTrue(user.hasRole(Role.DRIVER));
@@ -397,32 +396,33 @@ class UserTest {
     LocalDateTime now = LocalDateTime.now();
     Set<Role> roles = new HashSet<>();
     roles.add(Role.USER);
-    
-    User testUser = new User(
-        1L, // id
-        "Test User", // name
-        "test@example.com", // email
-        "hash", // passwordHash
-        "1234567890", // phone
-        LocalDate.of(1990, 1, 1), // dateOfBirth
-        true, // ageVerified
-        35.0, // latitude
-        -78.0, // longitude
-        roles, // roles
-        10L, // merchantId
-        null, // driver
-        true, // isActive
-        false, // isEmailVerified
-        now, // lastLoginAt
-        "token", // refreshToken
-        now.plusDays(7), // refreshTokenExpiryDate
-        null, // address
-        now, // createdAt
-        now, // updatedAt
-        new ArrayList<>(), // orders
-        new ArrayList<>() // ratings
-    );
-    
+
+    User testUser =
+        new User(
+            1L, // id
+            "Test User", // name
+            "test@example.com", // email
+            "hash", // passwordHash
+            "1234567890", // phone
+            LocalDate.of(1990, 1, 1), // dateOfBirth
+            true, // ageVerified
+            35.0, // latitude
+            -78.0, // longitude
+            roles, // roles
+            10L, // merchantId
+            null, // driver
+            true, // isActive
+            false, // isEmailVerified
+            now, // lastLoginAt
+            "token", // refreshToken
+            now.plusDays(7), // refreshTokenExpiryDate
+            null, // address
+            now, // createdAt
+            now, // updatedAt
+            new ArrayList<>(), // orders
+            new ArrayList<>() // ratings
+            );
+
     assertNotNull(testUser);
     assertEquals("Test User", testUser.getName());
     assertEquals("test@example.com", testUser.getEmail());

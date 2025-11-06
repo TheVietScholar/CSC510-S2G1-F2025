@@ -117,8 +117,7 @@ public class PaymentServiceImpl implements PaymentService {
   }
 
   /**
-   * Validates a payment method before processing. Accepts test payment methods
-   * for testing
+   * Validates a payment method before processing. Accepts test payment methods for testing
    * purposes.
    */
   @Override

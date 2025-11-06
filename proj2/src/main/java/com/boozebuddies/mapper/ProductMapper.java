@@ -18,9 +18,9 @@ public class ProductMapper {
         .category(product.getCategory() != null ? product.getCategory().getName() : null)
         .merchantId(product.getMerchant() != null ? product.getMerchant().getId() : null)
         .merchantName(product.getMerchant() != null ? product.getMerchant().getName() : null)
-        .isAlcohol(product.isAlcohol())           
+        .isAlcohol(product.isAlcohol())
         .alcoholContent(product.getAlcoholContent())
-        .isAvailable(product.isAvailable())       
+        .isAvailable(product.isAvailable())
         .imageUrl(product.getImageUrl())
         .build();
   }

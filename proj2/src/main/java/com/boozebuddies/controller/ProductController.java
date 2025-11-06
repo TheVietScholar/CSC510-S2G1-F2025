@@ -174,27 +174,27 @@ public class ProductController {
       System.out.println("DEBUG - CreateProductRequest received:");
       System.out.println("  isAlcohol: " + request.isAlcohol());
       System.out.println("  alcoholContent: " + request.getAlcoholContent());
-      
+
       User user = permissionService.getAuthenticatedUser(authentication);
-      
+
       // Convert request to entity FIRST
       Product product = productMapper.toEntity(request);
-      
+
       // Debug after mapping
       System.out.println("DEBUG - After ProductMapper.toEntity():");
       System.out.println("  isAlcohol: " + product.isAlcohol());
-      
+
       // THEN set the merchant relationship using the merchantId from request
       Merchant merchant = merchantService.getMerchantById(request.getMerchantId());
       if (merchant == null) {
         return ResponseEntity.badRequest().body(ApiResponse.error("Merchant not found"));
       }
       product.setMerchant(merchant);
-      
+
       // Debug after setting merchant
       System.out.println("DEBUG - After setting merchant:");
       System.out.println("  isAlcohol: " + product.isAlcohol());
-      
+
       // Validate merchant ownership for merchant admins
       if (user != null && user.hasRole(Role.MERCHANT_ADMIN)) {
         if (!user.ownsMerchant(request.getMerchantId())) {
@@ -203,11 +203,11 @@ public class ProductController {
       }
 
       Product savedProduct = productService.addProduct(product);
-      
+
       // Debug after saving
       System.out.println("DEBUG - After productService.addProduct():");
       System.out.println("  isAlcohol: " + savedProduct.isAlcohol());
-      
+
       return ResponseEntity.status(HttpStatus.CREATED)
           .body(
               ApiResponse.success(productMapper.toDTO(savedProduct), "Product added successfully"));

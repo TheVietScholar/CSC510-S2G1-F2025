@@ -21,15 +21,16 @@ class PaymentTest {
     testOrder = Order.builder().id(1L).build();
     testUser = User.builder().id(1L).name("John Doe").email("john@example.com").build();
 
-    payment = Payment.builder()
-        .id(1L)
-        .order(testOrder)
-        .user(testUser)
-        .amount(new BigDecimal("99.99"))
-        .status(PaymentStatus.CAPTURED)
-        .paymentMethod("CREDIT_CARD")
-        .transactionId("TXN123456")
-        .build();
+    payment =
+        Payment.builder()
+            .id(1L)
+            .order(testOrder)
+            .user(testUser)
+            .amount(new BigDecimal("99.99"))
+            .status(PaymentStatus.CAPTURED)
+            .paymentMethod("CREDIT_CARD")
+            .transactionId("TXN123456")
+            .build();
   }
 
   // ==================== BUILDER TESTS ====================
@@ -40,20 +41,21 @@ class PaymentTest {
     LocalDateTime now = LocalDateTime.now();
     LocalDateTime paymentDate = now.minusHours(1);
 
-    Payment testPayment = Payment.builder()
-        .id(2L)
-        .order(testOrder)
-        .user(testUser)
-        .amount(new BigDecimal("150.00"))
-        .status(PaymentStatus.PENDING)
-        .paymentMethod("PAYPAL")
-        .transactionId("TXN789")
-        .failureReason("Card declined")
-        .refundReason("Customer request")
-        .createdAt(now)
-        .updatedAt(now)
-        .paymentDate(paymentDate)
-        .build();
+    Payment testPayment =
+        Payment.builder()
+            .id(2L)
+            .order(testOrder)
+            .user(testUser)
+            .amount(new BigDecimal("150.00"))
+            .status(PaymentStatus.PENDING)
+            .paymentMethod("PAYPAL")
+            .transactionId("TXN789")
+            .failureReason("Card declined")
+            .refundReason("Customer request")
+            .createdAt(now)
+            .updatedAt(now)
+            .paymentDate(paymentDate)
+            .build();
 
     assertNotNull(testPayment);
     assertEquals(2L, testPayment.getId());
@@ -73,12 +75,13 @@ class PaymentTest {
   @Test
   @DisplayName("Builder creates payment with default values")
   void testBuilder_Defaults() {
-    Payment testPayment = Payment.builder()
-        .order(testOrder)
-        .user(testUser)
-        .amount(new BigDecimal("50.00"))
-        .status(PaymentStatus.CAPTURED)
-        .build();
+    Payment testPayment =
+        Payment.builder()
+            .order(testOrder)
+            .user(testUser)
+            .amount(new BigDecimal("50.00"))
+            .status(PaymentStatus.CAPTURED)
+            .build();
 
     assertNotNull(testPayment);
     assertEquals("", testPayment.getFailureReason());
@@ -370,20 +373,20 @@ class PaymentTest {
   @DisplayName("AllArgsConstructor creates payment with all parameters")
   void testAllArgsConstructor() {
     LocalDateTime now = LocalDateTime.now();
-    Payment testPayment = new Payment(
-        5L,
-        testOrder,
-        new BigDecimal("75.50"),
-        PaymentStatus.CAPTURED,
-        testUser,
-        "CASH",
-        "TXN555",
-        "None",
-        "Customer return",
-        now,
-        now,
-        now
-    );
+    Payment testPayment =
+        new Payment(
+            5L,
+            testOrder,
+            new BigDecimal("75.50"),
+            PaymentStatus.CAPTURED,
+            testUser,
+            "CASH",
+            "TXN555",
+            "None",
+            "Customer return",
+            now,
+            now,
+            now);
 
     assertNotNull(testPayment);
     assertEquals(5L, testPayment.getId());
@@ -462,7 +465,9 @@ class PaymentTest {
   @Test
   @DisplayName("Payment failure reason can be long text")
   void testLongFailureReason() {
-    String longReason = "This is a very long failure reason that explains in detail why the payment failed. ".repeat(10);
+    String longReason =
+        "This is a very long failure reason that explains in detail why the payment failed. "
+            .repeat(10);
     payment.setFailureReason(longReason);
     assertEquals(longReason, payment.getFailureReason());
   }
@@ -470,7 +475,9 @@ class PaymentTest {
   @Test
   @DisplayName("Payment refund reason can be long text")
   void testLongRefundReason() {
-    String longReason = "This is a very long refund reason that explains in detail why the refund was issued. ".repeat(10);
+    String longReason =
+        "This is a very long refund reason that explains in detail why the refund was issued. "
+            .repeat(10);
     payment.setRefundReason(longReason);
     assertEquals(longReason, payment.getRefundReason());
   }
