@@ -48,10 +48,9 @@ public interface DriverRepository extends JpaRepository<Driver, Long> {
   /** Retrieves a driver by their phone number. */
   Optional<Driver> findByPhone(String phone);
 
-  /** Find driver by their UserId */
-  Optional<Driver> findByUserId(Long userId);
+  @Query("SELECT d FROM Driver d WHERE d.user.id = :userId")
+  Optional<Driver> findByUserId(@Param("userId") Long userId);
 
-  /** Finds drivers based on whether they are currently available for delivery. */
   List<Driver> findByIsAvailable(boolean isAvailable);
 
   /** Finds drivers by their vehicle type (e.g., car, van, bike). */

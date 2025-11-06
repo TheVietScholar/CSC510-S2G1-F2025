@@ -17,6 +17,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,10 +41,15 @@ import org.springframework.transaction.annotation.Transactional;
 public class OrderServiceImpl implements OrderService {
 
   @Autowired private OrderRepository orderRepository;
+
   @Autowired private DeliveryRepository deliveryRepository;
+
   @Autowired private PaymentService paymentService;
+
   @Autowired private NotificationService notificationService;
+
   @Autowired private ProductService productService;
+
   @Autowired private UserService userService;
 
   /**
@@ -264,6 +270,7 @@ public class OrderServiceImpl implements OrderService {
       throw new RuntimeException("Order must contain at least one item");
     }
 
+    // Check if user is age verified for alcohol products
     boolean hasAlcohol =
         order.getItems().stream()
             .anyMatch(item -> item.getProduct() != null && item.getProduct().isAlcohol());
@@ -323,26 +330,35 @@ public class OrderServiceImpl implements OrderService {
 
   @Override
   public List<Order> getOrdersWithinDistance(double latitude, double longitude, double distanceKm) {
-    List<Order> availOrders = orderRepository.findAvailableForAssignment();
+    List<OrderStatus> availableStatuses =
+        List.of(
+            OrderStatus.PENDING,
+            OrderStatus.CONFIRMED,
+            OrderStatus.PREPARING,
+            OrderStatus.READY_FOR_PICKUP);
+    List<Order> availOrders = orderRepository.findAvailableForAssignment(availableStatuses);
 
-    for (Order order : availOrders) {
-      if (calculateDistance(
-              latitude,
-              longitude,
-              order.getMerchant().getLatitude(),
-              order.getMerchant().getLongitude())
-          > distanceKm) {
-        availOrders.remove(order);
-      }
-    }
-
-    return availOrders;
+    // Filter orders by distance, excluding orders with null merchant or missing
+    // coordinates
+    return availOrders.stream()
+        .filter(
+            order -> {
+              if (order.getMerchant() == null) {
+                return false; // Skip orders without merchant
+              }
+              Double merchantLat = order.getMerchant().getLatitude();
+              Double merchantLng = order.getMerchant().getLongitude();
+              if (merchantLat == null || merchantLng == null) {
+                return false; // Skip orders with merchants that don't have coordinates
+              }
+              double distance = calculateDistance(latitude, longitude, merchantLat, merchantLng);
+              return distance <= distanceKm; // Include orders within the radius
+            })
+        .collect(Collectors.toList());
   }
 
-  /**
-   * Calculate distance between two points using Haversine formula. Returns distance in kilometers.
-   */
-  private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+  @Override
+  public double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
     final int EARTH_RADIUS_KM = 6371;
 
     double dLat = Math.toRadians(lat2 - lat1);
@@ -358,5 +374,18 @@ public class OrderServiceImpl implements OrderService {
     double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
     return EARTH_RADIUS_KM * c;
+  }
+
+  @Override
+  @Transactional
+  public Order updateEstimatedDeliveryTime(Long orderId, LocalDateTime estimatedDeliveryTime) {
+    Optional<Order> orderOpt = orderRepository.findById(orderId);
+    if (orderOpt.isEmpty()) {
+      throw new RuntimeException("Order not found");
+    }
+    Order order = orderOpt.get();
+    order.setEstimatedDeliveryTime(estimatedDeliveryTime);
+    order.setUpdatedAt(LocalDateTime.now());
+    return orderRepository.save(order);
   }
 }

@@ -48,59 +48,68 @@ public class OrderServiceImplTest {
 
   private User user;
   private Merchant merchant;
-  private OrderItem item;
   private Product product;
 
   @BeforeEach
   public void setupCommonMocks() {
     user = mock(User.class);
     merchant = mock(Merchant.class);
-    item = mock(OrderItem.class);
     product = mock(Product.class);
-    // when(item.getProduct()).thenReturn(product);
   }
 
   @Test
   public void createOrder_success_savesProcessesPaymentAndCreatesDelivery() {
     Order order = mock(Order.class);
-    OrderItem item = mock(OrderItem.class);
-    Product product = mock(Product.class);
+    Long productId = 1L;
+    BigDecimal productPrice = new BigDecimal("19.99");
+    Integer quantity = 2;
 
-    // Mock the OrderItem properly
-    when(item.getProduct()).thenReturn(product);
-    when(item.getQuantity()).thenReturn(2);
-    when(item.getUnitPrice()).thenReturn(new BigDecimal("10.00"));
-    when(product.getId()).thenReturn(1L);
+    // Use a real OrderItem object so setUnitPrice actually stores the value
+    OrderItem realItem = OrderItem.builder().product(product).quantity(quantity).build();
+
+    // Setup product mocks
+    when(product.getId()).thenReturn(productId);
+    when(product.getPrice()).thenReturn(productPrice);
     when(product.getName()).thenReturn("Test Product");
-    // REMOVE THIS LINE - not needed since unitPrice is already set
-    // when(product.getPrice()).thenReturn(new BigDecimal("10.00"));
     when(product.isAlcohol()).thenReturn(false);
-
-    when(productService.getProductById(1L)).thenReturn(product);
+    when(productService.getProductById(productId)).thenReturn(product);
 
     when(order.getUser()).thenReturn(user);
     when(order.getMerchant()).thenReturn(merchant);
-    when(order.getItems()).thenReturn(List.of(item));
+    when(order.getItems()).thenReturn(List.of(realItem));
     when(order.getTotalAmount()).thenReturn(null);
     when(orderRepository.save(order)).thenReturn(order);
-
+    // Make deliveryRepository.save return the same delivery instance passed
     when(deliveryRepository.save(any(Delivery.class)))
         .thenAnswer(invocation -> invocation.getArgument(0));
 
     Order returned = orderService.createOrder(order);
 
+    // repository save returned the same mock
     assertSame(order, returned);
+
+    // verify that total calculation was attempted when totalAmount was null
     verify(order).getTotalAmount();
     verify(order).calculateTotal();
-    verify(paymentService).processPayment(order, "test_payment");
 
+    // payment processed with test_payment method
+    verify(paymentService).processPayment(order, "test_payment");
     ArgumentCaptor<Delivery> deliveryCaptor = ArgumentCaptor.forClass(Delivery.class);
     verify(deliveryRepository).save(deliveryCaptor.capture());
     Delivery savedDelivery = deliveryCaptor.getValue();
     assertNotNull(savedDelivery);
     assertEquals(DeliveryStatus.PENDING, savedDelivery.getStatus());
     verify(notificationService).sendOrderConfirmation(savedDelivery);
+
+    // ensure initial status was set to PENDING
     verify(order).setStatus(OrderStatus.PENDING);
+
+    // verify order item initialization - check the real item
+    assertEquals(1, realItem.getLineNo());
+    assertEquals(order, realItem.getOrder());
+    assertEquals(productPrice, realItem.getUnitPrice());
+    assertEquals("Test Product", realItem.getName());
+    assertNotNull(realItem.getSubtotal());
   }
 
   @Test
@@ -208,10 +217,11 @@ public class OrderServiceImplTest {
   public void getOrderById_delegatesToRepository() {
     Long id = 5L;
     Order order = mock(Order.class);
-    when(orderRepository.findById(id)).thenReturn(Optional.of(order));
+    when(orderRepository.findByIdWithRelationships(id)).thenReturn(Optional.of(order));
     Optional<Order> found = orderService.getOrderById(id);
     assertTrue(found.isPresent());
     assertSame(order, found.get());
+    verify(orderRepository).findByIdWithRelationships(id);
   }
 
   @Test
@@ -713,7 +723,8 @@ public class OrderServiceImplTest {
     verify(orderRepository).findByDriverId(driverId);
   }
 
-  // ==================== UPDATE ORDER STATUS - ADDITIONAL STATUS TESTS ====================
+  // ==================== UPDATE ORDER STATUS - ADDITIONAL STATUS TESTS
+  // ====================
 
   @Test
   public void updateOrderStatus_readyForPickup_noNotification() {
@@ -848,13 +859,20 @@ public class OrderServiceImplTest {
     when(merchant2.getLatitude()).thenReturn(35.52);
     when(merchant2.getLongitude()).thenReturn(-78.92);
 
-    when(orderRepository.findAvailableForAssignment()).thenReturn(List.of(order1, order2));
+    List<OrderStatus> availableStatuses =
+        List.of(
+            OrderStatus.PENDING,
+            OrderStatus.CONFIRMED,
+            OrderStatus.PREPARING,
+            OrderStatus.READY_FOR_PICKUP);
+    when(orderRepository.findAvailableForAssignment(availableStatuses))
+        .thenReturn(List.of(order1, order2));
 
     List<Order> result = orderService.getOrdersWithinDistance(latitude, longitude, radiusKm);
 
     assertNotNull(result);
     assertEquals(2, result.size());
-    verify(orderRepository).findAvailableForAssignment();
+    verify(orderRepository).findAvailableForAssignment(availableStatuses);
   }
 
   @Test
@@ -863,13 +881,20 @@ public class OrderServiceImplTest {
     double longitude = -78.9;
     double radiusKm = 10.0;
 
-    when(orderRepository.findAvailableForAssignment()).thenReturn(new java.util.ArrayList<>());
+    List<OrderStatus> availableStatuses =
+        List.of(
+            OrderStatus.PENDING,
+            OrderStatus.CONFIRMED,
+            OrderStatus.PREPARING,
+            OrderStatus.READY_FOR_PICKUP);
+    when(orderRepository.findAvailableForAssignment(availableStatuses))
+        .thenReturn(new java.util.ArrayList<>());
 
     List<Order> result = orderService.getOrdersWithinDistance(latitude, longitude, radiusKm);
 
     assertNotNull(result);
     assertTrue(result.isEmpty());
-    verify(orderRepository).findAvailableForAssignment();
+    verify(orderRepository).findAvailableForAssignment(availableStatuses);
   }
 
   @Test
@@ -885,8 +910,14 @@ public class OrderServiceImplTest {
     when(merchant.getLatitude()).thenReturn(35.5);
     when(merchant.getLongitude()).thenReturn(-78.9);
 
+    List<OrderStatus> availableStatuses =
+        List.of(
+            OrderStatus.PENDING,
+            OrderStatus.CONFIRMED,
+            OrderStatus.PREPARING,
+            OrderStatus.READY_FOR_PICKUP);
     List<Order> availableOrders = new java.util.ArrayList<>(List.of(order));
-    when(orderRepository.findAvailableForAssignment()).thenReturn(availableOrders);
+    when(orderRepository.findAvailableForAssignment(availableStatuses)).thenReturn(availableOrders);
 
     List<Order> result = orderService.getOrdersWithinDistance(latitude, longitude, radiusKm);
 
@@ -913,8 +944,14 @@ public class OrderServiceImplTest {
     when(merchant2.getLatitude()).thenReturn(34.0);
     when(merchant2.getLongitude()).thenReturn(-118.0);
 
+    List<OrderStatus> availableStatuses =
+        List.of(
+            OrderStatus.PENDING,
+            OrderStatus.CONFIRMED,
+            OrderStatus.PREPARING,
+            OrderStatus.READY_FOR_PICKUP);
     List<Order> availableOrders = new java.util.ArrayList<>(List.of(order1, order2));
-    when(orderRepository.findAvailableForAssignment()).thenReturn(availableOrders);
+    when(orderRepository.findAvailableForAssignment(availableStatuses)).thenReturn(availableOrders);
 
     List<Order> result = orderService.getOrdersWithinDistance(latitude, longitude, radiusKm);
 
@@ -936,13 +973,19 @@ public class OrderServiceImplTest {
     when(merchant.getLatitude()).thenReturn(89.5);
     when(merchant.getLongitude()).thenReturn(0.0);
 
+    List<OrderStatus> availableStatuses =
+        List.of(
+            OrderStatus.PENDING,
+            OrderStatus.CONFIRMED,
+            OrderStatus.PREPARING,
+            OrderStatus.READY_FOR_PICKUP);
     List<Order> availableOrders = new java.util.ArrayList<>(List.of(order));
-    when(orderRepository.findAvailableForAssignment()).thenReturn(availableOrders);
+    when(orderRepository.findAvailableForAssignment(availableStatuses)).thenReturn(availableOrders);
 
     List<Order> result = orderService.getOrdersWithinDistance(latitude, longitude, radiusKm);
 
     assertNotNull(result);
-    verify(orderRepository).findAvailableForAssignment();
+    verify(orderRepository).findAvailableForAssignment(availableStatuses);
   }
 
   @Test
@@ -958,13 +1001,19 @@ public class OrderServiceImplTest {
     when(merchant.getLatitude()).thenReturn(35.5);
     when(merchant.getLongitude()).thenReturn(-180.0);
 
+    List<OrderStatus> availableStatuses =
+        List.of(
+            OrderStatus.PENDING,
+            OrderStatus.CONFIRMED,
+            OrderStatus.PREPARING,
+            OrderStatus.READY_FOR_PICKUP);
     List<Order> availableOrders = new java.util.ArrayList<>(List.of(order));
-    when(orderRepository.findAvailableForAssignment()).thenReturn(availableOrders);
+    when(orderRepository.findAvailableForAssignment(availableStatuses)).thenReturn(availableOrders);
 
     List<Order> result = orderService.getOrdersWithinDistance(latitude, longitude, radiusKm);
 
     assertNotNull(result);
-    verify(orderRepository).findAvailableForAssignment();
+    verify(orderRepository).findAvailableForAssignment(availableStatuses);
   }
 
   @Test
@@ -980,13 +1029,19 @@ public class OrderServiceImplTest {
     when(merchant.getLatitude()).thenReturn(-33.9);
     when(merchant.getLongitude()).thenReturn(151.3);
 
+    List<OrderStatus> availableStatuses =
+        List.of(
+            OrderStatus.PENDING,
+            OrderStatus.CONFIRMED,
+            OrderStatus.PREPARING,
+            OrderStatus.READY_FOR_PICKUP);
     List<Order> availableOrders = new java.util.ArrayList<>(List.of(order));
-    when(orderRepository.findAvailableForAssignment()).thenReturn(availableOrders);
+    when(orderRepository.findAvailableForAssignment(availableStatuses)).thenReturn(availableOrders);
 
     List<Order> result = orderService.getOrdersWithinDistance(latitude, longitude, radiusKm);
 
     assertNotNull(result);
-    verify(orderRepository).findAvailableForAssignment();
+    verify(orderRepository).findAvailableForAssignment(availableStatuses);
   }
 
   @Test
@@ -1005,8 +1060,14 @@ public class OrderServiceImplTest {
     when(merchant.getLatitude()).thenReturn(lat2);
     when(merchant.getLongitude()).thenReturn(lon2);
 
+    List<OrderStatus> availableStatuses =
+        List.of(
+            OrderStatus.PENDING,
+            OrderStatus.CONFIRMED,
+            OrderStatus.PREPARING,
+            OrderStatus.READY_FOR_PICKUP);
     List<Order> availableOrders = new java.util.ArrayList<>(List.of(order));
-    when(orderRepository.findAvailableForAssignment()).thenReturn(availableOrders);
+    when(orderRepository.findAvailableForAssignment(availableStatuses)).thenReturn(availableOrders);
 
     List<Order> result = orderService.getOrdersWithinDistance(lat1, lon1, radiusKm);
 
@@ -1225,5 +1286,299 @@ public class OrderServiceImplTest {
     assertTrue(ex.getMessage().contains("Invalid status transition"));
     assertTrue(ex.getMessage().contains("PENDING"));
     assertTrue(ex.getMessage().contains("COMPLETED"));
+  }
+
+  // ==================== CALCULATE DISTANCE TESTS ====================
+
+  @Test
+  public void calculateDistance_returnsCorrectDistance() {
+    // Test distance between two known points
+    // New York City (40.7128, -74.0060) to Philadelphia (39.9526, -75.1652)
+    // Actual distance: ~129.6 km
+    double lat1 = 40.7128;
+    double lon1 = -74.0060;
+    double lat2 = 39.9526;
+    double lon2 = -75.1652;
+
+    double distance = orderService.calculateDistance(lat1, lon1, lat2, lon2);
+
+    assertTrue(
+        distance > 125 && distance < 135,
+        "Distance should be approximately 129.6 km, but was " + distance);
+  }
+
+  @Test
+  public void calculateDistance_returnsZeroForSameLocation() {
+    double lat = 35.7796;
+    double lon = -78.6382;
+
+    double distance = orderService.calculateDistance(lat, lon, lat, lon);
+
+    assertEquals(0.0, distance, 0.001, "Distance should be zero for same location");
+  }
+
+  @Test
+  public void calculateDistance_handlesOppositeSideOfGlobe() {
+    // Test coordinates on opposite sides of the globe
+    double lat1 = 0.0;
+    double lon1 = 0.0;
+    double lat2 = 0.0;
+    double lon2 = 180.0;
+
+    double distance = orderService.calculateDistance(lat1, lon1, lat2, lon2);
+
+    // Should be approximately half the Earth's circumference (~20,000 km)
+    assertTrue(
+        distance > 19000 && distance < 21000,
+        "Distance should be approximately half Earth's circumference");
+  }
+
+  // ==================== UPDATE ESTIMATED DELIVERY TIME TESTS
+  // ====================
+
+  @Test
+  public void updateEstimatedDeliveryTime_updatesOrderSuccessfully() {
+    Long orderId = 1L;
+    LocalDateTime estimatedTime = LocalDateTime.now().plusMinutes(30);
+    Order order = mock(Order.class);
+
+    when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
+    when(orderRepository.save(order)).thenReturn(order);
+
+    Order result = orderService.updateEstimatedDeliveryTime(orderId, estimatedTime);
+
+    assertSame(order, result);
+    verify(order).setEstimatedDeliveryTime(estimatedTime);
+    verify(order).setUpdatedAt(any(LocalDateTime.class));
+    verify(orderRepository).save(order);
+  }
+
+  @Test
+  public void updateEstimatedDeliveryTime_throwsExceptionWhenOrderNotFound() {
+    Long orderId = 999L;
+    LocalDateTime estimatedTime = LocalDateTime.now().plusMinutes(30);
+
+    when(orderRepository.findById(orderId)).thenReturn(Optional.empty());
+
+    RuntimeException exception =
+        assertThrows(
+            RuntimeException.class,
+            () -> orderService.updateEstimatedDeliveryTime(orderId, estimatedTime));
+
+    assertEquals("Order not found", exception.getMessage());
+    verify(orderRepository, never()).save(any());
+  }
+
+  // ==================== GET ORDERS WITHIN DISTANCE - EDGE CASES
+  // ====================
+
+  @Test
+  public void getOrdersWithinDistance_filtersOutOrdersWithNullMerchant() {
+    double latitude = 35.5;
+    double longitude = -78.9;
+    double radiusKm = 10.0;
+
+    Order orderWithMerchant = mock(Order.class);
+    Order orderWithoutMerchant = mock(Order.class);
+    Merchant merchant = mock(Merchant.class);
+
+    when(orderWithMerchant.getMerchant()).thenReturn(merchant);
+    when(orderWithoutMerchant.getMerchant()).thenReturn(null);
+    when(merchant.getLatitude()).thenReturn(35.51);
+    when(merchant.getLongitude()).thenReturn(-78.91);
+
+    List<OrderStatus> availableStatuses =
+        List.of(
+            OrderStatus.PENDING,
+            OrderStatus.CONFIRMED,
+            OrderStatus.PREPARING,
+            OrderStatus.READY_FOR_PICKUP);
+    when(orderRepository.findAvailableForAssignment(availableStatuses))
+        .thenReturn(List.of(orderWithMerchant, orderWithoutMerchant));
+
+    List<Order> result = orderService.getOrdersWithinDistance(latitude, longitude, radiusKm);
+
+    assertNotNull(result);
+    assertEquals(1, result.size());
+    assertTrue(result.contains(orderWithMerchant));
+    assertFalse(result.contains(orderWithoutMerchant));
+  }
+
+  @Test
+  public void getOrdersWithinDistance_filtersOutOrdersWithNullMerchantCoordinates() {
+    double latitude = 35.5;
+    double longitude = -78.9;
+    double radiusKm = 10.0;
+
+    Order orderWithCoords = mock(Order.class);
+    Order orderWithoutCoords = mock(Order.class);
+    Merchant merchantWithCoords = mock(Merchant.class);
+    Merchant merchantWithoutCoords = mock(Merchant.class);
+
+    when(orderWithCoords.getMerchant()).thenReturn(merchantWithCoords);
+    when(orderWithoutCoords.getMerchant()).thenReturn(merchantWithoutCoords);
+    when(merchantWithCoords.getLatitude()).thenReturn(35.51);
+    when(merchantWithCoords.getLongitude()).thenReturn(-78.91);
+    when(merchantWithoutCoords.getLatitude()).thenReturn(null);
+    when(merchantWithoutCoords.getLongitude()).thenReturn(null);
+
+    List<OrderStatus> availableStatuses =
+        List.of(
+            OrderStatus.PENDING,
+            OrderStatus.CONFIRMED,
+            OrderStatus.PREPARING,
+            OrderStatus.READY_FOR_PICKUP);
+    when(orderRepository.findAvailableForAssignment(availableStatuses))
+        .thenReturn(List.of(orderWithCoords, orderWithoutCoords));
+
+    List<Order> result = orderService.getOrdersWithinDistance(latitude, longitude, radiusKm);
+
+    assertNotNull(result);
+    assertEquals(1, result.size());
+    assertTrue(result.contains(orderWithCoords));
+    assertFalse(result.contains(orderWithoutCoords));
+  }
+
+  @Test
+  public void getOrdersWithinDistance_filtersOutOrdersOutsideRadius() {
+    double latitude = 35.5;
+    double longitude = -78.9;
+    double radiusKm = 5.0; // Small radius
+
+    Order orderWithinRadius = mock(Order.class);
+    Order orderOutsideRadius = mock(Order.class);
+    Merchant merchant1 = mock(Merchant.class);
+    Merchant merchant2 = mock(Merchant.class);
+
+    when(orderWithinRadius.getMerchant()).thenReturn(merchant1);
+    when(orderOutsideRadius.getMerchant()).thenReturn(merchant2);
+    // Close merchant (within 5km)
+    when(merchant1.getLatitude()).thenReturn(35.51);
+    when(merchant1.getLongitude()).thenReturn(-78.91);
+    // Far merchant (outside 5km)
+    when(merchant2.getLatitude()).thenReturn(35.6);
+    when(merchant2.getLongitude()).thenReturn(-78.8);
+
+    List<OrderStatus> availableStatuses =
+        List.of(
+            OrderStatus.PENDING,
+            OrderStatus.CONFIRMED,
+            OrderStatus.PREPARING,
+            OrderStatus.READY_FOR_PICKUP);
+    when(orderRepository.findAvailableForAssignment(availableStatuses))
+        .thenReturn(List.of(orderWithinRadius, orderOutsideRadius));
+
+    List<Order> result = orderService.getOrdersWithinDistance(latitude, longitude, radiusKm);
+
+    assertNotNull(result);
+    // Should only include order within radius (close merchant is ~1.43km, far
+    // merchant is ~14.33km)
+    assertEquals(1, result.size(), "Should only include order within 5km radius");
+    assertTrue(result.contains(orderWithinRadius), "Result should contain order within radius");
+    assertFalse(
+        result.contains(orderOutsideRadius), "Result should not contain order outside radius");
+  }
+
+  // ==================== ADDITIONAL COVERAGE TESTS ====================
+
+  @Test
+  public void getOrdersWithinDistance_handlesNullMerchantLatitude() {
+    double latitude = 35.5;
+    double longitude = -78.9;
+    double radiusKm = 10.0;
+
+    Order order = mock(Order.class);
+    Merchant merchant = mock(Merchant.class);
+
+    when(order.getMerchant()).thenReturn(merchant);
+    when(merchant.getLatitude()).thenReturn(null);
+    when(merchant.getLongitude()).thenReturn(-78.91);
+
+    List<OrderStatus> availableStatuses =
+        List.of(
+            OrderStatus.PENDING,
+            OrderStatus.CONFIRMED,
+            OrderStatus.PREPARING,
+            OrderStatus.READY_FOR_PICKUP);
+    when(orderRepository.findAvailableForAssignment(availableStatuses)).thenReturn(List.of(order));
+
+    List<Order> result = orderService.getOrdersWithinDistance(latitude, longitude, radiusKm);
+
+    assertNotNull(result);
+    assertTrue(result.isEmpty(), "Should filter out orders with null merchant latitude");
+  }
+
+  @Test
+  public void getOrdersWithinDistance_handlesNullMerchantLongitude() {
+    double latitude = 35.5;
+    double longitude = -78.9;
+    double radiusKm = 10.0;
+
+    Order order = mock(Order.class);
+    Merchant merchant = mock(Merchant.class);
+
+    when(order.getMerchant()).thenReturn(merchant);
+    when(merchant.getLatitude()).thenReturn(35.51);
+    when(merchant.getLongitude()).thenReturn(null);
+
+    List<OrderStatus> availableStatuses =
+        List.of(
+            OrderStatus.PENDING,
+            OrderStatus.CONFIRMED,
+            OrderStatus.PREPARING,
+            OrderStatus.READY_FOR_PICKUP);
+    when(orderRepository.findAvailableForAssignment(availableStatuses)).thenReturn(List.of(order));
+
+    List<Order> result = orderService.getOrdersWithinDistance(latitude, longitude, radiusKm);
+
+    assertNotNull(result);
+    assertTrue(result.isEmpty(), "Should filter out orders with null merchant longitude");
+  }
+
+  @Test
+  public void updateEstimatedDeliveryTime_updatesTimestamp() {
+    Long orderId = 1L;
+    LocalDateTime estimatedTime = LocalDateTime.now().plusMinutes(30);
+    Order order = mock(Order.class);
+
+    when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
+    when(orderRepository.save(order)).thenReturn(order);
+
+    Order result = orderService.updateEstimatedDeliveryTime(orderId, estimatedTime);
+
+    assertSame(order, result);
+    verify(order).setEstimatedDeliveryTime(estimatedTime);
+    verify(order).setUpdatedAt(any(LocalDateTime.class));
+    verify(orderRepository).save(order);
+  }
+
+  @Test
+  public void calculateDistance_handlesNegativeCoordinates() {
+    // Test with negative coordinates (southern hemisphere, western hemisphere)
+    double lat1 = -33.8688; // Sydney
+    double lon1 = 151.2093;
+    double lat2 = -34.9285; // Melbourne
+    double lon2 = 138.6007;
+
+    double distance = orderService.calculateDistance(lat1, lon1, lat2, lon2);
+
+    // Actual distance between Sydney and Melbourne is approximately 1162 km
+    assertTrue(
+        distance > 1150 && distance < 1175,
+        "Distance should be approximately 1162 km, but was " + distance);
+  }
+
+  @Test
+  public void calculateDistance_handlesVerySmallDistance() {
+    // Test with very close coordinates (same building)
+    double lat = 35.7796;
+    double lon = -78.6382;
+    double lat2 = 35.7797; // ~11 meters away
+    double lon2 = -78.6383;
+
+    double distance = orderService.calculateDistance(lat, lon, lat2, lon2);
+
+    assertTrue(distance < 0.1, "Distance should be very small (< 0.1 km)");
+    assertTrue(distance > 0, "Distance should be greater than zero");
   }
 }

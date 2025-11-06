@@ -156,12 +156,12 @@ class DriverServiceImplTest {
     var user = new com.boozebuddies.entity.User();
     user.setId(10L);
     Driver driver = Driver.builder().id(10L).name("ProfileDriver").build();
-    when(repository.findById(10L)).thenReturn(Optional.of(driver));
+    when(repository.findByUserId(10L)).thenReturn(Optional.of(driver));
 
     Driver found = service.getDriverProfile(user);
 
     assertEquals(driver, found);
-    verify(repository).findById(10L);
+    verify(repository).findByUserId(10L);
   }
 
   @Test
@@ -169,7 +169,7 @@ class DriverServiceImplTest {
   void getDriverProfile_notFoundThrows() {
     var user = new com.boozebuddies.entity.User();
     user.setId(99L);
-    when(repository.findById(99L)).thenReturn(Optional.empty());
+    when(repository.findByUserId(99L)).thenReturn(Optional.empty());
 
     assertThrows(IllegalArgumentException.class, () -> service.getDriverProfile(user));
   }
@@ -186,5 +186,29 @@ class DriverServiceImplTest {
     assertEquals(1, result.size());
     assertEquals(d.getId(), result.get(0).getId());
     verify(repository).findNearbyAvailableDrivers(10.0, 20.0, 5000.0);
+  }
+
+  @Test
+  @DisplayName("getDriverByUserId returns driver when found")
+  void getDriverByUserId_returnsDriver() {
+    Driver driver = Driver.builder().id(5L).name("UserDriver").build();
+    when(repository.findByUserId(10L)).thenReturn(Optional.of(driver));
+
+    Optional<Driver> found = service.getDriverByUserId(10L);
+
+    assertTrue(found.isPresent());
+    assertEquals(5L, found.get().getId());
+    verify(repository).findByUserId(10L);
+  }
+
+  @Test
+  @DisplayName("getDriverByUserId returns empty when not found")
+  void getDriverByUserId_returnsEmptyWhenNotFound() {
+    when(repository.findByUserId(999L)).thenReturn(Optional.empty());
+
+    Optional<Driver> found = service.getDriverByUserId(999L);
+
+    assertFalse(found.isPresent());
+    verify(repository).findByUserId(999L);
   }
 }

@@ -150,6 +150,10 @@ public class SecurityConfig {
                     .requestMatchers("/api/orders/driver/**")
                     .hasRole("DRIVER")
 
+                    // DRIVER can view available orders by distance
+                    .requestMatchers(HttpMethod.GET, "/api/orders/by-distance")
+                    .hasRole("DRIVER")
+
                     // ADMIN can view all orders
                     .requestMatchers(HttpMethod.GET, "/api/orders")
                     .hasRole("ADMIN")
@@ -189,6 +193,8 @@ public class SecurityConfig {
                     .hasRole("ADMIN")
 
                     // Drivers manage their own profile
+                    .requestMatchers(HttpMethod.GET, "/api/drivers/my-profile")
+                    .hasRole("DRIVER")
                     .requestMatchers("/api/drivers/my-profile/**")
                     .hasRole("DRIVER")
 

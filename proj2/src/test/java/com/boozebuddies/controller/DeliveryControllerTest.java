@@ -69,6 +69,7 @@ public class DeliveryControllerTest {
   private User adminUser;
   private User otherDriverUser;
   private Driver otherDriver;
+  private User orderOwner;
 
   @BeforeEach
   void setUp() {
@@ -94,6 +95,10 @@ public class DeliveryControllerTest {
 
     adminUser = User.builder().id(99L).name("Admin User").build();
     adminUser.setRoles(Set.of(Role.ADMIN));
+
+    orderOwner = User.builder().id(50L).name("Order Owner").build();
+    orderOwner.addRole(Role.USER);
+    testOrder.setUser(orderOwner);
 
     testDelivery =
         Delivery.builder()
@@ -896,5 +901,135 @@ public class DeliveryControllerTest {
         .andExpect(
             jsonPath("$.message")
                 .value(org.hamcrest.Matchers.containsString("Failed to update location")));
+  }
+
+  // ==================== GET DELIVERY BY ORDER ID TESTS ====================
+
+  @Test
+  @DisplayName("GET /api/deliveries/order/{orderId} returns 200 with delivery for order owner")
+  void getDeliveryByOrderId_orderOwner_success() throws Exception {
+    User orderOwner = User.builder().id(50L).name("Order Owner").build();
+    orderOwner.addRole(Role.USER);
+    testDelivery.getOrder().setUser(orderOwner);
+
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(orderOwner);
+    when(deliveryService.getDeliveryByOrderId(100L)).thenReturn(testDelivery);
+    when(deliveryMapper.toDTO(testDelivery)).thenReturn(testDeliveryDTO);
+
+    mockMvc
+        .perform(get("/api/deliveries/order/100"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.success").value(true))
+        .andExpect(jsonPath("$.message").value("Delivery retrieved successfully"))
+        .andExpect(jsonPath("$.data.orderId").value(100));
+  }
+
+  @Test
+  @DisplayName("GET /api/deliveries/order/{orderId} returns 200 for admin")
+  void getDeliveryByOrderId_adminAccess_success() throws Exception {
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(adminUser);
+    when(deliveryService.getDeliveryByOrderId(100L)).thenReturn(testDelivery);
+    when(deliveryMapper.toDTO(testDelivery)).thenReturn(testDeliveryDTO);
+
+    mockMvc
+        .perform(get("/api/deliveries/order/100"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.success").value(true))
+        .andExpect(jsonPath("$.data.orderId").value(100));
+  }
+
+  @Test
+  @DisplayName("GET /api/deliveries/order/{orderId} returns 200 for driver")
+  void getDeliveryByOrderId_driverAccess_success() throws Exception {
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(testDriverUser);
+    when(deliveryService.getDeliveryByOrderId(100L)).thenReturn(testDelivery);
+    when(deliveryMapper.toDTO(testDelivery)).thenReturn(testDeliveryDTO);
+
+    mockMvc
+        .perform(get("/api/deliveries/order/100"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.success").value(true))
+        .andExpect(jsonPath("$.data.orderId").value(100));
+  }
+
+  @Test
+  @DisplayName("GET /api/deliveries/order/{orderId} returns 403 when user cannot access")
+  void getDeliveryByOrderId_accessDenied() throws Exception {
+    User otherUser = User.builder().id(99L).name("Other User").build();
+    otherUser.addRole(Role.USER);
+    testDelivery.getOrder().setUser(orderOwner);
+
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(otherUser);
+    when(deliveryService.getDeliveryByOrderId(100L)).thenReturn(testDelivery);
+
+    mockMvc
+        .perform(get("/api/deliveries/order/100"))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("don't have permission")));
+  }
+
+  @Test
+  @DisplayName("GET /api/deliveries/order/{orderId} returns 404 when not found")
+  void getDeliveryByOrderId_notFound() throws Exception {
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(adminUser);
+    when(deliveryService.getDeliveryByOrderId(999L)).thenReturn(null);
+
+    mockMvc.perform(get("/api/deliveries/order/999")).andExpect(status().isNotFound());
+  }
+
+  @Test
+  @DisplayName("GET /api/deliveries/order/{orderId} returns 400 on exception")
+  void getDeliveryByOrderId_exception_returnsBadRequest() throws Exception {
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(adminUser);
+    when(deliveryService.getDeliveryByOrderId(100L)).thenThrow(new RuntimeException("error"));
+
+    mockMvc
+        .perform(get("/api/deliveries/order/100"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.startsWith("Failed to retrieve delivery:")));
+  }
+
+  @Test
+  @DisplayName("GET /api/deliveries/order/{orderId} returns 403 when order has no user")
+  void getDeliveryByOrderId_orderWithNoUser_accessDenied() throws Exception {
+    User otherUser = User.builder().id(99L).name("Other User").build();
+    otherUser.addRole(Role.USER);
+    testDelivery.getOrder().setUser(null); // Order has no user
+
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(otherUser);
+    when(deliveryService.getDeliveryByOrderId(100L)).thenReturn(testDelivery);
+
+    mockMvc
+        .perform(get("/api/deliveries/order/100"))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("don't have permission")));
+  }
+
+  @Test
+  @DisplayName("GET /api/deliveries/{id} returns 403 when order has no user")
+  void getDeliveryById_orderWithNoUser_accessDenied() throws Exception {
+    User nonDriverUser = User.builder().id(99L).name("Non Driver").build();
+    nonDriverUser.addRole(Role.USER);
+    testDelivery.getOrder().setUser(null); // Order has no user
+
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(nonDriverUser);
+    when(deliveryService.getDeliveryById(1L)).thenReturn(testDelivery);
+
+    mockMvc
+        .perform(get("/api/deliveries/1"))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("don't have permission")));
   }
 }

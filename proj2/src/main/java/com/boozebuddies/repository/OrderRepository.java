@@ -34,18 +34,15 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
   /** Retrieves all orders matching the specified {@link OrderStatus}. */
   List<Order> findByStatus(OrderStatus status);
 
-  /** Return a list of open orders */
   @Query(
-      "SELECT o FROM Order o WHERE o.status = PENDING or o.status = CONFIRMED or o.status = PREPARING or o.status = READY_FOR_PICKUP AND o.driver is null")
-  List<Order> findAvailableForAssignment();
+      """
+      SELECT o FROM Order o
+      LEFT JOIN FETCH o.merchant
+      WHERE o.status IN :statuses
+      AND o.driver IS NULL
+      """)
+  List<Order> findAvailableForAssignment(@Param("statuses") List<OrderStatus> statuses);
 
-  /**
-   * Retrieves paginated orders by status.
-   *
-   * @param status the order status to filter by
-   * @param pageable pagination and sorting configuration
-   * @return a paginated list of orders with the given status
-   */
   Page<Order> findByStatus(OrderStatus status, Pageable pageable);
 
   /**

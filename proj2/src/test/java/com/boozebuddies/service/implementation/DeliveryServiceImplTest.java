@@ -246,4 +246,38 @@ class DeliveryServiceImplTest {
     assertNotNull(delivered.getDeliveredTime());
     assertEquals(DeliveryStatus.DELIVERED, delivered.getStatus());
   }
+
+  @Test
+  @DisplayName("getDeliveryByOrderId returns delivery when found")
+  void getDeliveryByOrderId_returnsDelivery() {
+    Order order = new Order();
+    order.setId(100L);
+    Driver driver = Driver.builder().id(5L).build();
+    Delivery delivery =
+        Delivery.builder()
+            .id(50L)
+            .order(order)
+            .driver(driver)
+            .status(DeliveryStatus.PENDING)
+            .build();
+    when(repository.findByOrderId(100L)).thenReturn(Optional.of(delivery));
+
+    Delivery found = service.getDeliveryByOrderId(100L);
+
+    assertNotNull(found);
+    assertEquals(50L, found.getId());
+    assertEquals(100L, found.getOrder().getId());
+    verify(repository).findByOrderId(100L);
+  }
+
+  @Test
+  @DisplayName("getDeliveryByOrderId returns null when not found")
+  void getDeliveryByOrderId_returnsNullWhenNotFound() {
+    when(repository.findByOrderId(999L)).thenReturn(Optional.empty());
+
+    Delivery found = service.getDeliveryByOrderId(999L);
+
+    assertNull(found);
+    verify(repository).findByOrderId(999L);
+  }
 }

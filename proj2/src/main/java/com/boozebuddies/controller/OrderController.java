@@ -2,6 +2,7 @@ package com.boozebuddies.controller;
 
 import com.boozebuddies.dto.ApiResponse;
 import com.boozebuddies.dto.CreateOrderRequest;
+import com.boozebuddies.dto.DriverOrderDTO;
 import com.boozebuddies.dto.OrderDTO;
 import com.boozebuddies.entity.Order;
 import com.boozebuddies.entity.User;
@@ -70,12 +71,8 @@ public class OrderController {
   // ==================== RETRIEVE ORDERS ====================
 
   /**
-   * Retrieves an order by ID. Users can view their own orders, merchant admins can view orders for
-   * their merchant, drivers can view assigned orders, and admins can view all orders.
-   *
-   * @param orderId the order ID
-   * @param authentication the authentication object
-   * @return the order with the specified ID
+   * Get order by ID. Users can view their own orders, merchant admins can view orders for their
+   * merchant, drivers can view assigned orders, and admins can view all orders.
    */
   @GetMapping("/{orderId}")
   @IsAuthenticated
@@ -87,6 +84,11 @@ public class OrderController {
       }
 
       User user = permissionService.getAuthenticatedUser(authentication);
+      if (user == null) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            .body(ApiResponse.error("Authentication required"));
+      }
+
       Optional<Order> orderOpt = orderService.getOrderById(orderId);
 
       if (orderOpt.isEmpty()) {
@@ -141,12 +143,7 @@ public class OrderController {
     }
   }
 
-  /**
-   * Retrieves all orders for the authenticated user. Users can only view their own orders.
-   *
-   * @param authentication the authentication object
-   * @return a list of the user's orders
-   */
+  /** Get all orders for the authenticated user. Users can only view their own orders. */
   @GetMapping("/my-orders")
   @IsUser
   public ResponseEntity<ApiResponse<List<OrderDTO>>> getMyOrders(Authentication authentication) {
@@ -163,12 +160,7 @@ public class OrderController {
     }
   }
 
-  /**
-   * Retrieves all orders for a specific user. Admin only.
-   *
-   * @param userId the user ID
-   * @return a list of orders for the specified user
-   */
+  /** Get all orders for a specific user. Admin only - to view any user's orders. */
   @GetMapping("/user/{userId}")
   @IsAdmin
   public ResponseEntity<ApiResponse<List<OrderDTO>>> getOrdersByUser(@PathVariable Long userId) {
@@ -237,12 +229,8 @@ public class OrderController {
   }
 
   /**
-   * Retrieves orders for a specific merchant. Admin or merchant admin (if they own the merchant)
-   * can access.
-   *
-   * @param merchantId the merchant ID
-   * @param authentication the authentication object
-   * @return a list of orders for the specified merchant
+   * Get orders for a specific merchant. Admin or merchant admin (if they own the merchant) can
+   * access.
    */
   @GetMapping("/merchant/{merchantId}")
   @IsAdminOrMerchantAdmin
@@ -346,7 +334,7 @@ public class OrderController {
   }
 
   /**
-   * Updates order status. Admin can update any order, merchant admin can update orders for their
+   * Update order status. Admin can update any order, merchant admin can update orders for their
    * merchant.
    *
    * @param orderId the order ID
@@ -382,18 +370,9 @@ public class OrderController {
     }
   }
 
-  /**
-   * Method for getting a list of available orders by distance
-   *
-   * @param latitude of driver
-   * @param longitude of driver
-   * @param radiusKm for distance from driver
-   * @param authentication for driver user
-   * @return ResponseEntity with List of Orders
-   */
   @GetMapping("/by-distance")
   @IsDriver
-  public ResponseEntity<ApiResponse<List<OrderDTO>>> getOrdersByDistance(
+  public ResponseEntity<ApiResponse<List<DriverOrderDTO>>> getOrdersByDistance(
       @RequestParam Double latitude,
       @RequestParam Double longitude,
       @RequestParam Double radiusKm,
@@ -412,10 +391,40 @@ public class OrderController {
       }
 
       List<Order> orders = orderService.getOrdersWithinDistance(latitude, longitude, radiusKm);
-      List<OrderDTO> orderDTOs =
-          orders.stream().map(orderMapper::toDTO).collect(Collectors.toList());
+
+      // Convert to DriverOrderDTO with distance and ETA calculations, and update
+      // estimatedDeliveryTime
+      List<DriverOrderDTO> driverOrderDTOs =
+          orders.stream()
+              .map(
+                  order -> {
+                    // Calculate distance from driver to merchant
+                    Double distanceKm = null;
+                    if (order.getMerchant() != null
+                        && order.getMerchant().getLatitude() != null
+                        && order.getMerchant().getLongitude() != null) {
+                      distanceKm =
+                          orderService.calculateDistance(
+                              latitude,
+                              longitude,
+                              order.getMerchant().getLatitude(),
+                              order.getMerchant().getLongitude());
+
+                      // Calculate and update estimatedDeliveryTime in database
+                      // ETA = distance / speed * 60 (convert to minutes) + 5 minutes for pickup
+                      if (distanceKm != null) {
+                        int etaMinutes = (int) Math.ceil((distanceKm / 30.0) * 60) + 5;
+                        java.time.LocalDateTime estimatedTime =
+                            java.time.LocalDateTime.now().plusMinutes(etaMinutes);
+                        orderService.updateEstimatedDeliveryTime(order.getId(), estimatedTime);
+                      }
+                    }
+                    return orderMapper.toDriverDTO(order, distanceKm);
+                  })
+              .collect(Collectors.toList());
+
       return ResponseEntity.ok(
-          ApiResponse.success(orderDTOs, "Orders within distance retrieved successfully"));
+          ApiResponse.success(driverOrderDTOs, "Orders within distance retrieved successfully"));
     } catch (Exception e) {
       return ResponseEntity.badRequest()
           .body(ApiResponse.error("Failed to retrieve orders: " + e.getMessage()));
