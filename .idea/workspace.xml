@@ -4,7 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="bd579945-702f-464b-b732-cccb18cc9ce2" name="Changes" comment="chore(build): update Maven wrapper and configuration for Java 17 compatibility" />
+    <list default="true" id="bd579945-702f-464b-b732-cccb18cc9ce2" name="Changes"
+      comment="chore(build): update Maven wrapper and configuration for Java 17 compatibility" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -14,21 +15,21 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="GitHubPullRequestSearchHistory">{
-  &quot;lastFilter&quot;: {
+    &quot;lastFilter&quot;: {
     &quot;state&quot;: &quot;OPEN&quot;,
     &quot;assignee&quot;: &quot;cyclizationz&quot;
-  }
-}</component>
+    }
+    }</component>
   <component name="GithubPullRequestsUISettings">{
-  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;selectedUrlAndAccountId&quot;: {
     &quot;url&quot;: &quot;https://github.com/TheVietScholar/CSC510-S2G1-F2025.git&quot;,
     &quot;accountId&quot;: &quot;c2f782e5-c619-4b6d-ae55-c29e57287c27&quot;
-  }
-}</component>
+    }
+    }</component>
   <component name="ProjectColorInfo">{
-  &quot;customColor&quot;: &quot;&quot;,
-  &quot;associatedIndex&quot;: 1
-}</component>
+    &quot;customColor&quot;: &quot;&quot;,
+    &quot;associatedIndex&quot;: 1
+    }</component>
   <component name="ProjectId" id="34Ly6AokUytZ7FRUbN0zZcGz1Ob" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
@@ -110,7 +111,8 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="BoozeBuddies" type="docker-deploy" factoryName="docker-compose.yml" server-name="Docker">
+    <configuration name="BoozeBuddies" type="docker-deploy" factoryName="docker-compose.yml"
+      server-name="Docker">
       <deployment type="docker-compose.yml">
         <settings>
           <option name="services">
@@ -128,7 +130,8 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-jdk-9823dce3aa75-bf35d07a577b-intellij.indexing.shared.core-IU-252.26830.84" />
+        <option
+          value="bundled-jdk-9823dce3aa75-bf35d07a577b-intellij.indexing.shared.core-IU-252.26830.84" />
         <option value="bundled-js-predefined-d6986cc7102b-3aa1da707db6-JavaScript-IU-252.26830.84" />
       </set>
     </attachedChunks>
@@ -143,7 +146,8 @@
       <workItem from="1761006971302" duration="2623000" />
       <workItem from="1761346177979" duration="68000" />
     </task>
-    <task id="LOCAL-00001" summary="chore(build): update Maven wrapper and configuration for Java 17 compatibility">
+    <task id="LOCAL-00001"
+      summary="chore(build): update Maven wrapper and configuration for Java 17 compatibility">
       <option name="closed" value="true" />
       <created>1761008879445</created>
       <option name="number" value="00001" />
@@ -159,7 +163,8 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="chore(build): update Maven wrapper and configuration for Java 17 compatibility" />
-    <option name="LAST_COMMIT_MESSAGE" value="chore(build): update Maven wrapper and configuration for Java 17 compatibility" />
+    <option name="LAST_COMMIT_MESSAGE"
+      value="chore(build): update Maven wrapper and configuration for Java 17 compatibility" />
   </component>
   <component name="VgoProject">
     <settings-migrated>true</settings-migrated>

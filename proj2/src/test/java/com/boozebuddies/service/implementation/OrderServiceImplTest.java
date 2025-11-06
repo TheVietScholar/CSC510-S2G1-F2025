@@ -18,6 +18,10 @@ import com.boozebuddies.repository.OrderRepository;
 import com.boozebuddies.repository.UserRepository;
 import com.boozebuddies.service.NotificationService;
 import com.boozebuddies.service.PaymentService;
+import com.boozebuddies.service.ProductService;
+import com.boozebuddies.service.UserService;
+
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,6 +41,8 @@ public class OrderServiceImplTest {
   @Mock private DeliveryRepository deliveryRepository;
   @Mock private PaymentService paymentService;
   @Mock private NotificationService notificationService;
+  @Mock private ProductService productService;
+  @Mock private UserService userService;
 
   @InjectMocks private OrderServiceImpl orderService;
 
@@ -57,51 +63,75 @@ public class OrderServiceImplTest {
   @Test
   public void createOrder_success_savesProcessesPaymentAndCreatesDelivery() {
     Order order = mock(Order.class);
+    OrderItem item = mock(OrderItem.class);
+    Product product = mock(Product.class);
+
+    // Mock the OrderItem properly
+    when(item.getProduct()).thenReturn(product);
+    when(item.getQuantity()).thenReturn(2);
+    when(item.getUnitPrice()).thenReturn(new BigDecimal("10.00"));
+    when(product.getId()).thenReturn(1L);
+    when(product.getName()).thenReturn("Test Product");
+    // REMOVE THIS LINE - not needed since unitPrice is already set
+    // when(product.getPrice()).thenReturn(new BigDecimal("10.00"));
+    when(product.isAlcohol()).thenReturn(false);
+    
+    when(productService.getProductById(1L)).thenReturn(product);
 
     when(order.getUser()).thenReturn(user);
     when(order.getMerchant()).thenReturn(merchant);
     when(order.getItems()).thenReturn(List.of(item));
     when(order.getTotalAmount()).thenReturn(null);
     when(orderRepository.save(order)).thenReturn(order);
-    // Make deliveryRepository.save return the same delivery instance passed
+    
     when(deliveryRepository.save(any(Delivery.class)))
         .thenAnswer(invocation -> invocation.getArgument(0));
 
     Order returned = orderService.createOrder(order);
 
-    // repository save returned the same mock
     assertSame(order, returned);
-
-    // verify that total calculation was attempted when totalAmount was null
     verify(order).getTotalAmount();
     verify(order).calculateTotal();
-
-    // payment processed and notification sent
-    verify(paymentService).processPayment(order, null);
+    verify(paymentService).processPayment(order, "test_payment");
+    
     ArgumentCaptor<Delivery> deliveryCaptor = ArgumentCaptor.forClass(Delivery.class);
     verify(deliveryRepository).save(deliveryCaptor.capture());
     Delivery savedDelivery = deliveryCaptor.getValue();
     assertNotNull(savedDelivery);
     assertEquals(DeliveryStatus.PENDING, savedDelivery.getStatus());
     verify(notificationService).sendOrderConfirmation(savedDelivery);
-
-    // ensure initial status was set to PENDING
     verify(order).setStatus(OrderStatus.PENDING);
   }
 
   @Test
   public void createOrder_failsWhenAlcoholAndUserNotAgeVerified() {
     Order order = mock(Order.class);
+    OrderItem item = mock(OrderItem.class);
+    Product product = mock(Product.class);
+    
+    // Mock product initialization (happens BEFORE validation)
+    when(item.getProduct()).thenReturn(product);
+    when(item.getQuantity()).thenReturn(2);
+    when(item.getUnitPrice()).thenReturn(new BigDecimal("10.00"));
+    when(product.getId()).thenReturn(1L);
+    when(product.getName()).thenReturn("Beer");
+    when(product.isAlcohol()).thenReturn(true); // This is an alcohol product
+    
+    // Mock productService to return the product
+    when(productService.getProductById(1L)).thenReturn(product);
+    
     when(order.getUser()).thenReturn(user);
     when(order.getMerchant()).thenReturn(merchant);
     when(order.getItems()).thenReturn(List.of(item));
-    when(item.getProduct()).thenReturn(product);
-    when(product.isAlcohol()).thenReturn(true);
+    
+    // Mock user NOT age verified
+    when(user.getId()).thenReturn(1L);
     when(user.isAgeVerified()).thenReturn(false);
+    when(userService.findById(1L)).thenReturn(user); // Service fetches fresh user data
 
     RuntimeException ex =
         assertThrows(RuntimeException.class, () -> orderService.createOrder(order));
-    assertEquals(ex.getMessage(), "User must be age verified for alcohol orders");
+    assertEquals("User must be age verified for alcohol orders", ex.getMessage());
     verify(orderRepository, never()).save(any());
   }
 

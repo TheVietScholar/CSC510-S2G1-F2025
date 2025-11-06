@@ -82,6 +82,12 @@ public class DeliveryServiceImpl implements DeliveryService {
     return deliveryRepository.findById(deliveryId).orElse(null);
   }
 
+  /** Finds a delivery by order ID. */
+  @Override
+  public Delivery getDeliveryByOrderId(Long orderId) {
+    return deliveryRepository.findByOrderId(orderId).orElse(null);
+  }
+
   /** Gets all active (non-completed and non-cancelled) deliveries. */
   @Override
   public List<Delivery> getActiveDeliveries() {

@@ -84,6 +84,9 @@ function App() {
   }
 
   const handleLogout = () => {
+    // Clear tokens from localStorage
+    localStorage.removeItem('bb_token')
+    localStorage.removeItem('bb_refresh_token')
     setUser(null)
     setCart([])
     setCurrentPage('login')

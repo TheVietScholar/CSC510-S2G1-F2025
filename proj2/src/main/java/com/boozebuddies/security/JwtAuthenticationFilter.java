@@ -21,7 +21,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 /**
- * Filter that validates JWT from the Authorization header and sets the SecurityContext. Runs once
+ * Filter that validates JWT from the Authorization header and sets the
+ * SecurityContext. Runs once
  * per request before Spring Security checks authorization.
  */
 @Component
@@ -42,9 +43,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
   @Override
   protected void doFilterInternal(
-      @NonNull HttpServletRequest request,
-      @NonNull HttpServletResponse response,
-      @NonNull FilterChain filterChain)
+      HttpServletRequest request,
+      HttpServletResponse response,
+      FilterChain filterChain)
       throws ServletException, IOException {
 
     try {
@@ -73,29 +74,48 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
   private void authenticateToken(String token, HttpServletRequest request) {
     String username = jwtUtil.extractUsername(token);
-    if (username == null) return;
-
-    // Extract roles directly from token
-    Set<String> roles = jwtUtil.extractRoles(token);
-
-    // Build authorities
-    Set<SimpleGrantedAuthority> authorities =
-        roles.stream()
-            .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
-            .collect(Collectors.toSet());
-
-    // You can skip DB lookup if you trust the token
-    // Optional: verify the user still exists / active
-    User user = userService.findByEmail(username).orElse(null);
-    if (user == null || !user.isActive() || !jwtUtil.validateToken(token, user)) {
-      log.debug("JWT invalid or user inactive");
+    if (username == null) {
+      log.debug("Cannot extract username from token");
       return;
     }
 
-    UsernamePasswordAuthenticationToken authentication =
-        new UsernamePasswordAuthenticationToken(user, null, authorities);
+    // Extract roles directly from token
+    Set<String> roles = jwtUtil.extractRoles(token);
+    log.debug("Extracted roles from token: {}", roles);
+
+    // Build authorities
+    Set<SimpleGrantedAuthority> authorities = roles.stream()
+        .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
+        .collect(Collectors.toSet());
+
+    // Verify the user still exists / active
+    User user = userService.findByEmail(username).orElse(null);
+    if (user == null) {
+      log.warn("User not found for email: {}", username);
+      return;
+    }
+
+    if (!user.isActive()) {
+      log.warn("User is inactive: {}", username);
+      return;
+    }
+
+    if (!jwtUtil.validateToken(token, user)) {
+      log.warn("Token validation failed for user: {}", username);
+      return;
+    }
+
+    // Use roles from user entity if token roles are empty (fallback)
+    if (authorities.isEmpty() && user.getRoles() != null && !user.getRoles().isEmpty()) {
+      authorities = buildAuthorities(user);
+      log.debug("Using roles from user entity: {}", authorities);
+    }
+
+    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(user, null,
+        authorities);
     authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
     SecurityContextHolder.getContext().setAuthentication(authentication);
+    log.debug("Authentication set for user: {} with authorities: {}", username, authorities);
   }
 
   /** Build Spring Security authorities from user roles */

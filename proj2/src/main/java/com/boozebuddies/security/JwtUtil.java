@@ -19,8 +19,7 @@ public class JwtUtil {
   private final long jwtExpirationMs;
 
   public JwtUtil(
-      @Value("${jwt.secret:boozebuddies-super-secret-key-change-in-production-minimum-256-bits}")
-          String secret,
+      @Value("${jwt.secret:boozebuddies-super-secret-key-change-in-production-minimum-256-bits}") String secret,
       @Value("${jwt.expirationMs:900000}") long jwtExpirationMs) {
     // Ensure the secret is at least 256 bits (32 bytes) for HS256
     if (secret.length() < 32) {
@@ -38,10 +37,9 @@ public class JwtUtil {
     Date expiry = new Date(now.getTime() + jwtExpirationMs);
 
     // Add user roles to token
-    var roles =
-        user.getRoles() != null
-            ? user.getRoles().stream().map(Enum::name).toList()
-            : Collections.emptyList();
+    var roles = user.getRoles() != null
+        ? user.getRoles().stream().map(Enum::name).toList()
+        : Collections.emptyList();
 
     return Jwts.builder()
         .setSubject(user.getEmail())
@@ -76,7 +74,8 @@ public class JwtUtil {
   /** Extract user ID from token */
   public Long extractUserId(String token) {
     Claims claims = getClaims(token);
-    if (claims == null) return null;
+    if (claims == null)
+      return null;
     Object userIdObj = claims.get("userId");
     if (userIdObj instanceof Integer) {
       return ((Integer) userIdObj).longValue();
@@ -87,8 +86,7 @@ public class JwtUtil {
   /** Check if token is expired */
   public boolean isTokenExpired(String token) {
     try {
-      Claims claims =
-          Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
+      Claims claims = Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
       return claims.getExpiration().before(new Date());
     } catch (ExpiredJwtException e) {
       return true;
@@ -97,25 +95,59 @@ public class JwtUtil {
     }
   }
 
-  /** Validate token against user */
+  // /** Validate token against user */
+  // public boolean validateToken(String token, User user) {
+  // if (token == null || user == null) {
+  // return false;
+  // }
+
+  // try {
+  // Claims claims =
+  // Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
+
+  // String username = claims.getSubject();
+  // Date expiration = claims.getExpiration();
+
+  // return username != null
+  // && username.equalsIgnoreCase(user.getEmail())
+  // && expiration != null
+  // && !expiration.before(new Date());
+
+  // } catch (JwtException | IllegalArgumentException e) {
+  // return false;
+  // }
+  // }
+
   public boolean validateToken(String token, User user) {
     if (token == null || user == null) {
+      System.out.println("VALIDATION FAILED: token=" + (token != null) + ", user=" + (user != null));
       return false;
     }
 
     try {
-      Claims claims =
-          Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
+      Claims claims = Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
 
       String username = claims.getSubject();
       Date expiration = claims.getExpiration();
 
-      return username != null
+      System.out.println("=== TOKEN VALIDATION ===");
+      System.out.println("Token username: " + username);
+      System.out.println("User email: " + user.getEmail());
+      System.out.println("Username match: " + (username != null && username.equalsIgnoreCase(user.getEmail())));
+      System.out.println("Expiration: " + expiration);
+      System.out.println("Expired: " + (expiration != null && expiration.before(new Date())));
+
+      boolean valid = username != null
           && username.equalsIgnoreCase(user.getEmail())
           && expiration != null
           && !expiration.before(new Date());
 
+      System.out.println("VALIDATION RESULT: " + valid);
+      return valid;
+
     } catch (JwtException | IllegalArgumentException e) {
+      System.out.println("VALIDATION EXCEPTION: " + e.getMessage());
+      e.printStackTrace();
       return false;
     }
   }
@@ -133,15 +165,16 @@ public class JwtUtil {
   @SuppressWarnings("unchecked")
   public Set<String> extractRoles(String token) {
     Claims claims = getClaims(token);
-    if (claims == null) return Collections.emptySet();
+    if (claims == null)
+      return Collections.emptySet();
 
     Object rolesObj = claims.get("roles");
     if (rolesObj instanceof java.util.List<?>) {
       return ((java.util.List<?>) rolesObj)
           .stream()
-              .filter(String.class::isInstance)
-              .map(String.class::cast)
-              .collect(Collectors.toSet());
+          .filter(String.class::isInstance)
+          .map(String.class::cast)
+          .collect(Collectors.toSet());
     }
     return Collections.emptySet();
   }

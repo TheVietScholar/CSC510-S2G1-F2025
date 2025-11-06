@@ -7,6 +7,7 @@ import com.boozebuddies.dto.OrderItemRequest;
 import com.boozebuddies.entity.Merchant;
 import com.boozebuddies.entity.Order;
 import com.boozebuddies.entity.OrderItem;
+import com.boozebuddies.entity.Product;
 import com.boozebuddies.entity.User;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
@@ -15,7 +16,8 @@ import org.springframework.stereotype.Component;
 public class OrderMapper {
 
   public OrderDTO toDTO(Order order) {
-    if (order == null) return null;
+    if (order == null)
+      return null;
 
     return OrderDTO.builder()
         .id(order.getId())
@@ -36,7 +38,8 @@ public class OrderMapper {
   }
 
   public Order toEntity(CreateOrderRequest request) {
-    if (request == null) return null;
+    if (request == null)
+      return null;
 
     Order order = new Order();
 
@@ -70,7 +73,8 @@ public class OrderMapper {
   }
 
   private OrderItemDTO orderItemToDTO(OrderItem orderItem) {
-    if (orderItem == null) return null;
+    if (orderItem == null)
+      return null;
 
     return OrderItemDTO.builder()
         .id(orderItem.getId())
@@ -83,12 +87,20 @@ public class OrderMapper {
   }
 
   private OrderItem orderItemRequestToEntity(OrderItemRequest request) {
-    if (request == null) return null;
+    if (request == null)
+      return null;
 
     OrderItem orderItem = new OrderItem();
     orderItem.setQuantity(request.getQuantity());
     orderItem.setUnitPrice(request.getUnitPrice());
-    // Product will be set by the service
+
+    // Set product reference (just ID - service will fetch full entity)
+    if (request.getProductId() != null) {
+      Product product = new Product();
+      product.setId(request.getProductId());
+      orderItem.setProduct(product);
+    }
+
     return orderItem;
   }
 }

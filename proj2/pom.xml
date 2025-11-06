@@ -25,6 +25,11 @@
     <google.java.format.version>1.23.0</google.java.format.version>
     <checkstyle.plugin.version>3.3.1</checkstyle.plugin.version>
     <!-- <checkstyle.version>10.17.0</checkstyle.version> -->
+    <!-- Flyway Maven plugin properties (defaults for Docker) -->
+    <flyway.url>
+      jdbc:mysql://127.0.0.1:3307/boozebuddies?allowPublicKeyRetrieval=true&amp;useSSL=false</flyway.url>
+    <flyway.user>app</flyway.user>
+    <flyway.password>app</flyway.password>
   </properties>
 
   <dependencies>
@@ -122,23 +127,23 @@
           <version>${checkstyle.plugin.version}</version>
         </plugin> -->
         <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-javadoc-plugin</artifactId>
-            <version>3.6.3</version> <!-- Use the latest stable version -->
-            <executions>
-                <execution>
-                    <id>attach-javadocs</id>
-                    <goals>
-                        <goal>jar</goal>
-                    </goals>
-                </execution>
-            </executions>
-            <configuration>
-                <!-- Optional: Configure Javadoc generation options -->
-                <source>17</source> <!-- Specify Java source version -->
-                <doclint>none</doclint> <!-- Disable doclint if needed -->
-                <!-- Add other configurations as required -->
-            </configuration>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <version>3.6.3</version> <!-- Use the latest stable version -->
+          <executions>
+            <execution>
+              <id>attach-javadocs</id>
+              <goals>
+                <goal>jar</goal>
+              </goals>
+            </execution>
+          </executions>
+          <configuration>
+            <!-- Optional: Configure Javadoc generation options -->
+            <source>17</source> <!-- Specify Java source version -->
+            <doclint>none</doclint> <!-- Disable doclint if needed -->
+            <!-- Add other configurations as required -->
+          </configuration>
         </plugin>
       </plugins>
     </pluginManagement>
@@ -289,6 +294,18 @@
             </goals>
           </execution>
         </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.flywaydb</groupId>
+        <artifactId>flyway-maven-plugin</artifactId>
+        <configuration>
+          <url>${flyway.url}</url>
+          <user>${flyway.user}</user>
+          <password>${flyway.password}</password>
+          <locations>
+            <location>classpath:db/migration</location>
+          </locations>
+        </configuration>
       </plugin>
     </plugins>
   </build>

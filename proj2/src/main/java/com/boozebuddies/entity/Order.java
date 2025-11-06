@@ -89,8 +89,17 @@ public class Order {
   }
 
   public void calculateTotal() {
+    if (items == null || items.isEmpty()) {
+      this.totalAmount = BigDecimal.ZERO;
+      return;
+    }
+    
+    // Filter out null subtotals and sum them
     this.totalAmount =
-        items.stream().map(OrderItem::getSubtotal).reduce(BigDecimal.ZERO, BigDecimal::add);
+        items.stream()
+            .map(OrderItem::getSubtotal)
+            .filter(subtotal -> subtotal != null)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
   }
 
   public boolean canBeCancelled() {

@@ -55,6 +55,13 @@ public class PermissionServiceImpl implements PermissionService {
       return null;
     }
 
+    // Check if principal is already a User object (set by JwtAuthenticationFilter)
+    Object principal = authentication.getPrincipal();
+    if (principal instanceof User) {
+      return (User) principal;
+    }
+
+    // Fallback: look up by email (for other authentication types)
     String email = authentication.getName();
     return userService.findByEmail(email).orElse(null);
   }
@@ -149,9 +156,8 @@ public class PermissionServiceImpl implements PermissionService {
       return orderService
           .getOrderById(orderId)
           .map(
-              order ->
-                  order.getDriver() != null
-                      && order.getDriver().getId().equals(user.getDriver().getId()))
+              order -> order.getDriver() != null
+                  && order.getDriver().getId().equals(user.getDriver().getId()))
           .orElse(false);
     } catch (Exception e) {
       return false;
