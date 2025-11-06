@@ -220,9 +220,8 @@ public class PermissionServiceImpl implements PermissionService {
       return orderService
           .getOrderById(orderId)
           .map(
-              order ->
-                  order.getDriver() != null
-                      && order.getDriver().getId().equals(user.getDriver().getId()))
+              order -> order.getDriver() != null
+                  && order.getDriver().getId().equals(user.getDriver().getId()))
           .orElse(false);
     } catch (Exception e) {
       return false;
