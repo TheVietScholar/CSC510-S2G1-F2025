@@ -23,9 +23,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * REST controller for managing payments and payment operations.
- */
+/** REST controller for managing payments and payment operations. */
 @RestController
 @RequestMapping("/api/payments")
 @RequiredArgsConstructor
@@ -130,7 +128,8 @@ public class PaymentController {
   }
 
   /**
-   * Retrieves payments by user ID. Users can view their own payments, admins can view any user's payments.
+   * Retrieves payments by user ID. Users can view their own payments, admins can view any user's
+   * payments.
    *
    * @param userId the user ID
    * @param authentication the authentication object
@@ -163,7 +162,8 @@ public class PaymentController {
   }
 
   /**
-   * Retrieves payment by order ID. Users can view payment for their own orders, admins can view any payment.
+   * Retrieves payment by order ID. Users can view payment for their own orders, admins can view any
+   * payment.
    *
    * @param orderId the order ID
    * @param authentication the authentication object
@@ -250,7 +250,8 @@ public class PaymentController {
   // ==================== PAYMENT METHOD VALIDATION ====================
 
   /**
-   * Validates a payment method. Users can validate their own payment methods, admins can validate for any user.
+   * Validates a payment method. Users can validate their own payment methods, admins can validate
+   * for any user.
    *
    * @param userId the user ID
    * @param paymentMethod the payment method to validate

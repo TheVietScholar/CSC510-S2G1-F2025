@@ -6,9 +6,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import lombok.*;
 
-/**
- * Entity representing a payment for an order.
- */
+/** Entity representing a payment for an order. */
 @Entity
 @Table(name = "payments")
 @NoArgsConstructor
@@ -73,9 +71,7 @@ public class Payment {
   @Column(name = "payment_date")
   private LocalDateTime paymentDate;
 
-  /**
-   * Updates the updatedAt timestamp before persisting changes.
-   */
+  /** Updates the updatedAt timestamp before persisting changes. */
   @PreUpdate
   public void preUpdate() {
     this.updatedAt = LocalDateTime.now();

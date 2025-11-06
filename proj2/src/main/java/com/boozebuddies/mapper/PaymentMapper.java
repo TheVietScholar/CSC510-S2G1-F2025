@@ -5,9 +5,7 @@ import com.boozebuddies.dto.PaymentRequest;
 import com.boozebuddies.entity.Payment;
 import org.springframework.stereotype.Component;
 
-/**
- * Mapper for converting between Payment entities and Payment-related DTO objects.
- */
+/** Mapper for converting between Payment entities and Payment-related DTO objects. */
 @Component
 public class PaymentMapper {
 

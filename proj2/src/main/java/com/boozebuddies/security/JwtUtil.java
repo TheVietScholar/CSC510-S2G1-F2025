@@ -13,18 +13,19 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 /**
- * Utility class for generating, parsing, and validating JSON Web Tokens (JWTs)
- * used for stateless authentication in the BoozeBuddies application.
+ * Utility class for generating, parsing, and validating JSON Web Tokens (JWTs) used for stateless
+ * authentication in the BoozeBuddies application.
  *
  * <p>This component handles:
+ *
  * <ul>
- *   <li>Creating signed JWT tokens with user claims and expiration times</li>
- *   <li>Extracting claims such as username, user ID, and roles</li>
- *   <li>Validating tokens for integrity, signature, and expiration</li>
+ *   <li>Creating signed JWT tokens with user claims and expiration times
+ *   <li>Extracting claims such as username, user ID, and roles
+ *   <li>Validating tokens for integrity, signature, and expiration
  * </ul>
  *
- * <p>Uses the HS256 (HMAC-SHA256) signing algorithm and requires a minimum
- * secret key length of 256 bits (32 characters).
+ * <p>Uses the HS256 (HMAC-SHA256) signing algorithm and requires a minimum secret key length of 256
+ * bits (32 characters).
  */
 @Component
 public class JwtUtil {
@@ -35,7 +36,7 @@ public class JwtUtil {
   /**
    * Constructs a {@code JwtUtil} instance with the provided secret key and token expiration period.
    *
-   * @param secret          the secret key used for signing JWTs (must be at least 32 characters)
+   * @param secret the secret key used for signing JWTs (must be at least 32 characters)
    * @param jwtExpirationMs the duration in milliseconds before a token expires
    * @throws IllegalArgumentException if the secret key is shorter than 32 characters
    */
@@ -87,8 +88,8 @@ public class JwtUtil {
   /**
    * Extracts and parses all claims from a given JWT.
    *
-   * <p>If the token is expired, it still returns the claims. Returns {@code null}
-   * if the token is malformed or has an invalid signature.
+   * <p>If the token is expired, it still returns the claims. Returns {@code null} if the token is
+   * malformed or has an invalid signature.
    *
    * @param token the JWT to parse
    * @return a {@link Claims} object containing the token’s payload, or {@code null} if invalid
@@ -153,14 +154,15 @@ public class JwtUtil {
 
   /**
    * Validates the JWT against a specific user by checking:
+   *
    * <ul>
-   *   <li>Signature integrity</li>
-   *   <li>Token expiration</li>
-   *   <li>Subject (username/email) matching the given user</li>
+   *   <li>Signature integrity
+   *   <li>Token expiration
+   *   <li>Subject (username/email) matching the given user
    * </ul>
    *
    * @param token the JWT to validate
-   * @param user  the user to validate the token against
+   * @param user the user to validate the token against
    * @return {@code true} if the token is valid and matches the user; otherwise {@code false}
    */
   public boolean validateToken(String token, User user) {
@@ -224,7 +226,8 @@ public class JwtUtil {
    * <p>Roles are stored as a list of strings under the {@code roles} claim.
    *
    * @param token the JWT to extract roles from
-   * @return a set of role names (e.g., {@code ["ADMIN", "USER"]}); returns an empty set if none found
+   * @return a set of role names (e.g., {@code ["ADMIN", "USER"]}); returns an empty set if none
+   *     found
    */
   @SuppressWarnings("unchecked")
   public Set<String> extractRoles(String token) {

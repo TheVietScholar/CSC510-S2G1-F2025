@@ -12,9 +12,9 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
 /**
- * Implementation of the {@link RatingService} interface that handles ratings for products,
- * drivers, and merchants. This service allows users to submit and retrieve ratings for different
- * entities within the BoozeBuddies platform.
+ * Implementation of the {@link RatingService} interface that handles ratings for products, drivers,
+ * and merchants. This service allows users to submit and retrieve ratings for different entities
+ * within the BoozeBuddies platform.
  *
  * <p>Each rating is stored in an in-memory list (for demonstration or testing purposes). In a
  * production environment, these would typically be persisted in a database.

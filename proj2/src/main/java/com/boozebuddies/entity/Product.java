@@ -6,9 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.*;
 
-/**
- * Entity representing a product available for purchase.
- */
+/** Entity representing a product available for purchase. */
 @Entity
 @Table(name = "products")
 @NoArgsConstructor
@@ -46,7 +44,7 @@ public class Product {
   /** Whether this product contains alcohol */
   @Builder.Default
   @Column(name = "is_alcohol")
-  private boolean isAlcohol;
+  private boolean isAlcohol = false;
 
   public boolean isAlcohol() { // This should be the getter name
     return isAlcohol;

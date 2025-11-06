@@ -21,9 +21,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * REST controller for managing merchants and merchant operations.
- */
+/** REST controller for managing merchants and merchant operations. */
 @RestController
 @RequestMapping("/api/merchants")
 public class MerchantController {

@@ -14,11 +14,12 @@ import org.springframework.stereotype.Service;
  * notifications.
  *
  * <p>This service supports:
+ *
  * <ul>
- *   <li>Notifying individual users, drivers, and merchants</li>
- *   <li>Sending delivery status updates</li>
- *   <li>Broadcasting global system messages</li>
- *   <li>Convenience methods for order confirmation and cancellation</li>
+ *   <li>Notifying individual users, drivers, and merchants
+ *   <li>Sending delivery status updates
+ *   <li>Broadcasting global system messages
+ *   <li>Convenience methods for order confirmation and cancellation
  * </ul>
  */
 @Service

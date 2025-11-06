@@ -4,9 +4,7 @@ import jakarta.persistence.*;
 import java.math.BigDecimal;
 import lombok.*;
 
-/**
- * Entity representing an item in an order.
- */
+/** Entity representing an item in an order. */
 @Entity
 @Table(name = "order_items")
 @NoArgsConstructor
@@ -50,9 +48,7 @@ public class OrderItem {
   @Column(nullable = false, precision = 10, scale = 2)
   private BigDecimal subtotal;
 
-  /**
-   * Calculates and sets the subtotal before persisting or updating.
-   */
+  /** Calculates and sets the subtotal before persisting or updating. */
   @PrePersist
   @PreUpdate
   public void calculateSubtotal() {

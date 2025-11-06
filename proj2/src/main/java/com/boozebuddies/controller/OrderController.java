@@ -20,9 +20,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * REST controller for managing orders and order operations.
- */
+/** REST controller for managing orders and order operations. */
 @RestController
 @RequestMapping("/api/orders")
 @RequiredArgsConstructor
@@ -239,7 +237,8 @@ public class OrderController {
   }
 
   /**
-   * Retrieves orders for a specific merchant. Admin or merchant admin (if they own the merchant) can access.
+   * Retrieves orders for a specific merchant. Admin or merchant admin (if they own the merchant)
+   * can access.
    *
    * @param merchantId the merchant ID
    * @param authentication the authentication object
@@ -347,7 +346,8 @@ public class OrderController {
   }
 
   /**
-   * Updates order status. Admin can update any order, merchant admin can update orders for their merchant.
+   * Updates order status. Admin can update any order, merchant admin can update orders for their
+   * merchant.
    *
    * @param orderId the order ID
    * @param status the new order status
@@ -384,6 +384,7 @@ public class OrderController {
 
   /**
    * Method for getting a list of available orders by distance
+   *
    * @param latitude of driver
    * @param longitude of driver
    * @param radiusKm for distance from driver

@@ -21,7 +21,10 @@ public class ValidationServiceImpl implements ValidationService {
   private static final Pattern EMAIL_PATTERN =
       Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
 
-  /** Regular expression pattern for validating strong passwords (minimum 8 characters, letters, and numbers). */
+  /**
+   * Regular expression pattern for validating strong passwords (minimum 8 characters, letters, and
+   * numbers).
+   */
   private static final Pattern PASSWORD_PATTERN =
       Pattern.compile("^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{8,}$");
 

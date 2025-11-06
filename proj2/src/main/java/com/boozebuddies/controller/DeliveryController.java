@@ -24,9 +24,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * REST controller for managing deliveries and driver operations.
- */
+/** REST controller for managing deliveries and driver operations. */
 @RestController
 @RequestMapping("/api/deliveries")
 @RequiredArgsConstructor
@@ -137,6 +135,7 @@ public class DeliveryController {
 
   /**
    * Method for getting a Delivery by the attached Order Id
+   *
    * @param orderId to search by
    * @param authentication of the user
    * @return Response Entity with retrieval data
@@ -231,7 +230,8 @@ public class DeliveryController {
   // ==================== DRIVER ENDPOINTS ====================
 
   /**
-   * Retrieves all deliveries for the authenticated driver. Drivers can only view their own deliveries.
+   * Retrieves all deliveries for the authenticated driver. Drivers can only view their own
+   * deliveries.
    *
    * @param authentication the authentication object
    * @return a list of deliveries for the authenticated driver
@@ -494,7 +494,8 @@ public class DeliveryController {
   }
 
   /**
-   * Updates delivery location for real-time tracking. Drivers update their current location while delivering.
+   * Updates delivery location for real-time tracking. Drivers update their current location while
+   * delivering.
    *
    * @param deliveryId the delivery ID
    * @param latitude the current latitude

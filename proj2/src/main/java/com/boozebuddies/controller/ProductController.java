@@ -21,9 +21,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * REST controller for managing products and product operations.
- */
+/** REST controller for managing products and product operations. */
 @RestController
 @RequestMapping("/api/products")
 @RequiredArgsConstructor
@@ -161,7 +159,8 @@ public class ProductController {
   }
 
   /**
-   * Retrieves all products by merchant including unavailable ones. Admin can see all, merchant admin can only see their own.
+   * Retrieves all products by merchant including unavailable ones. Admin can see all, merchant
+   * admin can only see their own.
    *
    * @param merchantId the merchant ID
    * @param authentication the authentication object
@@ -197,7 +196,8 @@ public class ProductController {
   // ==================== ADMIN & MERCHANT_ADMIN ENDPOINTS ====================
 
   /**
-   * Adds a new product. Admin can add for any merchant, merchant admin can only add for their own merchant.
+   * Adds a new product. Admin can add for any merchant, merchant admin can only add for their own
+   * merchant.
    *
    * @param request the product creation request
    * @param authentication the authentication object
@@ -257,7 +257,8 @@ public class ProductController {
   }
 
   /**
-   * Updates an existing product. Admin can update any product, merchant admin can only update their own products.
+   * Updates an existing product. Admin can update any product, merchant admin can only update their
+   * own products.
    *
    * @param id the product ID
    * @param productDTO the updated product data
@@ -303,7 +304,8 @@ public class ProductController {
   }
 
   /**
-   * Deletes a product. Admin can delete any product, merchant admin can only delete their own products.
+   * Deletes a product. Admin can delete any product, merchant admin can only delete their own
+   * products.
    *
    * @param id the product ID
    * @param authentication the authentication object

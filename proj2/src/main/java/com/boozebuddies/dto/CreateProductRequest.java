@@ -4,9 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.math.BigDecimal;
 import lombok.*;
 
-/**
- * Data transfer object for creating a new product.
- */
+/** Data transfer object for creating a new product. */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -14,16 +12,16 @@ import lombok.*;
 public class CreateProductRequest {
   /** The name of the product */
   private String name;
-  
+
   /** A description of the product */
   private String description;
-  
+
   /** The price of the product */
   private BigDecimal price;
-  
+
   /** The category the product belongs to */
   private String category;
-  
+
   /** The ID of the merchant selling this product */
   private Long merchantId;
 
@@ -37,10 +35,10 @@ public class CreateProductRequest {
   /** Whether the product is available for ordering */
   @JsonProperty("isAvailable")
   private boolean isAvailable;
-  
+
   /** The number of units available in stock */
   private Integer stockQuantity;
-  
+
   /** URL to the product image */
   private String imageUrl;
 }

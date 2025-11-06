@@ -7,9 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.*;
 
-/**
- * Entity representing a driver who delivers orders.
- */
+/** Entity representing a driver who delivers orders. */
 @Entity
 @Table(name = "drivers")
 @NoArgsConstructor
@@ -100,9 +98,7 @@ public class Driver {
   @Builder.Default
   private List<Rating> ratings = new ArrayList<>();
 
-  /**
-   * Updates the updatedAt timestamp before persisting changes.
-   */
+  /** Updates the updatedAt timestamp before persisting changes. */
   @PreUpdate
   public void preUpdate() {
     this.updatedAt = LocalDateTime.now();

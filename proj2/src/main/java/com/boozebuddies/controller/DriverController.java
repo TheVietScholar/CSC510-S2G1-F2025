@@ -19,9 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * REST controller for managing drivers and driver operations.
- */
+/** REST controller for managing drivers and driver operations. */
 @RestController
 @RequestMapping("/api/drivers")
 @RequiredArgsConstructor

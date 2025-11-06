@@ -5,17 +5,14 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 /**
  * Main entry point for the BoozeBuddies Spring Boot application.
- * <p>
- * This class bootstraps the application using Spring Boot's auto-configuration.
- * The protected constructor prevents instantiation of this class.
- * </p>
+ *
+ * <p>This class bootstraps the application using Spring Boot's auto-configuration. The protected
+ * constructor prevents instantiation of this class.
  */
 @SpringBootApplication
 public class BoozeBuddiesApplication {
 
-  /**
-   * Protected constructor to prevent instantiation of the application class.
-   */
+  /** Protected constructor to prevent instantiation of the application class. */
   protected BoozeBuddiesApplication() {
     // Prevent instantiation
   }

@@ -4,9 +4,7 @@ import com.boozebuddies.dto.CategoryDTO;
 import com.boozebuddies.entity.Category;
 import org.springframework.stereotype.Component;
 
-/**
- * Mapper for converting between Category entities and CategoryDTO objects.
- */
+/** Mapper for converting between Category entities and CategoryDTO objects. */
 @Component
 public class CategoryMapper {
   /**

@@ -9,9 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * REST controller for handling authentication operations.
- */
+/** REST controller for handling authentication operations. */
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -60,8 +58,9 @@ public class AuthController {
 
   /**
    * Authentication method for logging in as driver
+   *
    * @param request the refresh token request
-   * @return the authentication response with new JWT tokens 
+   * @return the authentication response with new JWT tokens
    */
   @PostMapping("/driver/login")
   public ResponseEntity<AuthenticationResponse> driverLogin(

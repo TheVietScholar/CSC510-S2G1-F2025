@@ -6,9 +6,7 @@ import com.boozebuddies.entity.User;
 import java.util.HashSet;
 import org.springframework.stereotype.Component;
 
-/**
- * Mapper for converting between User entities and User-related DTO objects.
- */
+/** Mapper for converting between User entities and User-related DTO objects. */
 @Component
 public class UserMapper {
 

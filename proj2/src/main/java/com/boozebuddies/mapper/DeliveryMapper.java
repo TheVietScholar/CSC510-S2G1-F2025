@@ -7,9 +7,7 @@ import com.boozebuddies.entity.Order;
 import com.boozebuddies.model.DeliveryStatus;
 import org.springframework.stereotype.Component;
 
-/**
- * Mapper for converting between Delivery entities and DeliveryDTO objects.
- */
+/** Mapper for converting between Delivery entities and DeliveryDTO objects. */
 @Component
 public class DeliveryMapper {
 

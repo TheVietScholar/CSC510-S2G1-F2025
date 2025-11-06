@@ -17,9 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * REST controller for managing ratings for products, drivers, and merchants.
- */
+/** REST controller for managing ratings for products, drivers, and merchants. */
 @RestController
 @RequestMapping("/api/ratings")
 @RequiredArgsConstructor
@@ -111,7 +109,8 @@ public class RatingController {
   // -----------------------------
 
   /**
-   * Creates a rating for a merchant. Users can rate merchants, or admins can rate on behalf of users.
+   * Creates a rating for a merchant. Users can rate merchants, or admins can rate on behalf of
+   * users.
    *
    * @param userId the user ID
    * @param merchantId the merchant ID
