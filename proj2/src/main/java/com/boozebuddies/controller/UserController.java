@@ -13,6 +13,7 @@ import com.boozebuddies.service.ValidationService;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -38,9 +39,10 @@ public class UserController {
   // ==================== RETRIEVE ====================
 
   /**
-   * Retrieves a user by ID. Users can view their own profile, admins can view any profile.
+   * Retrieves a user by ID. Users can view their own profile, admins can view any
+   * profile.
    *
-   * @param id the user ID
+   * @param id             the user ID
    * @param authentication the authentication object
    * @return the user with the specified ID
    */
@@ -62,9 +64,8 @@ public class UserController {
       return userService
           .getUserById(id)
           .map(
-              user ->
-                  ResponseEntity.ok(
-                      ApiResponse.success(userMapper.toDTO(user), "User retrieved successfully")))
+              user -> ResponseEntity.ok(
+                  ApiResponse.success(userMapper.toDTO(user), "User retrieved successfully")))
           .orElse(ResponseEntity.notFound().build());
     } catch (AccessDeniedException e) {
       return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error(e.getMessage()));
@@ -83,8 +84,7 @@ public class UserController {
   @IsAdmin
   public ResponseEntity<?> getAllUsers() {
     try {
-      List<UserDTO> users =
-          userService.getAllUsers().stream().map(userMapper::toDTO).collect(Collectors.toList());
+      List<UserDTO> users = userService.getAllUsers().stream().map(userMapper::toDTO).collect(Collectors.toList());
       return ResponseEntity.ok(ApiResponse.success(users, "Users retrieved successfully"));
     } catch (Exception e) {
       return ResponseEntity.badRequest()
@@ -113,10 +113,11 @@ public class UserController {
   // ==================== UPDATE ====================
 
   /**
-   * Updates a user. Users can update their own profile, admins can update any profile.
+   * Updates a user. Users can update their own profile, admins can update any
+   * profile.
    *
-   * @param id the user ID
-   * @param userDTO the updated user data
+   * @param id             the user ID
+   * @param userDTO        the updated user data
    * @param authentication the authentication object
    * @return the updated user
    */
@@ -154,9 +155,10 @@ public class UserController {
   // ==================== VERIFY AGE ====================
 
   /**
-   * Verifies a user's age. Users can verify their own age, admins can verify any user's age.
+   * Verifies a user's age. Users can verify their own age, admins can verify any
+   * user's age.
    *
-   * @param id the user ID
+   * @param id             the user ID
    * @param authentication the authentication object
    * @return the user with updated age verification status
    */
@@ -175,8 +177,7 @@ public class UserController {
         throw new AccessDeniedException("You can only verify your own age");
       }
 
-      User user =
-          userService.getUserById(id).orElseThrow(() -> new RuntimeException("User not found"));
+      User user = userService.getUserById(id).orElseThrow(() -> new RuntimeException("User not found"));
 
       // In real app, this would integrate with external age verification service
       boolean isVerified = validationService.validateAge(user);
@@ -229,7 +230,7 @@ public class UserController {
   /**
    * Assigns a role to a user. Admin only.
    *
-   * @param id the user ID
+   * @param id      the user ID
    * @param request the role assignment request
    * @return the updated user
    */
@@ -240,8 +241,7 @@ public class UserController {
       User updatedUser;
 
       if (request.getRole() == Role.MERCHANT_ADMIN && request.getMerchantId() != null) {
-        updatedUser =
-            roleService.assignRoleWithMerchant(id, request.getRole(), request.getMerchantId());
+        updatedUser = roleService.assignRoleWithMerchant(id, request.getRole(), request.getMerchantId());
       } else {
         updatedUser = roleService.assignRole(id, request.getRole());
       }
@@ -257,7 +257,7 @@ public class UserController {
   /**
    * Removes a role from a user. Admin only.
    *
-   * @param id the user ID
+   * @param id   the user ID
    * @param role the role to remove
    * @return the updated user
    */
@@ -277,7 +277,7 @@ public class UserController {
   /**
    * Sets all roles for a user, replacing existing roles. Admin only.
    *
-   * @param id the user ID
+   * @param id      the user ID
    * @param request the set roles request
    * @return the updated user
    */
@@ -297,7 +297,7 @@ public class UserController {
   /**
    * Assigns a merchant to a user for MERCHANT_ADMIN role. Admin only.
    *
-   * @param id the user ID
+   * @param id      the user ID
    * @param request the merchant assignment request
    * @return the updated user
    */

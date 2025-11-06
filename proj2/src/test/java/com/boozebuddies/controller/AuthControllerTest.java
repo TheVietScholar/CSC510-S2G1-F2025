@@ -353,10 +353,7 @@ class AuthControllerTest {
         .thenReturn(response);
 
     mockMvc
-        .perform(
-            post("/api/auth/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{}"))
+        .perform(post("/api/auth/register").contentType(MediaType.APPLICATION_JSON).content("{}"))
         .andExpect(status().isOk());
   }
 

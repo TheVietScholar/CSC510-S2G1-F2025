@@ -5,9 +5,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import lombok.*;
 
-/**
- * DTO for orders displayed to drivers, includes distance and ETA calculations.
- */
+/** DTO for orders displayed to drivers, includes distance and ETA calculations. */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -28,4 +26,3 @@ public class DriverOrderDTO {
   private LocalDateTime updatedAt;
   private LocalDateTime estimatedDeliveryTime;
 }
-

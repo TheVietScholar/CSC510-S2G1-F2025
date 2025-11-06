@@ -35,25 +35,16 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class OrderServiceImplTest {
 
-  @Mock
-  private OrderRepository orderRepository;
-  @Mock
-  private UserRepository userRepository;
-  @Mock
-  private MerchantRepository merchantRepository;
-  @Mock
-  private DeliveryRepository deliveryRepository;
-  @Mock
-  private PaymentService paymentService;
-  @Mock
-  private NotificationService notificationService;
-  @Mock
-  private ProductService productService;
-  @Mock
-  private UserService userService;
+  @Mock private OrderRepository orderRepository;
+  @Mock private UserRepository userRepository;
+  @Mock private MerchantRepository merchantRepository;
+  @Mock private DeliveryRepository deliveryRepository;
+  @Mock private PaymentService paymentService;
+  @Mock private NotificationService notificationService;
+  @Mock private ProductService productService;
+  @Mock private UserService userService;
 
-  @InjectMocks
-  private OrderServiceImpl orderService;
+  @InjectMocks private OrderServiceImpl orderService;
 
   private User user;
   private Merchant merchant;
@@ -74,10 +65,7 @@ public class OrderServiceImplTest {
     Integer quantity = 2;
 
     // Use a real OrderItem object so setUnitPrice actually stores the value
-    OrderItem realItem = OrderItem.builder()
-        .product(product)
-        .quantity(quantity)
-        .build();
+    OrderItem realItem = OrderItem.builder().product(product).quantity(quantity).build();
 
     // Setup product mocks
     when(product.getId()).thenReturn(productId);
@@ -150,7 +138,8 @@ public class OrderServiceImplTest {
     when(user.isAgeVerified()).thenReturn(false);
     when(userService.findById(1L)).thenReturn(user); // Service fetches fresh user data
 
-    RuntimeException ex = assertThrows(RuntimeException.class, () -> orderService.createOrder(order));
+    RuntimeException ex =
+        assertThrows(RuntimeException.class, () -> orderService.createOrder(order));
     assertEquals("User must be age verified for alcohol orders", ex.getMessage());
     verify(orderRepository, never()).save(any());
   }
@@ -197,7 +186,8 @@ public class OrderServiceImplTest {
     when(orderRepository.findById(id)).thenReturn(Optional.of(order));
     when(order.isValidStatusTransition(any())).thenReturn(false);
 
-    RuntimeException ex = assertThrows(RuntimeException.class, () -> orderService.updateOrderStatus(id, "COMPLETED"));
+    RuntimeException ex =
+        assertThrows(RuntimeException.class, () -> orderService.updateOrderStatus(id, "COMPLETED"));
     assertTrue(ex.getMessage().contains("Invalid status transition"));
     verify(orderRepository).findById(id);
     verify(orderRepository, never()).save(any());
@@ -256,7 +246,8 @@ public class OrderServiceImplTest {
     Order order = mock(Order.class);
     when(order.getUser()).thenReturn(null);
 
-    RuntimeException ex = assertThrows(RuntimeException.class, () -> orderService.createOrder(order));
+    RuntimeException ex =
+        assertThrows(RuntimeException.class, () -> orderService.createOrder(order));
     assertEquals("User is required", ex.getMessage());
     verify(orderRepository, never()).save(any());
   }
@@ -267,7 +258,8 @@ public class OrderServiceImplTest {
     when(order.getUser()).thenReturn(user);
     when(order.getMerchant()).thenReturn(null);
 
-    RuntimeException ex = assertThrows(RuntimeException.class, () -> orderService.createOrder(order));
+    RuntimeException ex =
+        assertThrows(RuntimeException.class, () -> orderService.createOrder(order));
     assertEquals("Merchant is required", ex.getMessage());
     verify(orderRepository, never()).save(any());
   }
@@ -279,7 +271,8 @@ public class OrderServiceImplTest {
     when(order.getMerchant()).thenReturn(merchant);
     when(order.getItems()).thenReturn(List.of());
 
-    RuntimeException ex = assertThrows(RuntimeException.class, () -> orderService.createOrder(order));
+    RuntimeException ex =
+        assertThrows(RuntimeException.class, () -> orderService.createOrder(order));
     assertEquals("Order must contain at least one item", ex.getMessage());
     verify(orderRepository, never()).save(any());
   }
@@ -318,8 +311,9 @@ public class OrderServiceImplTest {
     Order order = mock(Order.class);
     when(orderRepository.findById(id)).thenReturn(Optional.of(order));
 
-    RuntimeException ex = assertThrows(
-        RuntimeException.class, () -> orderService.updateOrderStatus(id, "INVALID_STATUS"));
+    RuntimeException ex =
+        assertThrows(
+            RuntimeException.class, () -> orderService.updateOrderStatus(id, "INVALID_STATUS"));
     assertTrue(ex instanceof IllegalArgumentException);
     verify(orderRepository, never()).save(any());
   }
@@ -329,7 +323,8 @@ public class OrderServiceImplTest {
     Long id = 99L;
     when(orderRepository.findById(id)).thenReturn(Optional.empty());
 
-    RuntimeException ex = assertThrows(RuntimeException.class, () -> orderService.updateOrderStatus(id, "CONFIRMED"));
+    RuntimeException ex =
+        assertThrows(RuntimeException.class, () -> orderService.updateOrderStatus(id, "CONFIRMED"));
     assertEquals("Order not found", ex.getMessage());
     verify(orderRepository, never()).save(any());
   }
@@ -446,7 +441,8 @@ public class OrderServiceImplTest {
 
     when(order.getItems()).thenReturn(List.of(item));
 
-    RuntimeException ex = assertThrows(RuntimeException.class, () -> orderService.createOrder(order));
+    RuntimeException ex =
+        assertThrows(RuntimeException.class, () -> orderService.createOrder(order));
     assertEquals("Product not found with id: 999", ex.getMessage());
     verify(orderRepository, never()).save(any());
   }
@@ -459,7 +455,8 @@ public class OrderServiceImplTest {
     when(order.getMerchant()).thenReturn(merchant);
     when(order.getItems()).thenReturn(null);
 
-    RuntimeException ex = assertThrows(RuntimeException.class, () -> orderService.createOrder(order));
+    RuntimeException ex =
+        assertThrows(RuntimeException.class, () -> orderService.createOrder(order));
     assertEquals("Order must contain at least one item", ex.getMessage());
     verify(orderRepository, never()).save(any());
   }
@@ -862,12 +859,14 @@ public class OrderServiceImplTest {
     when(merchant2.getLatitude()).thenReturn(35.52);
     when(merchant2.getLongitude()).thenReturn(-78.92);
 
-    List<OrderStatus> availableStatuses = List.of(
-        OrderStatus.PENDING,
-        OrderStatus.CONFIRMED,
-        OrderStatus.PREPARING,
-        OrderStatus.READY_FOR_PICKUP);
-    when(orderRepository.findAvailableForAssignment(availableStatuses)).thenReturn(List.of(order1, order2));
+    List<OrderStatus> availableStatuses =
+        List.of(
+            OrderStatus.PENDING,
+            OrderStatus.CONFIRMED,
+            OrderStatus.PREPARING,
+            OrderStatus.READY_FOR_PICKUP);
+    when(orderRepository.findAvailableForAssignment(availableStatuses))
+        .thenReturn(List.of(order1, order2));
 
     List<Order> result = orderService.getOrdersWithinDistance(latitude, longitude, radiusKm);
 
@@ -882,12 +881,14 @@ public class OrderServiceImplTest {
     double longitude = -78.9;
     double radiusKm = 10.0;
 
-    List<OrderStatus> availableStatuses = List.of(
-        OrderStatus.PENDING,
-        OrderStatus.CONFIRMED,
-        OrderStatus.PREPARING,
-        OrderStatus.READY_FOR_PICKUP);
-    when(orderRepository.findAvailableForAssignment(availableStatuses)).thenReturn(new java.util.ArrayList<>());
+    List<OrderStatus> availableStatuses =
+        List.of(
+            OrderStatus.PENDING,
+            OrderStatus.CONFIRMED,
+            OrderStatus.PREPARING,
+            OrderStatus.READY_FOR_PICKUP);
+    when(orderRepository.findAvailableForAssignment(availableStatuses))
+        .thenReturn(new java.util.ArrayList<>());
 
     List<Order> result = orderService.getOrdersWithinDistance(latitude, longitude, radiusKm);
 
@@ -909,11 +910,12 @@ public class OrderServiceImplTest {
     when(merchant.getLatitude()).thenReturn(35.5);
     when(merchant.getLongitude()).thenReturn(-78.9);
 
-    List<OrderStatus> availableStatuses = List.of(
-        OrderStatus.PENDING,
-        OrderStatus.CONFIRMED,
-        OrderStatus.PREPARING,
-        OrderStatus.READY_FOR_PICKUP);
+    List<OrderStatus> availableStatuses =
+        List.of(
+            OrderStatus.PENDING,
+            OrderStatus.CONFIRMED,
+            OrderStatus.PREPARING,
+            OrderStatus.READY_FOR_PICKUP);
     List<Order> availableOrders = new java.util.ArrayList<>(List.of(order));
     when(orderRepository.findAvailableForAssignment(availableStatuses)).thenReturn(availableOrders);
 
@@ -942,11 +944,12 @@ public class OrderServiceImplTest {
     when(merchant2.getLatitude()).thenReturn(34.0);
     when(merchant2.getLongitude()).thenReturn(-118.0);
 
-    List<OrderStatus> availableStatuses = List.of(
-        OrderStatus.PENDING,
-        OrderStatus.CONFIRMED,
-        OrderStatus.PREPARING,
-        OrderStatus.READY_FOR_PICKUP);
+    List<OrderStatus> availableStatuses =
+        List.of(
+            OrderStatus.PENDING,
+            OrderStatus.CONFIRMED,
+            OrderStatus.PREPARING,
+            OrderStatus.READY_FOR_PICKUP);
     List<Order> availableOrders = new java.util.ArrayList<>(List.of(order1, order2));
     when(orderRepository.findAvailableForAssignment(availableStatuses)).thenReturn(availableOrders);
 
@@ -970,11 +973,12 @@ public class OrderServiceImplTest {
     when(merchant.getLatitude()).thenReturn(89.5);
     when(merchant.getLongitude()).thenReturn(0.0);
 
-    List<OrderStatus> availableStatuses = List.of(
-        OrderStatus.PENDING,
-        OrderStatus.CONFIRMED,
-        OrderStatus.PREPARING,
-        OrderStatus.READY_FOR_PICKUP);
+    List<OrderStatus> availableStatuses =
+        List.of(
+            OrderStatus.PENDING,
+            OrderStatus.CONFIRMED,
+            OrderStatus.PREPARING,
+            OrderStatus.READY_FOR_PICKUP);
     List<Order> availableOrders = new java.util.ArrayList<>(List.of(order));
     when(orderRepository.findAvailableForAssignment(availableStatuses)).thenReturn(availableOrders);
 
@@ -997,11 +1001,12 @@ public class OrderServiceImplTest {
     when(merchant.getLatitude()).thenReturn(35.5);
     when(merchant.getLongitude()).thenReturn(-180.0);
 
-    List<OrderStatus> availableStatuses = List.of(
-        OrderStatus.PENDING,
-        OrderStatus.CONFIRMED,
-        OrderStatus.PREPARING,
-        OrderStatus.READY_FOR_PICKUP);
+    List<OrderStatus> availableStatuses =
+        List.of(
+            OrderStatus.PENDING,
+            OrderStatus.CONFIRMED,
+            OrderStatus.PREPARING,
+            OrderStatus.READY_FOR_PICKUP);
     List<Order> availableOrders = new java.util.ArrayList<>(List.of(order));
     when(orderRepository.findAvailableForAssignment(availableStatuses)).thenReturn(availableOrders);
 
@@ -1024,11 +1029,12 @@ public class OrderServiceImplTest {
     when(merchant.getLatitude()).thenReturn(-33.9);
     when(merchant.getLongitude()).thenReturn(151.3);
 
-    List<OrderStatus> availableStatuses = List.of(
-        OrderStatus.PENDING,
-        OrderStatus.CONFIRMED,
-        OrderStatus.PREPARING,
-        OrderStatus.READY_FOR_PICKUP);
+    List<OrderStatus> availableStatuses =
+        List.of(
+            OrderStatus.PENDING,
+            OrderStatus.CONFIRMED,
+            OrderStatus.PREPARING,
+            OrderStatus.READY_FOR_PICKUP);
     List<Order> availableOrders = new java.util.ArrayList<>(List.of(order));
     when(orderRepository.findAvailableForAssignment(availableStatuses)).thenReturn(availableOrders);
 
@@ -1054,11 +1060,12 @@ public class OrderServiceImplTest {
     when(merchant.getLatitude()).thenReturn(lat2);
     when(merchant.getLongitude()).thenReturn(lon2);
 
-    List<OrderStatus> availableStatuses = List.of(
-        OrderStatus.PENDING,
-        OrderStatus.CONFIRMED,
-        OrderStatus.PREPARING,
-        OrderStatus.READY_FOR_PICKUP);
+    List<OrderStatus> availableStatuses =
+        List.of(
+            OrderStatus.PENDING,
+            OrderStatus.CONFIRMED,
+            OrderStatus.PREPARING,
+            OrderStatus.READY_FOR_PICKUP);
     List<Order> availableOrders = new java.util.ArrayList<>(List.of(order));
     when(orderRepository.findAvailableForAssignment(availableStatuses)).thenReturn(availableOrders);
 
@@ -1226,8 +1233,7 @@ public class OrderServiceImplTest {
     Order order2 = mock(Order.class);
     Order order3 = mock(Order.class);
 
-    when(orderRepository.findByCustomerId(userId))
-        .thenReturn(List.of(order1, order2, order3));
+    when(orderRepository.findByCustomerId(userId)).thenReturn(List.of(order1, order2, order3));
 
     List<Order> orders = orderService.getOrdersByUser(userId);
 
@@ -1274,7 +1280,8 @@ public class OrderServiceImplTest {
     when(order.isValidStatusTransition(OrderStatus.COMPLETED)).thenReturn(false);
     when(order.getStatus()).thenReturn(OrderStatus.PENDING);
 
-    RuntimeException ex = assertThrows(RuntimeException.class, () -> orderService.updateOrderStatus(id, "COMPLETED"));
+    RuntimeException ex =
+        assertThrows(RuntimeException.class, () -> orderService.updateOrderStatus(id, "COMPLETED"));
 
     assertTrue(ex.getMessage().contains("Invalid status transition"));
     assertTrue(ex.getMessage().contains("PENDING"));
@@ -1295,7 +1302,8 @@ public class OrderServiceImplTest {
 
     double distance = orderService.calculateDistance(lat1, lon1, lat2, lon2);
 
-    assertTrue(distance > 125 && distance < 135,
+    assertTrue(
+        distance > 125 && distance < 135,
         "Distance should be approximately 129.6 km, but was " + distance);
   }
 
@@ -1320,7 +1328,8 @@ public class OrderServiceImplTest {
     double distance = orderService.calculateDistance(lat1, lon1, lat2, lon2);
 
     // Should be approximately half the Earth's circumference (~20,000 km)
-    assertTrue(distance > 19000 && distance < 21000,
+    assertTrue(
+        distance > 19000 && distance < 21000,
         "Distance should be approximately half Earth's circumference");
   }
 
@@ -1351,8 +1360,10 @@ public class OrderServiceImplTest {
 
     when(orderRepository.findById(orderId)).thenReturn(Optional.empty());
 
-    RuntimeException exception = assertThrows(RuntimeException.class,
-        () -> orderService.updateEstimatedDeliveryTime(orderId, estimatedTime));
+    RuntimeException exception =
+        assertThrows(
+            RuntimeException.class,
+            () -> orderService.updateEstimatedDeliveryTime(orderId, estimatedTime));
 
     assertEquals("Order not found", exception.getMessage());
     verify(orderRepository, never()).save(any());
@@ -1376,11 +1387,12 @@ public class OrderServiceImplTest {
     when(merchant.getLatitude()).thenReturn(35.51);
     when(merchant.getLongitude()).thenReturn(-78.91);
 
-    List<OrderStatus> availableStatuses = List.of(
-        OrderStatus.PENDING,
-        OrderStatus.CONFIRMED,
-        OrderStatus.PREPARING,
-        OrderStatus.READY_FOR_PICKUP);
+    List<OrderStatus> availableStatuses =
+        List.of(
+            OrderStatus.PENDING,
+            OrderStatus.CONFIRMED,
+            OrderStatus.PREPARING,
+            OrderStatus.READY_FOR_PICKUP);
     when(orderRepository.findAvailableForAssignment(availableStatuses))
         .thenReturn(List.of(orderWithMerchant, orderWithoutMerchant));
 
@@ -1410,11 +1422,12 @@ public class OrderServiceImplTest {
     when(merchantWithoutCoords.getLatitude()).thenReturn(null);
     when(merchantWithoutCoords.getLongitude()).thenReturn(null);
 
-    List<OrderStatus> availableStatuses = List.of(
-        OrderStatus.PENDING,
-        OrderStatus.CONFIRMED,
-        OrderStatus.PREPARING,
-        OrderStatus.READY_FOR_PICKUP);
+    List<OrderStatus> availableStatuses =
+        List.of(
+            OrderStatus.PENDING,
+            OrderStatus.CONFIRMED,
+            OrderStatus.PREPARING,
+            OrderStatus.READY_FOR_PICKUP);
     when(orderRepository.findAvailableForAssignment(availableStatuses))
         .thenReturn(List.of(orderWithCoords, orderWithoutCoords));
 
@@ -1446,11 +1459,12 @@ public class OrderServiceImplTest {
     when(merchant2.getLatitude()).thenReturn(35.6);
     when(merchant2.getLongitude()).thenReturn(-78.8);
 
-    List<OrderStatus> availableStatuses = List.of(
-        OrderStatus.PENDING,
-        OrderStatus.CONFIRMED,
-        OrderStatus.PREPARING,
-        OrderStatus.READY_FOR_PICKUP);
+    List<OrderStatus> availableStatuses =
+        List.of(
+            OrderStatus.PENDING,
+            OrderStatus.CONFIRMED,
+            OrderStatus.PREPARING,
+            OrderStatus.READY_FOR_PICKUP);
     when(orderRepository.findAvailableForAssignment(availableStatuses))
         .thenReturn(List.of(orderWithinRadius, orderOutsideRadius));
 
@@ -1461,7 +1475,8 @@ public class OrderServiceImplTest {
     // merchant is ~14.33km)
     assertEquals(1, result.size(), "Should only include order within 5km radius");
     assertTrue(result.contains(orderWithinRadius), "Result should contain order within radius");
-    assertFalse(result.contains(orderOutsideRadius), "Result should not contain order outside radius");
+    assertFalse(
+        result.contains(orderOutsideRadius), "Result should not contain order outside radius");
   }
 
   // ==================== ADDITIONAL COVERAGE TESTS ====================
@@ -1479,13 +1494,13 @@ public class OrderServiceImplTest {
     when(merchant.getLatitude()).thenReturn(null);
     when(merchant.getLongitude()).thenReturn(-78.91);
 
-    List<OrderStatus> availableStatuses = List.of(
-        OrderStatus.PENDING,
-        OrderStatus.CONFIRMED,
-        OrderStatus.PREPARING,
-        OrderStatus.READY_FOR_PICKUP);
-    when(orderRepository.findAvailableForAssignment(availableStatuses))
-        .thenReturn(List.of(order));
+    List<OrderStatus> availableStatuses =
+        List.of(
+            OrderStatus.PENDING,
+            OrderStatus.CONFIRMED,
+            OrderStatus.PREPARING,
+            OrderStatus.READY_FOR_PICKUP);
+    when(orderRepository.findAvailableForAssignment(availableStatuses)).thenReturn(List.of(order));
 
     List<Order> result = orderService.getOrdersWithinDistance(latitude, longitude, radiusKm);
 
@@ -1506,13 +1521,13 @@ public class OrderServiceImplTest {
     when(merchant.getLatitude()).thenReturn(35.51);
     when(merchant.getLongitude()).thenReturn(null);
 
-    List<OrderStatus> availableStatuses = List.of(
-        OrderStatus.PENDING,
-        OrderStatus.CONFIRMED,
-        OrderStatus.PREPARING,
-        OrderStatus.READY_FOR_PICKUP);
-    when(orderRepository.findAvailableForAssignment(availableStatuses))
-        .thenReturn(List.of(order));
+    List<OrderStatus> availableStatuses =
+        List.of(
+            OrderStatus.PENDING,
+            OrderStatus.CONFIRMED,
+            OrderStatus.PREPARING,
+            OrderStatus.READY_FOR_PICKUP);
+    when(orderRepository.findAvailableForAssignment(availableStatuses)).thenReturn(List.of(order));
 
     List<Order> result = orderService.getOrdersWithinDistance(latitude, longitude, radiusKm);
 
@@ -1548,7 +1563,8 @@ public class OrderServiceImplTest {
     double distance = orderService.calculateDistance(lat1, lon1, lat2, lon2);
 
     // Actual distance between Sydney and Melbourne is approximately 1162 km
-    assertTrue(distance > 1150 && distance < 1175,
+    assertTrue(
+        distance > 1150 && distance < 1175,
         "Distance should be approximately 1162 km, but was " + distance);
   }
 

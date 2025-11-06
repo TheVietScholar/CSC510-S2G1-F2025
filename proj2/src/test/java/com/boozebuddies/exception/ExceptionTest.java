@@ -169,4 +169,3 @@ public class ExceptionTest {
     assertEquals(cause, exception.getCause());
   }
 }
-

@@ -86,6 +86,7 @@ public class OrderMapper {
 
   /**
    * Convert Order to DriverOrderDTO with distance and ETA calculations.
+   *
    * @param order The order entity
    * @param distanceKm Distance from driver to merchant in kilometers (calculated externally)
    * @return DriverOrderDTO with distance and ETA

@@ -253,12 +253,13 @@ class DeliveryServiceImplTest {
     Order order = new Order();
     order.setId(100L);
     Driver driver = Driver.builder().id(5L).build();
-    Delivery delivery = Delivery.builder()
-        .id(50L)
-        .order(order)
-        .driver(driver)
-        .status(DeliveryStatus.PENDING)
-        .build();
+    Delivery delivery =
+        Delivery.builder()
+            .id(50L)
+            .order(order)
+            .driver(driver)
+            .status(DeliveryStatus.PENDING)
+            .build();
     when(repository.findByOrderId(100L)).thenReturn(Optional.of(delivery));
 
     Delivery found = service.getDeliveryByOrderId(100L);

@@ -174,7 +174,8 @@ public class DriverController {
             .body(ApiResponse.error("Driver profile not found for this user"));
       }
       DriverDTO driverDTO = driverMapper.toDTO(driver);
-      return ResponseEntity.ok(ApiResponse.success(driverDTO, "Your profile retrieved successfully"));
+      return ResponseEntity.ok(
+          ApiResponse.success(driverDTO, "Your profile retrieved successfully"));
     } catch (IllegalArgumentException e) {
       return ResponseEntity.status(HttpStatus.NOT_FOUND)
           .body(ApiResponse.error("Driver profile not found: " + e.getMessage()));

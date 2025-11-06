@@ -779,8 +779,7 @@ class UserControllerTest {
     UserController.RoleRequest request = new UserController.RoleRequest();
     request.setRole(Role.USER);
 
-    when(roleService.assignRole(1L, Role.USER))
-        .thenThrow(new RuntimeException("Database error"));
+    when(roleService.assignRole(1L, Role.USER)).thenThrow(new RuntimeException("Database error"));
 
     mockMvc
         .perform(
@@ -865,8 +864,7 @@ class UserControllerTest {
     UserController.RoleRequest request = new UserController.RoleRequest();
     request.setRole(Role.USER);
 
-    when(roleService.assignRole(1L, Role.USER))
-        .thenThrow(new RuntimeException("Database error"));
+    when(roleService.assignRole(1L, Role.USER)).thenThrow(new RuntimeException("Database error"));
 
     mockMvc
         .perform(
@@ -882,8 +880,7 @@ class UserControllerTest {
   @Test
   @DisplayName("DELETE /api/users/{id}/roles/{role} catches generic Exception")
   void testRemoveRole_GenericException() throws Exception {
-    when(roleService.removeRole(1L, Role.ADMIN))
-        .thenThrow(new RuntimeException("Database error"));
+    when(roleService.removeRole(1L, Role.ADMIN)).thenThrow(new RuntimeException("Database error"));
 
     mockMvc
         .perform(delete("/api/users/1/roles/ADMIN"))

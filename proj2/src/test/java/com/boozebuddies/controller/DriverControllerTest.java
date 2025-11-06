@@ -260,7 +260,8 @@ public class DriverControllerTest {
   @Test
   @DisplayName("GET /api/drivers/{id} returns 404 when DriverNotFoundException thrown")
   void getDriverById_driverNotFoundException() throws Exception {
-    when(driverService.getDriverById(999L)).thenThrow(new DriverNotFoundException("Driver not found"));
+    when(driverService.getDriverById(999L))
+        .thenThrow(new DriverNotFoundException("Driver not found"));
 
     mockMvc
         .perform(get("/api/drivers/999"))
@@ -371,7 +372,9 @@ public class DriverControllerTest {
         .perform(get("/api/drivers/my-profile"))
         .andExpect(status().isNotFound())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Driver profile not found")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.containsString("Driver profile not found")));
   }
 
   @Test
@@ -384,7 +387,9 @@ public class DriverControllerTest {
         .perform(get("/api/drivers/my-profile"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.success").value(false))
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.startsWith("Failed to retrieve driver profile:")));
+        .andExpect(
+            jsonPath("$.message")
+                .value(org.hamcrest.Matchers.startsWith("Failed to retrieve driver profile:")));
   }
 
   // ==================== UPDATE AVAILABILITY TESTS ====================

@@ -100,8 +100,9 @@ class DriverServiceImplTest {
   @Test
   @DisplayName("getAllDrivers returns copy list of drivers")
   void getAllDrivers_returnsCopy() {
-    List<Driver> list = Arrays.asList(
-        Driver.builder().id(1L).name("d1").build(), Driver.builder().id(2L).name("d2").build());
+    List<Driver> list =
+        Arrays.asList(
+            Driver.builder().id(1L).name("d1").build(), Driver.builder().id(2L).name("d2").build());
     when(repository.findAll()).thenReturn(list);
 
     List<Driver> all = service.getAllDrivers();

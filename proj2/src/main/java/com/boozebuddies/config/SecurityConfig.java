@@ -149,7 +149,7 @@ public class SecurityConfig {
                     // DRIVER can view assigned orders
                     .requestMatchers("/api/orders/driver/**")
                     .hasRole("DRIVER")
-                    
+
                     // DRIVER can view available orders by distance
                     .requestMatchers(HttpMethod.GET, "/api/orders/by-distance")
                     .hasRole("DRIVER")
