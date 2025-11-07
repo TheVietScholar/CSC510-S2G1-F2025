@@ -22,7 +22,7 @@ public class ProductDTO {
   private BigDecimal price;
 
   /** The category ID this product belongs to */
-  private Long categoryId;  
+  private Long categoryId;
 
   /** The ID of the merchant selling this product */
   private Long merchantId;

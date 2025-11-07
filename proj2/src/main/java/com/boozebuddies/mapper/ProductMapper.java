@@ -19,13 +19,16 @@ public class ProductMapper {
    */
   public ProductDTO toDTO(Product product) {
     if (product == null) return null;
-    
+
     return ProductDTO.builder()
         .id(product.getId())
         .name(product.getName())
         .description(product.getDescription())
         .price(product.getPrice())
-        .categoryId(product.getCategory() != null ? product.getCategory().getId() : null) // Map category to categoryId
+        .categoryId(
+            product.getCategory() != null
+                ? product.getCategory().getId()
+                : null) // Map category to categoryId
         .merchantId(product.getMerchant() != null ? product.getMerchant().getId() : null)
         .merchantName(product.getMerchant() != null ? product.getMerchant().getName() : null)
         .isAlcohol(product.isAlcohol())
@@ -45,33 +48,33 @@ public class ProductMapper {
    */
   public Product toEntity(ProductDTO productDTO) {
     if (productDTO == null) return null;
-    
+
     Product product = new Product();
     product.setId(productDTO.getId());
     product.setName(productDTO.getName());
     product.setDescription(productDTO.getDescription());
     product.setPrice(productDTO.getPrice());
-    
+
     // Handle category - you'll need to fetch the Category entity by ID
     if (productDTO.getCategoryId() != null) {
       Category category = new Category();
       category.setId(productDTO.getCategoryId());
       product.setCategory(category);
     }
-    
+
     // Handle merchant
     if (productDTO.getMerchantId() != null) {
       Merchant merchant = new Merchant();
       merchant.setId(productDTO.getMerchantId());
       product.setMerchant(merchant);
     }
-    
+
     product.setAlcohol(productDTO.isAlcohol());
     product.setAlcoholContent(productDTO.getAlcoholContent());
     product.setImageUrl(productDTO.getImageUrl());
     product.setAvailable(productDTO.isAvailable());
     product.setVolume(productDTO.getVolume());
-    
+
     return product;
   }
 

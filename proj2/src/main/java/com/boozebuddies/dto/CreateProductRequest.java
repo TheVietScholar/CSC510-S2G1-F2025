@@ -20,7 +20,7 @@ public class CreateProductRequest {
   private BigDecimal price;
 
   /** The category ID the product belongs to */
-  private Long categoryId;  // CHANGED FROM String category
+  private Long categoryId; // CHANGED FROM String category
 
   /** The ID of the merchant selling this product */
   private Long merchantId;

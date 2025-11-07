@@ -37,12 +37,9 @@ class ProductServiceImplTest {
 
   @BeforeEach
   void setUp() {
-    productService = new ProductServiceImpl(
-        productRepository, 
-        categoryRepository, 
-        merchantRepository, 
-        productMapper
-    );
+    productService =
+        new ProductServiceImpl(
+            productRepository, categoryRepository, merchantRepository, productMapper);
 
     testMerchant = Merchant.builder().id(1L).name("Test Merchant").build();
     testCategory = Category.builder().id(1L).name("Beer").build();
@@ -143,40 +140,43 @@ class ProductServiceImplTest {
 
   @Test
   void testCreateProduct_ValidProductDTO_ReturnsSavedProduct() {
-    ProductDTO productDTO = ProductDTO.builder()
-        .name("New Beer")
-        .description("Test description")
-        .price(new BigDecimal("7.99"))
-        .categoryId(1L)
-        .merchantId(1L)
-        .isAlcohol(true)
-        .alcoholContent(5.5)
-        .isAvailable(true)
-        .imageUrl("/default.jpg")
-        .build();
+    ProductDTO productDTO =
+        ProductDTO.builder()
+            .name("New Beer")
+            .description("Test description")
+            .price(new BigDecimal("7.99"))
+            .categoryId(1L)
+            .merchantId(1L)
+            .isAlcohol(true)
+            .alcoholContent(5.5)
+            .isAvailable(true)
+            .imageUrl("/default.jpg")
+            .build();
 
-    Product productEntity = Product.builder()
-        .name("New Beer")
-        .description("Test description")
-        .price(new BigDecimal("7.99"))
-        .isAlcohol(true)
-        .alcoholContent(5.5)
-        .available(true)
-        .imageUrl("/default.jpg")
-        .build();
+    Product productEntity =
+        Product.builder()
+            .name("New Beer")
+            .description("Test description")
+            .price(new BigDecimal("7.99"))
+            .isAlcohol(true)
+            .alcoholContent(5.5)
+            .available(true)
+            .imageUrl("/default.jpg")
+            .build();
 
-    Product savedProduct = Product.builder()
-        .id(1L)
-        .name("New Beer")
-        .description("Test description")
-        .price(new BigDecimal("7.99"))
-        .merchant(testMerchant)
-        .category(testCategory)
-        .isAlcohol(true)
-        .alcoholContent(5.5)
-        .available(true)
-        .imageUrl("/default.jpg")
-        .build();
+    Product savedProduct =
+        Product.builder()
+            .id(1L)
+            .name("New Beer")
+            .description("Test description")
+            .price(new BigDecimal("7.99"))
+            .merchant(testMerchant)
+            .category(testCategory)
+            .isAlcohol(true)
+            .alcoholContent(5.5)
+            .available(true)
+            .imageUrl("/default.jpg")
+            .build();
 
     when(productMapper.toEntity(productDTO)).thenReturn(productEntity);
     when(categoryRepository.findById(1L)).thenReturn(Optional.of(testCategory));
@@ -195,14 +195,11 @@ class ProductServiceImplTest {
 
   @Test
   void testCreateProduct_CategoryNotFound_ThrowsException() {
-    ProductDTO productDTO = ProductDTO.builder()
-        .name("New Beer")
-        .categoryId(999L)
-        .merchantId(1L)
-        .build();
+    ProductDTO productDTO =
+        ProductDTO.builder().name("New Beer").categoryId(999L).merchantId(1L).build();
 
     Product productEntity = Product.builder().name("New Beer").build();
-    
+
     when(productMapper.toEntity(productDTO)).thenReturn(productEntity);
     when(categoryRepository.findById(999L)).thenReturn(Optional.empty());
 
@@ -212,14 +209,11 @@ class ProductServiceImplTest {
 
   @Test
   void testCreateProduct_MerchantNotFound_ThrowsException() {
-    ProductDTO productDTO = ProductDTO.builder()
-        .name("New Beer")
-        .categoryId(1L)
-        .merchantId(999L)
-        .build();
+    ProductDTO productDTO =
+        ProductDTO.builder().name("New Beer").categoryId(1L).merchantId(999L).build();
 
     Product productEntity = Product.builder().name("New Beer").build();
-    
+
     when(productMapper.toEntity(productDTO)).thenReturn(productEntity);
     when(categoryRepository.findById(1L)).thenReturn(Optional.of(testCategory));
     when(merchantRepository.findById(999L)).thenReturn(Optional.empty());
@@ -282,29 +276,31 @@ class ProductServiceImplTest {
             .available(true)
             .build();
 
-    ProductDTO productDTO = ProductDTO.builder()
-        .name("New Name")
-        .description("New description")
-        .price(new BigDecimal("6.99"))
-        .categoryId(1L)
-        .isAvailable(false)
-        .isAlcohol(true)
-        .alcoholContent(5.5)
-        .imageUrl("new-image.jpg")
-        .build();
+    ProductDTO productDTO =
+        ProductDTO.builder()
+            .name("New Name")
+            .description("New description")
+            .price(new BigDecimal("6.99"))
+            .categoryId(1L)
+            .isAvailable(false)
+            .isAlcohol(true)
+            .alcoholContent(5.5)
+            .imageUrl("new-image.jpg")
+            .build();
 
-    Product updatedProduct = Product.builder()
-        .id(1L)
-        .name("New Name")
-        .description("New description")
-        .price(new BigDecimal("6.99"))
-        .merchant(testMerchant)
-        .category(testCategory)
-        .available(false)
-        .isAlcohol(true)
-        .alcoholContent(5.5)
-        .imageUrl("new-image.jpg")
-        .build();
+    Product updatedProduct =
+        Product.builder()
+            .id(1L)
+            .name("New Name")
+            .description("New description")
+            .price(new BigDecimal("6.99"))
+            .merchant(testMerchant)
+            .category(testCategory)
+            .available(false)
+            .isAlcohol(true)
+            .alcoholContent(5.5)
+            .imageUrl("new-image.jpg")
+            .build();
 
     when(productRepository.findById(1L)).thenReturn(Optional.of(existingProduct));
     when(categoryRepository.findById(1L)).thenReturn(Optional.of(testCategory));

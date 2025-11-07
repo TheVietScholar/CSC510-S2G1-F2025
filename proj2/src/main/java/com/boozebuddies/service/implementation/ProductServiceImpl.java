@@ -145,20 +145,30 @@ public class ProductServiceImpl implements ProductService {
 
     // Convert to entity first
     Product product = productMapper.toEntity(productDTO);
-    
+
     // Set managed category entity
     if (productDTO.getCategoryId() != null) {
-      Category category = categoryRepository.findById(productDTO.getCategoryId())
-          .orElseThrow(() -> new IllegalArgumentException("Category not found with id: " + productDTO.getCategoryId()));
+      Category category =
+          categoryRepository
+              .findById(productDTO.getCategoryId())
+              .orElseThrow(
+                  () ->
+                      new IllegalArgumentException(
+                          "Category not found with id: " + productDTO.getCategoryId()));
       product.setCategory(category);
     } else {
       throw new IllegalArgumentException("Category ID is required");
     }
-    
+
     // Set managed merchant entity
     if (productDTO.getMerchantId() != null) {
-      Merchant merchant = merchantRepository.findById(productDTO.getMerchantId())
-          .orElseThrow(() -> new IllegalArgumentException("Merchant not found with id: " + productDTO.getMerchantId()));
+      Merchant merchant =
+          merchantRepository
+              .findById(productDTO.getMerchantId())
+              .orElseThrow(
+                  () ->
+                      new IllegalArgumentException(
+                          "Merchant not found with id: " + productDTO.getMerchantId()));
       product.setMerchant(merchant);
     } else {
       throw new IllegalArgumentException("Merchant ID is required");
@@ -229,8 +239,13 @@ public class ProductServiceImpl implements ProductService {
 
     // Update category if provided
     if (productDTO.getCategoryId() != null) {
-      Category category = categoryRepository.findById(productDTO.getCategoryId())
-          .orElseThrow(() -> new IllegalArgumentException("Category not found with id: " + productDTO.getCategoryId()));
+      Category category =
+          categoryRepository
+              .findById(productDTO.getCategoryId())
+              .orElseThrow(
+                  () ->
+                      new IllegalArgumentException(
+                          "Category not found with id: " + productDTO.getCategoryId()));
       existing.setCategory(category);
     }
 
