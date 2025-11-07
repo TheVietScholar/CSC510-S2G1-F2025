@@ -187,7 +187,7 @@ public class SecurityConfig {
                     .authenticated()
                     .requestMatchers("/api/drivers/my-profile/**")
                     .hasRole("DRIVER")
-                    
+
                     // ADMIN manages driver certifications and views all drivers
                     .requestMatchers(HttpMethod.GET, "/api/drivers")
                     .hasRole("ADMIN")

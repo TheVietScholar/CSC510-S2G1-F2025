@@ -3,8 +3,6 @@ package com.boozebuddies.controller;
 import com.boozebuddies.dto.ApiResponse;
 import com.boozebuddies.dto.CreateProductRequest;
 import com.boozebuddies.dto.ProductDTO;
-import com.boozebuddies.entity.Category;
-import com.boozebuddies.entity.Merchant;
 import com.boozebuddies.entity.Product;
 import com.boozebuddies.entity.User;
 import com.boozebuddies.mapper.ProductMapper;
@@ -199,8 +197,8 @@ public class ProductController {
   // ==================== ADMIN & MERCHANT_ADMIN ENDPOINTS ====================
 
   /**
-   * Creates a new product. Admin can create for any merchant, merchant admin can only create for their own
-   * merchant.
+   * Creates a new product. Admin can create for any merchant, merchant admin can only create for
+   * their own merchant.
    *
    * @param request the product creation request
    * @param authentication the authentication object
@@ -228,28 +226,34 @@ public class ProductController {
       }
 
       // Convert to ProductDTO to use the new createProduct method
-      ProductDTO productDTO = ProductDTO.builder()
-          .name(request.getName())
-          .description(request.getDescription())
-          .price(request.getPrice())
-          .categoryId(request.getCategoryId())  // This will be used by the service
-          .merchantId(request.getMerchantId())
-          .isAlcohol(request.isAlcohol())
-          .alcoholContent(request.getAlcoholContent())
-          .isAvailable(request.isAvailable())
-          .imageUrl(request.getImageUrl())
-          .build();
+      ProductDTO productDTO =
+          ProductDTO.builder()
+              .name(request.getName())
+              .description(request.getDescription())
+              .price(request.getPrice())
+              .categoryId(request.getCategoryId()) // This will be used by the service
+              .merchantId(request.getMerchantId())
+              .isAlcohol(request.isAlcohol())
+              .alcoholContent(request.getAlcoholContent())
+              .isAvailable(request.isAvailable())
+              .imageUrl(request.getImageUrl())
+              .build();
 
       // Use the new createProduct method that handles categories properly
       Product createdProduct = productService.createProduct(productDTO);
 
       System.out.println("DEBUG - After productService.createProduct():");
       System.out.println("  Product ID: " + createdProduct.getId());
-      System.out.println("  Category: " + (createdProduct.getCategory() != null ? createdProduct.getCategory().getId() : "null"));
+      System.out.println(
+          "  Category: "
+              + (createdProduct.getCategory() != null
+                  ? createdProduct.getCategory().getId()
+                  : "null"));
 
       return ResponseEntity.status(HttpStatus.CREATED)
           .body(
-              ApiResponse.success(productMapper.toDTO(createdProduct), "Product created successfully"));
+              ApiResponse.success(
+                  productMapper.toDTO(createdProduct), "Product created successfully"));
     } catch (AccessDeniedException e) {
       return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error(e.getMessage()));
     } catch (Exception e) {

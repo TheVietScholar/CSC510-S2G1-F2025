@@ -62,7 +62,7 @@ public class DriverController {
    * Updates a driver's certification status. Admin only.
    *
    * @param driverId the driver ID
-   * @param status   the new certification status
+   * @param status the new certification status
    * @return the updated driver
    */
   @PutMapping("/{driverId}/certification")
@@ -92,9 +92,10 @@ public class DriverController {
   @IsAdmin
   public ResponseEntity<ApiResponse<List<DriverDTO>>> getAvailableDrivers() {
     try {
-      List<DriverDTO> drivers = driverService.getAvailableDrivers().stream()
-          .map(driverMapper::toDTO)
-          .collect(Collectors.toList());
+      List<DriverDTO> drivers =
+          driverService.getAvailableDrivers().stream()
+              .map(driverMapper::toDTO)
+              .collect(Collectors.toList());
       return ResponseEntity.ok(
           ApiResponse.success(drivers, "Available drivers retrieved successfully"));
     } catch (Exception e) {
@@ -137,9 +138,10 @@ public class DriverController {
   @IsAdmin
   public ResponseEntity<ApiResponse<List<DriverDTO>>> getAllDrivers() {
     try {
-      List<DriverDTO> drivers = driverService.getAllDrivers().stream()
-          .map(driverMapper::toDTO)
-          .collect(Collectors.toList());
+      List<DriverDTO> drivers =
+          driverService.getAllDrivers().stream()
+              .map(driverMapper::toDTO)
+              .collect(Collectors.toList());
       return ResponseEntity.ok(ApiResponse.success(drivers, "All drivers retrieved successfully"));
     } catch (Exception e) {
       return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -152,8 +154,7 @@ public class DriverController {
   /**
    * Retrieves the authenticated driver's profile.
    *
-   * @param id             the user ID (must match authenticated user or user must
-   *                       be ADMIN)
+   * @param id the user ID (must match authenticated user or user must be ADMIN)
    * @param authentication the authentication object
    * @return the driver's profile
    */
@@ -206,7 +207,7 @@ public class DriverController {
   /**
    * Updates the authenticated driver's availability status.
    *
-   * @param available      whether the driver is available for deliveries
+   * @param available whether the driver is available for deliveries
    * @param authentication the authentication object
    * @return the updated driver profile
    */
@@ -219,9 +220,10 @@ public class DriverController {
       Driver driver = driverService.updateAvailability(user.getDriver().getId(), available);
       DriverDTO driverDTO = driverMapper.toDTO(driver);
 
-      String message = available
-          ? "You are now available for deliveries"
-          : "You are now unavailable for deliveries";
+      String message =
+          available
+              ? "You are now available for deliveries"
+              : "You are now unavailable for deliveries";
       return ResponseEntity.ok(ApiResponse.success(driverDTO, message));
     } catch (DriverNotFoundException e) {
       return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -235,8 +237,8 @@ public class DriverController {
   /**
    * Updates the authenticated driver's current location.
    *
-   * @param latitude       the current latitude
-   * @param longitude      the current longitude
+   * @param latitude the current latitude
+   * @param longitude the current longitude
    * @param authentication the authentication object
    * @return the updated driver profile
    */
@@ -254,7 +256,8 @@ public class DriverController {
             .body(ApiResponse.error("No driver profile found for this user"));
       }
 
-      Driver updatedDriver = driverService.updateDriverLocation(user.getDriver().getId(), latitude, longitude);
+      Driver updatedDriver =
+          driverService.updateDriverLocation(user.getDriver().getId(), latitude, longitude);
       DriverDTO driverDTO = driverMapper.toDTO(updatedDriver);
 
       return ResponseEntity.ok(ApiResponse.success(driverDTO, "Location updated successfully"));

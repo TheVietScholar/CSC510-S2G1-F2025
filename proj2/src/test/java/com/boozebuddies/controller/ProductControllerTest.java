@@ -129,7 +129,6 @@ public class ProductControllerTest {
         .andExpect(jsonPath("$.data.length()").value(2));
   }
 
-
   @Test
   @DisplayName("GET /api/products/{id} should return 200 with product")
   void getProductById_Success() throws Exception {
@@ -188,7 +187,6 @@ public class ProductControllerTest {
         .andExpect(jsonPath("$.data").value(true));
   }
 
-
   @Test
   @DisplayName("GET /api/products/all should return 200 with all products")
   void getAllProducts_Success() throws Exception {
@@ -225,22 +223,22 @@ public class ProductControllerTest {
         .andExpect(jsonPath("$.data").isArray());
   }
 
-
   @Test
   @DisplayName("POST /api/products should return 201 for admin")
   void createProduct_AdminSuccess() throws Exception {
     // Create a ProductDTO that matches what the controller builds
-    ProductDTO productDTOFromRequest = ProductDTO.builder()
-        .name("New Beer")
-        .description("Test description")
-        .price(new BigDecimal("7.99"))
-        .categoryId(1L)
-        .merchantId(1L)
-        .isAlcohol(true)
-        .alcoholContent(5.5)
-        .isAvailable(true)
-        .imageUrl("/default-product.jpg")
-        .build();
+    ProductDTO productDTOFromRequest =
+        ProductDTO.builder()
+            .name("New Beer")
+            .description("Test description")
+            .price(new BigDecimal("7.99"))
+            .categoryId(1L)
+            .merchantId(1L)
+            .isAlcohol(true)
+            .alcoholContent(5.5)
+            .isAvailable(true)
+            .imageUrl("/default-product.jpg")
+            .build();
 
     when(permissionService.getAuthenticatedUser(any())).thenReturn(adminUser);
     when(productService.createProduct(any(ProductDTO.class))).thenReturn(testProduct);
@@ -325,7 +323,6 @@ public class ProductControllerTest {
                 .value(org.hamcrest.Matchers.containsString("Failed to create product")));
   }
 
-
   @Test
   @DisplayName("PUT /api/products/{id} should return 200 for admin")
   void updateProduct_AdminSuccess() throws Exception {
@@ -365,7 +362,6 @@ public class ProductControllerTest {
         .andExpect(jsonPath("$.success").value(true));
   }
 
-
   @Test
   @DisplayName("DELETE /api/products/{id} should return 200 for admin")
   void deleteProduct_AdminSuccess() throws Exception {
@@ -381,259 +377,260 @@ public class ProductControllerTest {
 
     verify(productService, times(1)).deleteProduct(1L);
   }
-    // ==================== ADDITIONAL GET PRODUCT BY ID TESTS ====================
 
-    @Test
-    @DisplayName("GET /api/products/{id} should return 404 when product not found")
-    void getProductById_NotFound() throws Exception {
-      when(productService.getProductById(999L)).thenReturn(null);
-  
-      mockMvc
-          .perform(get("/api/products/999"))
-          .andExpect(status().isNotFound())
-          .andExpect(jsonPath("$.success").value(false))
-          .andExpect(jsonPath("$.message").value("Product not found"));
-    }
-  
-    @Test
-    @DisplayName("GET /api/products/{id} should return 400 on exception")
-    void getProductById_Exception() throws Exception {
-      when(productService.getProductById(1L)).thenThrow(new RuntimeException("Database error"));
-  
-      mockMvc
-          .perform(get("/api/products/1"))
-          .andExpect(status().isBadRequest())
-          .andExpect(jsonPath("$.success").value(false))
-          .andExpect(jsonPath("$.message").value("Failed to retrieve product: Database error"));
-    }
-  
-    @Test
-    @DisplayName("GET /api/products/search should return 200 with empty list when no matches")
-    void searchProducts_NoMatches() throws Exception {
-      when(productService.searchProducts("xyz")).thenReturn(List.of());
-  
-      mockMvc
-          .perform(get("/api/products/search?keyword=xyz"))
-          .andExpect(status().isOk())
-          .andExpect(jsonPath("$.success").value(true))
-          .andExpect(jsonPath("$.data").isArray())
-          .andExpect(jsonPath("$.data.length()").value(0));
-    }
-  
-    @Test
-    @DisplayName("GET /api/products/search should return 400 on exception")
-    void searchProducts_Exception() throws Exception {
-      when(productService.searchProducts("beer")).thenThrow(new RuntimeException("Search error"));
-  
-      mockMvc
-          .perform(get("/api/products/search?keyword=beer"))
-          .andExpect(status().isBadRequest())
-          .andExpect(jsonPath("$.success").value(false))
-          .andExpect(jsonPath("$.message").value("Failed to search products: Search error"));
-    }
-  
-    @Test
-    @DisplayName("GET /api/products/merchant/{merchantId} should return 200 with empty list")
-    void getProductsByMerchant_EmptyList() throws Exception {
-      when(productService.getAvailableProductsByMerchant(1L)).thenReturn(List.of());
-  
-      mockMvc
-          .perform(get("/api/products/merchant/1"))
-          .andExpect(status().isOk())
-          .andExpect(jsonPath("$.success").value(true))
-          .andExpect(jsonPath("$.data").isArray())
-          .andExpect(jsonPath("$.data.length()").value(0));
-    }
-  
-    @Test
-    @DisplayName("GET /api/products/merchant/{merchantId} should return 400 on exception")
-    void getProductsByMerchant_Exception() throws Exception {
-      when(productService.getAvailableProductsByMerchant(1L))
-          .thenThrow(new RuntimeException("Database error"));
-  
-      mockMvc
-          .perform(get("/api/products/merchant/1"))
-          .andExpect(status().isBadRequest())
-          .andExpect(jsonPath("$.success").value(false))
-          .andExpect(jsonPath("$.message").value("Failed to retrieve merchant products: Database error"));
-    }
+  // ==================== ADDITIONAL GET PRODUCT BY ID TESTS ====================
 
-  
-    @Test
-    @DisplayName("GET /api/products/{id}/available should return false when not available")
-    void isProductAvailable_NotAvailable() throws Exception {
-      when(productService.isProductAvailable(2L)).thenReturn(false);
-  
-      mockMvc
-          .perform(get("/api/products/2/available"))
-          .andExpect(status().isOk())
-          .andExpect(jsonPath("$.success").value(true))
-          .andExpect(jsonPath("$.data").value(false));
-    }
-  
-    @Test
-    @DisplayName("GET /api/products/{id}/available should return 400 on exception")
-    void isProductAvailable_Exception() throws Exception {
-      when(productService.isProductAvailable(1L)).thenThrow(new RuntimeException("Check failed"));
-  
-      mockMvc
-          .perform(get("/api/products/1/available"))
-          .andExpect(status().isBadRequest())
-          .andExpect(jsonPath("$.success").value(false))
-          .andExpect(jsonPath("$.message").value("Failed to check availability: Check failed"));
-    }
-  
-  
-    @Test
-    @DisplayName("GET /api/products/all should return 400 on exception")
-    void getAllProducts_Exception() throws Exception {
-      when(productService.getAllProducts()).thenThrow(new RuntimeException("Database error"));
-  
-      mockMvc
-          .perform(get("/api/products/all"))
-          .andExpect(status().isBadRequest())
-          .andExpect(jsonPath("$.success").value(false))
-          .andExpect(jsonPath("$.message").value("Failed to retrieve all products: Database error"));
-    }
-  
-    @Test
-    @DisplayName("GET /api/products/merchant/{merchantId}/all should return 403 when merchant admin tries to view other merchant")
-    void getAllProductsByMerchant_MerchantAdminAccessDenied() throws Exception {
-      when(permissionService.getAuthenticatedUser(any())).thenReturn(merchantAdminUser);
-  
-      mockMvc
-          .perform(get("/api/products/merchant/999/all"))
-          .andExpect(status().isForbidden())
-          .andExpect(jsonPath("$.success").value(false))
-          .andExpect(jsonPath("$.message").value("You can only view products for your own merchant"));
-    }
-  
-    @Test
-    @DisplayName("GET /api/products/merchant/{merchantId}/all should return 400 on exception")
-    void getAllProductsByMerchant_Exception() throws Exception {
-      when(permissionService.getAuthenticatedUser(any())).thenReturn(adminUser);
-      when(productService.getProductsByMerchant(1L))
-          .thenThrow(new RuntimeException("Database error"));
-  
-      mockMvc
-          .perform(get("/api/products/merchant/1/all"))
-          .andExpect(status().isBadRequest())
-          .andExpect(jsonPath("$.success").value(false))
-          .andExpect(jsonPath("$.message").value("Failed to retrieve products: Database error"));
-    }
+  @Test
+  @DisplayName("GET /api/products/{id} should return 404 when product not found")
+  void getProductById_NotFound() throws Exception {
+    when(productService.getProductById(999L)).thenReturn(null);
 
-  
-    @Test
-    @DisplayName("PUT /api/products/{id} should return 404 when product not found")
-    void updateProduct_NotFound() throws Exception {
-      when(productService.getProductById(999L)).thenReturn(null);
-  
-      mockMvc
-          .perform(
-              put("/api/products/999")
-                  .contentType(MediaType.APPLICATION_JSON)
-                  .content(objectMapper.writeValueAsString(testProductDTO)))
-          .andExpect(status().isNotFound())
-          .andExpect(jsonPath("$.success").value(false))
-          .andExpect(jsonPath("$.message").value("Product not found"));
-    }
-  
-    @Test
-    @DisplayName("PUT /api/products/{id} should return 403 when merchant admin tries to update other merchant's product")
-    void updateProduct_MerchantAdminAccessDenied() throws Exception {
-      Merchant otherMerchant = Merchant.builder().id(999L).build();
-      Product otherMerchantProduct = Product.builder().id(1L).merchant(otherMerchant).build();
-  
-      when(productService.getProductById(1L)).thenReturn(otherMerchantProduct);
-      when(permissionService.getAuthenticatedUser(any())).thenReturn(merchantAdminUser);
-  
-      mockMvc
-          .perform(
-              put("/api/products/1")
-                  .contentType(MediaType.APPLICATION_JSON)
-                  .content(objectMapper.writeValueAsString(testProductDTO)))
-          .andExpect(status().isForbidden())
-          .andExpect(jsonPath("$.success").value(false))
-          .andExpect(jsonPath("$.message").value("You can only update products for your own merchant"));
-    }
-  
-    @Test
-    @DisplayName("PUT /api/products/{id} should return 400 on exception")
-    void updateProduct_Exception() throws Exception {
-      when(productService.getProductById(1L)).thenReturn(testProduct);
-      when(permissionService.getAuthenticatedUser(any())).thenReturn(adminUser);
-      when(productService.updateProduct(eq(1L), any(ProductDTO.class)))
-          .thenThrow(new RuntimeException("Update failed"));
-  
-      mockMvc
-          .perform(
-              put("/api/products/1")
-                  .contentType(MediaType.APPLICATION_JSON)
-                  .content(objectMapper.writeValueAsString(testProductDTO)))
-          .andExpect(status().isBadRequest())
-          .andExpect(jsonPath("$.success").value(false))
-          .andExpect(jsonPath("$.message").value("Failed to update product: Update failed"));
-    }
-  
-  
-    @Test
-    @DisplayName("DELETE /api/products/{id} should return 404 when product not found")
-    void deleteProduct_NotFound() throws Exception {
-      when(productService.getProductById(999L)).thenReturn(null);
-  
-      mockMvc
-          .perform(delete("/api/products/999"))
-          .andExpect(status().isNotFound())
-          .andExpect(jsonPath("$.success").value(false))
-          .andExpect(jsonPath("$.message").value("Product not found"));
-  
-      verify(productService, never()).deleteProduct(any());
-    }
-  
-    @Test
-    @DisplayName("DELETE /api/products/{id} should return 403 when merchant admin tries to delete other merchant's product")
-    void deleteProduct_MerchantAdminAccessDenied() throws Exception {
-      Merchant otherMerchant = Merchant.builder().id(999L).build();
-      Product otherMerchantProduct = Product.builder().id(1L).merchant(otherMerchant).build();
-  
-      when(productService.getProductById(1L)).thenReturn(otherMerchantProduct);
-      when(permissionService.getAuthenticatedUser(any())).thenReturn(merchantAdminUser);
-  
-      mockMvc
-          .perform(delete("/api/products/1"))
-          .andExpect(status().isForbidden())
-          .andExpect(jsonPath("$.success").value(false))
-          .andExpect(jsonPath("$.message").value("You can only delete products for your own merchant"));
-  
-      verify(productService, never()).deleteProduct(any());
-    }
-  
-    @Test
-    @DisplayName("DELETE /api/products/{id} should return 400 on exception")
-    void deleteProduct_Exception() throws Exception {
-      when(productService.getProductById(1L)).thenReturn(testProduct);
-      when(permissionService.getAuthenticatedUser(any())).thenReturn(adminUser);
-      doThrow(new RuntimeException("Delete failed")).when(productService).deleteProduct(1L);
-  
-      mockMvc
-          .perform(delete("/api/products/1"))
-          .andExpect(status().isBadRequest())
-          .andExpect(jsonPath("$.success").value(false))
-          .andExpect(jsonPath("$.message").value("Failed to delete product: Delete failed"));
-    }
-  
-  
-    @Test
-    @DisplayName("GET /api/products should return 200 with empty list when no products")
-    void getAllAvailableProducts_EmptyList() throws Exception {
-      when(productService.getAvailableProducts()).thenReturn(List.of());
-  
-      mockMvc
-          .perform(get("/api/products"))
-          .andExpect(status().isOk())
-          .andExpect(jsonPath("$.success").value(true))
-          .andExpect(jsonPath("$.data").isArray())
-          .andExpect(jsonPath("$.data.length()").value(0));
-    }
-  
+    mockMvc
+        .perform(get("/api/products/999"))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(jsonPath("$.message").value("Product not found"));
+  }
+
+  @Test
+  @DisplayName("GET /api/products/{id} should return 400 on exception")
+  void getProductById_Exception() throws Exception {
+    when(productService.getProductById(1L)).thenThrow(new RuntimeException("Database error"));
+
+    mockMvc
+        .perform(get("/api/products/1"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(jsonPath("$.message").value("Failed to retrieve product: Database error"));
+  }
+
+  @Test
+  @DisplayName("GET /api/products/search should return 200 with empty list when no matches")
+  void searchProducts_NoMatches() throws Exception {
+    when(productService.searchProducts("xyz")).thenReturn(List.of());
+
+    mockMvc
+        .perform(get("/api/products/search?keyword=xyz"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.success").value(true))
+        .andExpect(jsonPath("$.data").isArray())
+        .andExpect(jsonPath("$.data.length()").value(0));
+  }
+
+  @Test
+  @DisplayName("GET /api/products/search should return 400 on exception")
+  void searchProducts_Exception() throws Exception {
+    when(productService.searchProducts("beer")).thenThrow(new RuntimeException("Search error"));
+
+    mockMvc
+        .perform(get("/api/products/search?keyword=beer"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(jsonPath("$.message").value("Failed to search products: Search error"));
+  }
+
+  @Test
+  @DisplayName("GET /api/products/merchant/{merchantId} should return 200 with empty list")
+  void getProductsByMerchant_EmptyList() throws Exception {
+    when(productService.getAvailableProductsByMerchant(1L)).thenReturn(List.of());
+
+    mockMvc
+        .perform(get("/api/products/merchant/1"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.success").value(true))
+        .andExpect(jsonPath("$.data").isArray())
+        .andExpect(jsonPath("$.data.length()").value(0));
+  }
+
+  @Test
+  @DisplayName("GET /api/products/merchant/{merchantId} should return 400 on exception")
+  void getProductsByMerchant_Exception() throws Exception {
+    when(productService.getAvailableProductsByMerchant(1L))
+        .thenThrow(new RuntimeException("Database error"));
+
+    mockMvc
+        .perform(get("/api/products/merchant/1"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(
+            jsonPath("$.message").value("Failed to retrieve merchant products: Database error"));
+  }
+
+  @Test
+  @DisplayName("GET /api/products/{id}/available should return false when not available")
+  void isProductAvailable_NotAvailable() throws Exception {
+    when(productService.isProductAvailable(2L)).thenReturn(false);
+
+    mockMvc
+        .perform(get("/api/products/2/available"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.success").value(true))
+        .andExpect(jsonPath("$.data").value(false));
+  }
+
+  @Test
+  @DisplayName("GET /api/products/{id}/available should return 400 on exception")
+  void isProductAvailable_Exception() throws Exception {
+    when(productService.isProductAvailable(1L)).thenThrow(new RuntimeException("Check failed"));
+
+    mockMvc
+        .perform(get("/api/products/1/available"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(jsonPath("$.message").value("Failed to check availability: Check failed"));
+  }
+
+  @Test
+  @DisplayName("GET /api/products/all should return 400 on exception")
+  void getAllProducts_Exception() throws Exception {
+    when(productService.getAllProducts()).thenThrow(new RuntimeException("Database error"));
+
+    mockMvc
+        .perform(get("/api/products/all"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(jsonPath("$.message").value("Failed to retrieve all products: Database error"));
+  }
+
+  @Test
+  @DisplayName(
+      "GET /api/products/merchant/{merchantId}/all should return 403 when merchant admin tries to view other merchant")
+  void getAllProductsByMerchant_MerchantAdminAccessDenied() throws Exception {
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(merchantAdminUser);
+
+    mockMvc
+        .perform(get("/api/products/merchant/999/all"))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(jsonPath("$.message").value("You can only view products for your own merchant"));
+  }
+
+  @Test
+  @DisplayName("GET /api/products/merchant/{merchantId}/all should return 400 on exception")
+  void getAllProductsByMerchant_Exception() throws Exception {
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(adminUser);
+    when(productService.getProductsByMerchant(1L))
+        .thenThrow(new RuntimeException("Database error"));
+
+    mockMvc
+        .perform(get("/api/products/merchant/1/all"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(jsonPath("$.message").value("Failed to retrieve products: Database error"));
+  }
+
+  @Test
+  @DisplayName("PUT /api/products/{id} should return 404 when product not found")
+  void updateProduct_NotFound() throws Exception {
+    when(productService.getProductById(999L)).thenReturn(null);
+
+    mockMvc
+        .perform(
+            put("/api/products/999")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(testProductDTO)))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(jsonPath("$.message").value("Product not found"));
+  }
+
+  @Test
+  @DisplayName(
+      "PUT /api/products/{id} should return 403 when merchant admin tries to update other merchant's product")
+  void updateProduct_MerchantAdminAccessDenied() throws Exception {
+    Merchant otherMerchant = Merchant.builder().id(999L).build();
+    Product otherMerchantProduct = Product.builder().id(1L).merchant(otherMerchant).build();
+
+    when(productService.getProductById(1L)).thenReturn(otherMerchantProduct);
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(merchantAdminUser);
+
+    mockMvc
+        .perform(
+            put("/api/products/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(testProductDTO)))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(
+            jsonPath("$.message").value("You can only update products for your own merchant"));
+  }
+
+  @Test
+  @DisplayName("PUT /api/products/{id} should return 400 on exception")
+  void updateProduct_Exception() throws Exception {
+    when(productService.getProductById(1L)).thenReturn(testProduct);
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(adminUser);
+    when(productService.updateProduct(eq(1L), any(ProductDTO.class)))
+        .thenThrow(new RuntimeException("Update failed"));
+
+    mockMvc
+        .perform(
+            put("/api/products/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(testProductDTO)))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(jsonPath("$.message").value("Failed to update product: Update failed"));
+  }
+
+  @Test
+  @DisplayName("DELETE /api/products/{id} should return 404 when product not found")
+  void deleteProduct_NotFound() throws Exception {
+    when(productService.getProductById(999L)).thenReturn(null);
+
+    mockMvc
+        .perform(delete("/api/products/999"))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(jsonPath("$.message").value("Product not found"));
+
+    verify(productService, never()).deleteProduct(any());
+  }
+
+  @Test
+  @DisplayName(
+      "DELETE /api/products/{id} should return 403 when merchant admin tries to delete other merchant's product")
+  void deleteProduct_MerchantAdminAccessDenied() throws Exception {
+    Merchant otherMerchant = Merchant.builder().id(999L).build();
+    Product otherMerchantProduct = Product.builder().id(1L).merchant(otherMerchant).build();
+
+    when(productService.getProductById(1L)).thenReturn(otherMerchantProduct);
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(merchantAdminUser);
+
+    mockMvc
+        .perform(delete("/api/products/1"))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(
+            jsonPath("$.message").value("You can only delete products for your own merchant"));
+
+    verify(productService, never()).deleteProduct(any());
+  }
+
+  @Test
+  @DisplayName("DELETE /api/products/{id} should return 400 on exception")
+  void deleteProduct_Exception() throws Exception {
+    when(productService.getProductById(1L)).thenReturn(testProduct);
+    when(permissionService.getAuthenticatedUser(any())).thenReturn(adminUser);
+    doThrow(new RuntimeException("Delete failed")).when(productService).deleteProduct(1L);
+
+    mockMvc
+        .perform(delete("/api/products/1"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(jsonPath("$.message").value("Failed to delete product: Delete failed"));
+  }
+
+  @Test
+  @DisplayName("GET /api/products should return 200 with empty list when no products")
+  void getAllAvailableProducts_EmptyList() throws Exception {
+    when(productService.getAvailableProducts()).thenReturn(List.of());
+
+    mockMvc
+        .perform(get("/api/products"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.success").value(true))
+        .andExpect(jsonPath("$.data").isArray())
+        .andExpect(jsonPath("$.data.length()").value(0));
+  }
 }
