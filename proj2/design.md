@@ -25,7 +25,7 @@ Layers (inside each bounded context):
 ```text
 src/main/java/com/boozebuddies/
   common/
-    config/ (global spring or manual DI config later)
+    config/ (Datalnitializer.java, PasswordEncoderConfig.java, SecurityConfig.java)
     error/ (ProblemDetails, exceptions)
     event/ (DomainEvent interface, dispatcher abstraction)
     util/
@@ -73,6 +73,16 @@ src/main/java/com/boozebuddies/
   security/
     auth/ (JWT utilities, filters)
     acl/ (authorization rules)
+
+resources/
+  application-docker.properties
+  application.properties
+  flyway.conf
+  db/migration/
+    V1_baseline_schema.sql
+    V2_seed_demo_data.sql
+    V3__add_mock_locations.sql
+    V4_seed_test_drivers_and_orders.sql
 ```text
 
 Tests mirror structure under `src/test/java/...` with `*Test` and integration tests possibly under `src/test/java/.../it/` or using Failsafe with `src/it/java` later.
